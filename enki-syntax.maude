@@ -1,0 +1,37 @@
+mod ENKI-SYNTAX is
+    protecting INT .
+    protecting BOOL .
+    protecting STRING .
+
+    sorts EnkiType .
+    op int : -> EnkiType .
+    op bool : -> EnkiType .
+    op string : -> EnkiType .
+    op any : String -> EnkiType .
+    op func : EnkiType EnkiType -> EnkiType .
+
+    sorts Id .
+    op end : -> Id .
+    op s : String -> Id .
+    op i : Int -> Id .
+    op b : Bool -> Id .
+    op v : String -> Id .
+    op t : Id EnkiType -> Id .
+    op comp : Id Id -> Id [assoc id: end] .
+
+    sorts Constraint .
+    op c : Id -> Constraint .
+    op _ _ : Constraint Constraint -> Constraint [assoc] .
+
+    sorts Expr .
+    op e : Id -> Expr .
+
+    sorts EnkiFunc EnkiRule .
+    op f : Id Expr -> EnkiFunc .
+    op r : Id Constraint -> EnkiRule .
+endm
+
+view Id from TRIV to ENKI-SYNTAX is
+    sort Elt to Id .
+endv
+

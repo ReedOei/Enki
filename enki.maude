@@ -1,0 +1,58 @@
+load enki-syntax.maude
+
+mod ENKI-TYPECHECK-SORTS-SYNTAX is
+    protecting ENKI-SYNTAX .
+
+    sorts TypedFunc TypedId .
+
+    op tid : Id EnkiType -> TypedId .
+endm
+
+view TypedId from TRIV to ENKI-TYPECHECK-SORTS-SYNTAX is
+    sort Elt to TypedId .
+endv
+
+mod ENKI-TYPECHECK-SORTS is
+    protecting ENKI-TYPECHECK-SORTS-SYNTAX .
+    protecting SET{TypedId} .
+endm
+
+view TypedIdSet from TRIV to ENKI-TYPECHECK-SORTS is
+    sort Elt to Set{TypedId} .
+endv
+
+mod ENKI-TYPECHECK is
+    protecting ENKI-SYNTAX .
+    protecting ENKI-TYPECHECK-SORTS .
+    protecting LIST{TypedId} .
+
+    protecting MAP{TypedId, TypedIdSet}.
+
+    sorts Env .
+
+    op empty : -> Env .
+
+    var S : String .
+    var I : Int .
+    var B : Bool .
+    var Id Id1 Id2 : Id .
+    var T T1 T2 : EnkiType .
+    var L : List{TypedId} .
+
+    op varlist : Id -> List{TypedId} .
+    eq varlist(end) = nil .
+    eq varlist(s(S)) = nil .
+    eq varlist(i(I)) = nil .
+    eq varlist(b(B)) = nil .
+    eq varlist(v(S)) = tid(v(S), any(S)) .
+    eq varlist(t(v(S), T)) = tid(v(S), T) .
+    eq varlist(comp(Id1, Id2)) = append(varlist(Id1), varlist(Id2)) .
+
+    op functype : NeList{TypedId} -> EnkiType .
+    eq functype(tid(Id1, T1) tid(Id2, T2)) = func(T1, T2) .
+    eq functype(tid(Id, T) L) = func(T, functype(L)) .
+endm
+
+reduce functype(varlist(comp(s("add"), v("X"), s("to"), v("Y")))) .
+reduce functype(tid(v("S"), int) tid(v("T"), int)) .
+
