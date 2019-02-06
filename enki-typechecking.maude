@@ -57,14 +57,6 @@ mod ENKI-TYPECHECK is
     op freshtype : Set{TypedId} Id -> Set{TypedId} .
     eq freshtype(TIDS, Id) = (tid(Id, firstUnused(types(TIDS), 0)), TIDS) .
 
-    op varlist : Id -> List{Id} .
-    eq varlist(s(S))           = nil .
-    eq varlist(i(I))           = nil .
-    eq varlist(b(B))           = nil .
-    eq varlist(v(S))           = v(S) .
-    eq varlist(t(v(S), T))     = t(v(S), T) .
-    eq varlist(comp(Id1, Id2)) = append(varlist(Id1), varlist(Id2)) .
-
     op freshtypes : Set{TypedId} List{Id} -> Set{TypedId} .
     eq freshtypes(TIDS, nil)                    = TIDS .
     eq freshtypes((tid(Id, T), TIDS), (Id Ids)) = freshtypes((tid(Id, T), TIDS), Ids) .
@@ -131,8 +123,8 @@ mod ENKI-TYPECHECK is
     eq makeFuncType(TIDS, Id1, Id2) = functype(attachVars(TIDS, varlist(Id1)) attachType(TIDS, Id2)) .
 
     var Expr : Expr .
-    op infer : EnkiFunc -> TypedFunc .
-    ceq infer(f(Id1, e(Id2))) = typedf(Id1, makeFuncType(TIDS, Id1, Id2), typedExpr(attachType(TIDS, Id2)))
+    op inferFunc : EnkiFunc -> TypedFunc .
+    ceq inferFunc(f(Id1, e(Id2))) = typedf(Id1, makeFuncType(TIDS, Id1, Id2), typedExpr(attachType(TIDS, Id2)))
         if TIDS := inferId(freshtypes(empty, idList(Id1) idList(Id2)), Id2) .
 endm
 

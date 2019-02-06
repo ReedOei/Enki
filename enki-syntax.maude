@@ -10,6 +10,11 @@ mod ENKI-SYNTAX-SORTS is
     op any : String -> EnkiType .
     op func : EnkiType EnkiType -> EnkiType .
 
+    vars T1 T2 : EnkiType .
+    op returnType : EnkiType -> EnkiType .
+    eq returnType(func(T1, T2)) = returnType(T2) .
+    eq returnType(T1)           = T1 [owise] .
+
     sort Id .
     op s : String -> Id .
     op i : Int -> Id .
@@ -44,12 +49,13 @@ mod ENKI-SYNTAX is
     protecting ENKI-SYNTAX-SORTS .
 
     protecting LIST{Id} .
+    protecting LIST{String} .
 
     var S : String .
     var I : Int .
     var B : Bool .
     var T : EnkiType .
-    vars Id Ids : Id .
+    vars Id Id1 Id2 Ids : Id .
 
     op idList : Id -> List{Id} .
     eq idList(v(S)) = v(S) .
@@ -57,5 +63,28 @@ mod ENKI-SYNTAX is
     eq idList(i(I)) = i(I) .
     eq idList(t(Id, T)) = t(Id, T) .
     eq idList(comp(Id, Ids)) = Id idList(Ids) .
+
+    op varlist : Id -> List{Id} .
+    eq varlist(s(S))           = nil .
+    eq varlist(i(I))           = nil .
+    eq varlist(b(B))           = nil .
+    eq varlist(v(S))           = v(S) .
+    eq varlist(t(v(S), T))     = t(v(S), T) .
+    eq varlist(t(Id, T))       = nil .
+    eq varlist(comp(Id1, Id2)) = append(varlist(Id1), varlist(Id2)) .
+
+    var L : List{Id} .
+    op varstrs : List{Id} -> List{String} .
+    eq varstrs(nil)          = nil .
+    eq varstrs(v(S) L)       = S varstrs(L) .
+    eq varstrs(t(v(S), T) L) = S varstrs(L) .
+
+    op strlist : Id -> List{String} .
+    eq strlist(s(S))           = S .
+    eq strlist(i(I))           = nil .
+    eq strlist(b(B))           = nil .
+    eq strlist(v(S))           = S .
+    eq strlist(t(Id, T))       = nil .
+    eq strlist(comp(Id1, Id2)) = append(strlist(Id1), strlist(Id2)) .
 endm
 

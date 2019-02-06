@@ -1,7 +1,7 @@
-load enki-typechecking.maude
+load enki-codegen.maude
 
 mod ENKI-LANG is
-    protecting ENKI-TYPECHECK .
+    protecting ENKI-CODEGEN .
 endm
 
 reduce firstUnused(empty, 0) .
@@ -23,5 +23,8 @@ reduce inferId(freshtypes(empty, idList(comp(v("X"), s("+"), v("Y")))), comp(v("
 
 --- Defines a function:
 --- add X to Y is: X + Y.
-reduce infer(f(comp(s("add"), v("X"), s("to"), v("Y")), e(comp(v("X"), s("+"), v("Y"))))) .
+reduce inferFunc(f(comp(s("add"), v("X"), s("to"), v("Y")), e(comp(v("X"), s("+"), v("Y"))))) .
+
+reduce genId(comp(v("X"), s("+"), v("Y"))) .
+reduce genFunc(inferFunc(f(comp(s("add"), v("X"), s("to"), v("Y")), e(comp(v("X"), s("+"), v("Y")))))) .
 
