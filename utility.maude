@@ -1,0 +1,13 @@
+mod UTILITY is
+    protecting STRING .
+    protecting LIST{String} .
+
+    vars S1 S2 Sep : String .
+    var Strs : List{String} .
+
+    op intercalate : String List{String} -> String .
+    eq intercalate(Sep, nil)        = "" .
+    eq intercalate(Sep, S1)         = S1 .
+    eq intercalate(Sep, S1 S2 Strs) = S1 + Sep + intercalate(Sep, S2 Strs) .
+endm
+
