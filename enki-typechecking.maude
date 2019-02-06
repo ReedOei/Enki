@@ -1,0 +1,138 @@
+load enki-syntax.maude
+
+mod ENKI-TYPECHECK-SORTS-SYNTAX is
+    protecting ENKI-SYNTAX .
+
+    sorts TypedFunc TypedId TypedExpr .
+
+    op tid : Id EnkiType -> TypedId .
+    op typedExpr : TypedId -> TypedExpr .
+    op typedf : Id EnkiType TypedExpr -> TypedFunc .
+endm
+
+view TypedId from TRIV to ENKI-TYPECHECK-SORTS-SYNTAX is
+    sort Elt to TypedId .
+endv
+
+mod ENKI-TYPECHECK-SORTS is
+    protecting ENKI-TYPECHECK-SORTS-SYNTAX .
+    protecting SET{TypedId} .
+    protecting LIST{TypedId} .
+endm
+
+mod ENKI-TYPECHECK is
+    protecting ENKI-SYNTAX .
+    protecting ENKI-TYPECHECK-SORTS .
+    protecting LIST{TypedId} .
+    protecting LIST{Id} .
+
+    protecting SET{TypedId} .
+    protecting SET{EnkiType} .
+
+    protecting CONVERSION .
+
+    var TS : Set{TypedId} .
+
+    vars S S1 S2 : String .
+    var I : Int .
+    var B : Bool .
+    vars Id Id1 Id2 : Id .
+    var Ids : List{Id} .
+
+    vars T T1 T2 : EnkiType .
+    vars TID TID1 TID2 : TypedId .
+    vars TIDS TIDS1 TIDS2 : Set{TypedId} .
+    var L : List{TypedId} .
+
+    var Ts : Set{EnkiType} .
+
+    op firstUnused : Set{EnkiType} Int -> EnkiType .
+    eq firstUnused(Ts, I) =
+        if any("T" + string(I, 10)) in Ts then firstUnused(Ts, I + 1) else any("T" + string(I, 10)) fi .
+
+    op types : Set{TypedId} -> Set{EnkiType} .
+    eq types(empty)              = empty .
+    eq types((tid(Id, T), TIDS)) = (T, types(TIDS)) .
+
+    op freshtype : Set{TypedId} Id -> Set{TypedId} .
+    eq freshtype(TIDS, Id) = (tid(Id, firstUnused(types(TIDS), 0)), TIDS) .
+
+    op varlist : Id -> List{Id} .
+    eq varlist(s(S))           = nil .
+    eq varlist(i(I))           = nil .
+    eq varlist(b(B))           = nil .
+    eq varlist(v(S))           = v(S) .
+    eq varlist(t(v(S), T))     = t(v(S), T) .
+    eq varlist(comp(Id1, Id2)) = append(varlist(Id1), varlist(Id2)) .
+
+    op freshtypes : Set{TypedId} List{Id} -> Set{TypedId} .
+    eq freshtypes(TIDS, nil)                    = TIDS .
+    eq freshtypes((tid(Id, T), TIDS), (Id Ids)) = freshtypes((tid(Id, T), TIDS), Ids) .
+    eq freshtypes(TIDS, (v(S) Ids))             = freshtypes(freshtype(TIDS, v(S)), Ids) .
+    eq freshtypes(TIDS, (i(I) Ids))             = freshtypes((tid(i(I), int), TIDS), Ids) .
+    eq freshtypes(TIDS, (b(B) Ids))             = freshtypes((tid(b(B), bool), TIDS), Ids) .
+    eq freshtypes(TIDS, (s(S) Ids))             = freshtypes((tid(s(S), string), TIDS), Ids) .
+
+    op typeSet : List{TypedId} -> Set{TypedId} .
+    eq typeSet(nil)          = empty .
+    eq typeSet(tid(Id, T) L) = (tid(Id, T), typeSet(L)) .
+
+    op typeof : Set{TypedId} Id -> EnkiType .
+    eq typeof((tid(Id, T), TIDS), Id) = T .
+    eq typeof(TIDS, Id) = firstUnused(types(TIDS), 0) [owise] .
+
+    op attachType : Set{TypedId} Id -> TypedId .
+    eq attachType(TIDS, Id) = tid(Id, typeof(TIDS, Id)) .
+
+    op attachVars : Set{TypedId} List{Id} -> List{TypedId} .
+    eq attachVars(TIDS, nil)                    = nil .
+    ceq attachVars(TIDS, (Id Ids)) = tid(Id, T) attachVars((tid(Id, T), TIDS), Ids)
+        if T := typeof(TIDS, Id) .
+
+    op functype : NeList{TypedId} -> EnkiType .
+    eq functype(tid(Id, T))   = T .
+    eq functype(tid(Id, T) L) = func(T, functype(L)) .
+
+    op join : EnkiType EnkiType -> EnkiType [comm] .
+    eq join(any(S), T) = T .
+    eq join(T, T)      = T .
+
+    op unifyAll : Set{TypedId} EnkiType EnkiType -> Set{TypedId} .
+    eq unifyAll(empty, T1, T2) = empty .
+    eq unifyAll((tid(Id, T1), TIDS), T1, T2) = (tid(Id, T2), unifyAll(TIDS, T1, T2)) .
+    eq unifyAll(TIDS, T1, T2) = TIDS [owise] .
+
+    op unify : Set{TypedId} Id Id -> Set{TypedId} .
+    ceq unify(TIDS, Id1, Id2) = unifyAll(unifyAll(TIDS, T1, T), T2, T)
+        if (tid(Id1, T1), tid(Id2, T2), TIDS2) := TIDS /\
+           T := join(T1, T2) .
+    eq unify(TIDS, Id1, Id2) = (tid(Id1, typeof(TIDS, Id2)), TIDS) .
+
+    op unifyType : Set{TypedId} Id EnkiType -> Set{TypedId} .
+    eq unifyType((tid(Id, T1), TIDS), Id, T2) = (tid(Id, join(T1, T2)), TIDS) .
+    eq unifyType(TIDS, Id, T2) = (tid(Id, T2), TIDS) [owise] .
+
+    op isArith : String -> Bool .
+    eq isArith("+") = true .
+    eq isArith("-") = true .
+    eq isArith("/") = true .
+    eq isArith("*") = true .
+    eq isArith(S)   = false [owise] .
+
+    op inferId : Set{TypedId} Id -> Set{TypedId} .
+    ceq inferId(TIDS, Id) = unify(unify(TIDS, Id1, Id2), Id, Id1)
+        if comp(Id1, s("="), Id2) := Id .
+    ceq inferId(TIDS, Id) = unify(unify(unifyType(TIDS, Id1, int), Id1, Id2), Id, Id1)
+        if comp(Id1, s(S), Id2) := Id /\
+           isArith(S) .
+    eq inferId(TIDS, Id)                     = TIDS [owise] .
+
+    op makeFuncType : Set{TypedId} Id Id -> EnkiType .
+    eq makeFuncType(TIDS, Id1, Id2) = functype(attachVars(TIDS, varlist(Id1)) attachType(TIDS, Id2)) .
+
+    var Expr : Expr .
+    op infer : EnkiFunc -> TypedFunc .
+    ceq infer(f(Id1, e(Id2))) = typedf(Id1, makeFuncType(TIDS, Id1, Id2), typedExpr(attachType(TIDS, Id2)))
+        if TIDS := inferId(freshtypes(empty, idList(Id1) idList(Id2)), Id2) .
+endm
+

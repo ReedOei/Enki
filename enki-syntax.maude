@@ -1,37 +1,61 @@
-mod ENKI-SYNTAX is
+mod ENKI-SYNTAX-SORTS is
     protecting INT .
     protecting BOOL .
     protecting STRING .
 
-    sorts EnkiType .
+    sort EnkiType .
     op int : -> EnkiType .
     op bool : -> EnkiType .
     op string : -> EnkiType .
     op any : String -> EnkiType .
     op func : EnkiType EnkiType -> EnkiType .
 
-    sorts Id .
-    op end : -> Id .
+    sort Id .
     op s : String -> Id .
     op i : Int -> Id .
     op b : Bool -> Id .
     op v : String -> Id .
     op t : Id EnkiType -> Id .
-    op comp : Id Id -> Id [assoc id: end] .
+    op comp : Id Id -> Id [assoc] .
 
-    sorts Constraint .
+    sort Constraint .
     op c : Id -> Constraint .
     op _ _ : Constraint Constraint -> Constraint [assoc] .
 
-    sorts Expr .
+    sort Expr .
     op e : Id -> Expr .
 
-    sorts EnkiFunc EnkiRule .
+    sort EnkiFunc .
     op f : Id Expr -> EnkiFunc .
+
+    sort EnkiRule .
     op r : Id Constraint -> EnkiRule .
 endm
 
-view Id from TRIV to ENKI-SYNTAX is
+view Id from TRIV to ENKI-SYNTAX-SORTS is
     sort Elt to Id .
 endv
+
+view EnkiType from TRIV to ENKI-SYNTAX-SORTS  is
+    sort Elt to EnkiType .
+endv
+
+mod ENKI-SYNTAX is
+    protecting ENKI-SYNTAX-SORTS .
+
+    protecting LIST{Id} .
+
+    var S : String .
+    var I : Int .
+    var B : Bool .
+    var T : EnkiType .
+    vars Id Ids : Id .
+
+    op idList : Id -> List{Id} .
+    eq idList(v(S)) = v(S) .
+    eq idList(b(B)) = b(B) .
+    eq idList(i(I)) = i(I) .
+    eq idList(t(Id, T)) = t(Id, T) .
+    eq idList(comp(Id, Ids)) = Id idList(Ids) .
+endm
 

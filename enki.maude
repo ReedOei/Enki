@@ -1,58 +1,27 @@
-load enki-syntax.maude
+load enki-typechecking.maude
 
-mod ENKI-TYPECHECK-SORTS-SYNTAX is
-    protecting ENKI-SYNTAX .
-
-    sorts TypedFunc TypedId .
-
-    op tid : Id EnkiType -> TypedId .
+mod ENKI-LANG is
+    protecting ENKI-TYPECHECK .
 endm
 
-view TypedId from TRIV to ENKI-TYPECHECK-SORTS-SYNTAX is
-    sort Elt to TypedId .
-endv
-
-mod ENKI-TYPECHECK-SORTS is
-    protecting ENKI-TYPECHECK-SORTS-SYNTAX .
-    protecting SET{TypedId} .
-endm
-
-view TypedIdSet from TRIV to ENKI-TYPECHECK-SORTS is
-    sort Elt to Set{TypedId} .
-endv
-
-mod ENKI-TYPECHECK is
-    protecting ENKI-SYNTAX .
-    protecting ENKI-TYPECHECK-SORTS .
-    protecting LIST{TypedId} .
-
-    protecting MAP{TypedId, TypedIdSet}.
-
-    sorts Env .
-
-    op empty : -> Env .
-
-    var S : String .
-    var I : Int .
-    var B : Bool .
-    var Id Id1 Id2 : Id .
-    var T T1 T2 : EnkiType .
-    var L : List{TypedId} .
-
-    op varlist : Id -> List{TypedId} .
-    eq varlist(end) = nil .
-    eq varlist(s(S)) = nil .
-    eq varlist(i(I)) = nil .
-    eq varlist(b(B)) = nil .
-    eq varlist(v(S)) = tid(v(S), any(S)) .
-    eq varlist(t(v(S), T)) = tid(v(S), T) .
-    eq varlist(comp(Id1, Id2)) = append(varlist(Id1), varlist(Id2)) .
-
-    op functype : NeList{TypedId} -> EnkiType .
-    eq functype(tid(Id1, T1) tid(Id2, T2)) = func(T1, T2) .
-    eq functype(tid(Id, T) L) = func(T, functype(L)) .
-endm
-
-reduce functype(varlist(comp(s("add"), v("X"), s("to"), v("Y")))) .
+reduce firstUnused(empty, 0) .
+reduce types(empty) .
+reduce freshtype(freshtype(empty, v("X")), v("Y")) .
+reduce freshtypes(empty, v("X") v("Y") v("X") v("Z")) .
+reduce varlist(comp(s("add"), v("X"), s("to"), v("Y"))) .
+reduce attachVars(empty, varlist(comp(s("add"), v("X"), s("to"), v("Y")))) .
+reduce functype(attachVars(empty, varlist(comp(s("add"), v("X"), s("to"), v("Y"))))) .
 reduce functype(tid(v("S"), int) tid(v("T"), int)) .
+reduce join(int, int) .
+reduce join(any("T0"), int) .
+reduce join(bool, any("T0")) .
+reduce unify(freshtypes(empty, v("X") v("Y")), v("X"), v("Y")) .
+reduce inferId(freshtypes(empty, v("X") s("=") v("Y")), comp(v("X"), s("="), v("Y"))) .
+reduce inferId(freshtypes(empty, v("X") s("=") i(40)), comp(v("X"), s("="), i(40))) .
+
+reduce inferId(freshtypes(empty, idList(comp(v("X"), s("+"), v("Y")))), comp(v("X"), s("+"), v("Y"))) .
+
+--- Defines a function:
+--- add X to Y is: X + Y.
+reduce infer(f(comp(s("add"), v("X"), s("to"), v("Y")), e(comp(v("X"), s("+"), v("Y"))))) .
 
