@@ -24,12 +24,13 @@ mod ENKI-CODEGEN is
     eq prologArith("-") = "-" .
     eq prologArith("/") = "div" .
     eq prologArith("*") = "*" .
+    eq prologArith("^") = "^" .
 
     op genId : Id -> String .
     eq genId(v(S)) = S .
     eq genId(s(S)) = "\"" + S + "\"" .
     eq genId(i(I)) = string(I, 10) .
-    ceq genId(comp(Id1, s(S), Id2)) = "(" + genId(Id1) + " " + prologArith(S) + " " + genId(Id2) + ")"
+    ceq genId(comp(Id1 s(S) Id2)) = "(" + genId(Id1) + " " + prologArith(S) + " " + genId(Id2) + ")"
         if isArith(S) .
 
     op genFunc : TypedFunc -> String .

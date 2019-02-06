@@ -21,7 +21,6 @@ mod ENKI-SYNTAX-SORTS is
     op b : Bool -> Id .
     op v : String -> Id .
     op t : Id EnkiType -> Id .
-    op comp : Id Id -> Id [assoc] .
 
     sort Constraint .
     op c : Id -> Constraint .
@@ -55,14 +54,18 @@ mod ENKI-SYNTAX is
     var I : Int .
     var B : Bool .
     var T : EnkiType .
-    vars Id Id1 Id2 Ids : Id .
+    vars Id Id1 Id2 : Id .
+    var Ids : List{Id} .
+
+    op comp : List{Id} -> Id .
 
     op idList : Id -> List{Id} .
-    eq idList(v(S)) = v(S) .
-    eq idList(b(B)) = b(B) .
-    eq idList(i(I)) = i(I) .
-    eq idList(t(Id, T)) = t(Id, T) .
-    eq idList(comp(Id, Ids)) = Id idList(Ids) .
+    eq idList(v(S))         = v(S) .
+    eq idList(b(B))         = b(B) .
+    eq idList(i(I))         = i(I) .
+    eq idList(t(Id, T))     = t(Id, T) .
+    eq idList(comp(nil))    = nil .
+    eq idList(comp(Id Ids)) = Id idList(comp(Ids)) .
 
     op varlist : Id -> List{Id} .
     eq varlist(s(S))           = nil .
@@ -71,7 +74,8 @@ mod ENKI-SYNTAX is
     eq varlist(v(S))           = v(S) .
     eq varlist(t(v(S), T))     = t(v(S), T) .
     eq varlist(t(Id, T))       = nil .
-    eq varlist(comp(Id1, Id2)) = append(varlist(Id1), varlist(Id2)) .
+    eq varlist(comp(nil))      = nil .
+    eq varlist(comp(Id Ids))   = append(varlist(Id), varlist(comp(Ids))) .
 
     var L : List{Id} .
     op varstrs : List{Id} -> List{String} .
@@ -85,6 +89,7 @@ mod ENKI-SYNTAX is
     eq strlist(b(B))           = nil .
     eq strlist(v(S))           = S .
     eq strlist(t(Id, T))       = nil .
-    eq strlist(comp(Id1, Id2)) = append(strlist(Id1), strlist(Id2)) .
+    eq strlist(comp(nil))      = nil .
+    eq strlist(comp(Id Ids))   = append(strlist(Id), strlist(comp(Ids))) .
 endm
 

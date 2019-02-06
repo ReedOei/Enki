@@ -109,13 +109,14 @@ mod ENKI-TYPECHECK is
     eq isArith("-") = true .
     eq isArith("/") = true .
     eq isArith("*") = true .
+    eq isArith("^") = true .
     eq isArith(S)   = false [owise] .
 
     op inferId : Set{TypedId} Id -> Set{TypedId} .
     ceq inferId(TIDS, Id) = unify(unify(TIDS, Id1, Id2), Id, Id1)
-        if comp(Id1, s("="), Id2) := Id .
+        if comp(Id1 s("=") Id2) := Id .
     ceq inferId(TIDS, Id) = unify(unify(unifyType(TIDS, Id1, int), Id1, Id2), Id, Id1)
-        if comp(Id1, s(S), Id2) := Id /\
+        if comp(Id1 s(S) Id2) := Id /\
            isArith(S) .
     eq inferId(TIDS, Id)                     = TIDS [owise] .
 

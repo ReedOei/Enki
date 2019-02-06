@@ -8,23 +8,28 @@ reduce firstUnused(empty, 0) .
 reduce types(empty) .
 reduce freshtype(freshtype(empty, v("X")), v("Y")) .
 reduce freshtypes(empty, v("X") v("Y") v("X") v("Z")) .
-reduce varlist(comp(s("add"), v("X"), s("to"), v("Y"))) .
-reduce attachVars(empty, varlist(comp(s("add"), v("X"), s("to"), v("Y")))) .
-reduce functype(attachVars(empty, varlist(comp(s("add"), v("X"), s("to"), v("Y"))))) .
+reduce varlist(comp(s("add") v("X") s("to") v("Y"))) .
+reduce attachVars(empty, varlist(comp(s("add") v("X") s("to") v("Y")))) .
+reduce functype(attachVars(empty, varlist(comp(s("add") v("X") s("to") v("Y"))))) .
 reduce functype(tid(v("S"), int) tid(v("T"), int)) .
 reduce join(int, int) .
 reduce join(any("T0"), int) .
 reduce join(bool, any("T0")) .
 reduce unify(freshtypes(empty, v("X") v("Y")), v("X"), v("Y")) .
-reduce inferId(freshtypes(empty, v("X") s("=") v("Y")), comp(v("X"), s("="), v("Y"))) .
-reduce inferId(freshtypes(empty, v("X") s("=") i(40)), comp(v("X"), s("="), i(40))) .
+reduce inferId(freshtypes(empty, v("X") s("=") v("Y")), comp(v("X") s("=") v("Y"))) .
+reduce inferId(freshtypes(empty, v("X") s("=") i(40)), comp(v("X") s("=") i(40))) .
 
-reduce inferId(freshtypes(empty, idList(comp(v("X"), s("+"), v("Y")))), comp(v("X"), s("+"), v("Y"))) .
+reduce inferId(freshtypes(empty, idList(comp(v("X") s("+") v("Y")))), comp(v("X") s("+") v("Y"))) .
 
 --- Defines a function:
 --- add X to Y is: X + Y.
-reduce inferFunc(f(comp(s("add"), v("X"), s("to"), v("Y")), e(comp(v("X"), s("+"), v("Y"))))) .
+reduce inferFunc(f(comp(s("add") v("X") s("to") v("Y")), e(comp(v("X") s("+") v("Y"))))) .
 
-reduce genId(comp(v("X"), s("+"), v("Y"))) .
-reduce genFunc(inferFunc(f(comp(s("add"), v("X"), s("to"), v("Y")), e(comp(v("X"), s("+"), v("Y")))))) .
+reduce genId(comp(v("X") s("+") v("Y"))) .
+reduce genFunc(inferFunc(f(comp(s("add") v("X") s("to") v("Y")), e(comp(v("X") s("+") v("Y")))))) .
+reduce genFunc(inferFunc(f(comp(s("distance") s("from") v("X1") v("Y1") s("to") v("X2") v("Y2")),
+            e(comp(
+                comp(comp(v("X1") s("-") v("X2")) s("^") i(2))
+                s("+")
+                comp(comp(v("Y1") s("-") v("Y2")) s("^") i(2))))))) .
 
