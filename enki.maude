@@ -20,16 +20,27 @@ reduce inferId(freshtypes(empty, v("X") s("=") v("Y")), comp(v("X") s("=") v("Y"
 reduce inferId(freshtypes(empty, v("X") s("=") i(40)), comp(v("X") s("=") i(40))) .
 
 reduce inferId(freshtypes(empty, idList(comp(v("X") s("+") v("Y")))), comp(v("X") s("+") v("Y"))) .
+reduce inferId((tid(s("add"), string), tid(s("addTwice"), string), tid(s("to"), string), tid(v("X"), any("T0")), tid(v("Y"), any("T1")), tid(fid(comp(s("add") v("X") s("to") v("Y"))), func(int, func(int,
+    int)))),
+    comp(s("add") v("X") s("to") comp(s("add") v("X") s("to") v("Y")))) .
 
 --- Defines a function:
 --- add X to Y is: X + Y.
-reduce inferFunc(f(comp(s("add") v("X") s("to") v("Y")), e(comp(v("X") s("+") v("Y"))))) .
+reduce inferFunc(empty, f(comp(s("add") v("X") s("to") v("Y")), e(comp(v("X") s("+") v("Y"))))) .
+reduce findFuncType((tid(fid(comp(s("add") v("X") s("to") v("Y"))), func(int, func(int, int)))),
+        comp(s("add") i(10) s("to") comp(v("X") s("+") v("Y")))) .
+reduce inferFuncs(empty,
+        f(comp(s("add") v("X") s("to") v("Y")), e(comp(v("X") s("+") v("Y"))))
+        f(comp(s("addTwice") v("X") s("to") v("Y")), e(comp(s("add") v("X") s("to") comp(s("add") v("X") s("to") v("Y")))))) .
 
 reduce genId(comp(v("X") s("+") v("Y"))) .
-reduce genFunc(inferFunc(f(comp(s("add") v("X") s("to") v("Y")), e(comp(v("X") s("+") v("Y")))))) .
-reduce genFunc(inferFunc(f(comp(s("distance") s("from") v("X1") v("Y1") s("to") v("X2") v("Y2")),
+reduce genFunc(inferFunc(empty, f(comp(s("add") v("X") s("to") v("Y")), e(comp(v("X") s("+") v("Y")))))) .
+reduce genFunc(inferFunc(empty, f(comp(s("distance") s("from") v("X1") v("Y1") s("to") v("X2") v("Y2")),
             e(comp(
                 comp(comp(v("X1") s("-") v("X2")) s("^") i(2))
                 s("+")
                 comp(comp(v("Y1") s("-") v("Y2")) s("^") i(2))))))) .
+reduce genFuncs(inferFuncs(empty,
+        f(comp(s("add") v("X") s("to") v("Y")), e(comp(v("X") s("+") v("Y"))))
+        f(comp(s("addTwice") v("X") s("to") v("Y")), e(comp(s("add") v("X") s("to") comp(s("add") v("X") s("to") v("Y"))))))) .
 

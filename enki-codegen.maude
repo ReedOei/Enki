@@ -39,5 +39,11 @@ mod ENKI-CODEGEN is
         if Name := intercalate("_", strlist(Id)) /\
            ResName := Name + "_Result" /\
            Params := intercalate(",", varstrs(varlist(Id)) ResName) .
+
+    var TFunc : TypedFunc .
+    var TFuncs : List{TypedFunc} .
+    op genFuncs : List{TypedFunc} -> String .
+    eq genFuncs(nil)          = "" .
+    eq genFuncs(TFunc TFuncs) = intercalate("\n\n", genFunc(TFunc) genFuncs(TFuncs)) .
 endm
 

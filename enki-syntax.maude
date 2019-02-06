@@ -20,6 +20,8 @@ mod ENKI-SYNTAX-SORTS is
     op i : Int -> Id .
     op b : Bool -> Id .
     op v : String -> Id .
+    op vmap : String String -> Id .
+    op fid : Id -> Id .
     op t : Id EnkiType -> Id .
 
     sort Constraint .
@@ -40,8 +42,12 @@ view Id from TRIV to ENKI-SYNTAX-SORTS is
     sort Elt to Id .
 endv
 
-view EnkiType from TRIV to ENKI-SYNTAX-SORTS  is
+view EnkiType from TRIV to ENKI-SYNTAX-SORTS is
     sort Elt to EnkiType .
+endv
+
+view EnkiFunc from TRIV to ENKI-SYNTAX-SORTS is
+    sort Elt to EnkiFunc .
 endv
 
 mod ENKI-SYNTAX is
@@ -63,9 +69,10 @@ mod ENKI-SYNTAX is
     eq idList(v(S))         = v(S) .
     eq idList(b(B))         = b(B) .
     eq idList(i(I))         = i(I) .
+    eq idList(s(S))         = s(S) .
     eq idList(t(Id, T))     = t(Id, T) .
     eq idList(comp(nil))    = nil .
-    eq idList(comp(Id Ids)) = Id idList(comp(Ids)) .
+    eq idList(comp(Id Ids)) = append(idList(Id), idList(comp(Ids))) .
 
     op varlist : Id -> List{Id} .
     eq varlist(s(S))           = nil .
