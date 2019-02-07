@@ -99,10 +99,6 @@ mod ENKI-CODEGEN is
         genFuncCall(FuncId, ResName) + " :- " + ResName + " " + eqSign(T) + " " + genId(Id2)
         if ResName := "Result_" + funcName(FuncId) [owise] .
 
-    op isEmpty : List{String} -> Bool .
-    eq isEmpty(nil) = true .
-    eq isEmpty(S Strs) = false .
-
     var TFunc : TypedFunc .
     var TFuncs : List{TypedFunc} .
     op genFuncs : List{TypedFunc} -> String .
