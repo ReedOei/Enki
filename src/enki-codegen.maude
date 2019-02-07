@@ -9,8 +9,10 @@ mod ENKI-CODEGEN is
 
     var Id Id1 Id2 : Id .
     var S : String .
+    var Current : List{String} .
     var I : Int .
     var T T2 : EnkiType .
+    var Types : List{EnkiType} .
     var Tid : TypedId .
     vars Name ResName Params : String .
 
@@ -26,6 +28,15 @@ mod ENKI-CODEGEN is
     eq prologArith("*") = "*" .
     eq prologArith("^") = "^" .
 
+    var VarMap : Map{String, Id} .
+    var Ids : List{Id} .
+    var NewLine : String .
+
+    op genParams : List{EnkiType} List{Id} Map{String, Id} List{String} -> String .
+    eq genParams(Types, nil, VarMap, Current) = intercalate(",\n", Current) .
+    ceq genParams(T Types, v(S) Ids, (S |-> Id, VarMap), Current) = genParams(Types, Ids, VarMap, NewLine Current)
+        if NewLine := S + " " + eqSign(T) + " " + genId(Id) .
+
     op genId : Id -> String .
     eq genId(v(S)) = S .
     eq genId(s(S)) = "\"" + S + "\"" .
@@ -33,12 +44,21 @@ mod ENKI-CODEGEN is
     ceq genId(comp(Id1 s(S) Id2)) = "(" + genId(Id1) + " " + prologArith(S) + " " + genId(Id2) + ")"
         if isArith(S) .
 
+    var FuncId : Id .
     op genFunc : TypedFunc -> String .
+    ceq genFunc(typedf(Id, T, typedExpr(tid(Id2, T2)))) =
+        Name + "(" + Params + ") :- \n" +
+        genParams(Types, varlist(FuncId), VarMap, nil) + ",\n" +
+        intercalate("_", strlist(FuncId)) + "(" + intercalate(",", strlist(comp(varlist(FuncId))) ResName) + ")."
+        if Name := intercalate("_", strlist(Id)) /\
+           ResName := Name + "_Result" /\
+           Params := intercalate(",", varstrs(varlist(Id)) ResName) /\
+           fcall(FuncId, Types, VarMap) := Id2 .
     ceq genFunc(typedf(Id, T, typedExpr(tid(Id2, T2)))) =
         Name + "(" + Params + ") :- " + ResName + " " + eqSign(T) + " " + genId(Id2) + "."
         if Name := intercalate("_", strlist(Id)) /\
            ResName := Name + "_Result" /\
-           Params := intercalate(",", varstrs(varlist(Id)) ResName) .
+           Params := intercalate(",", varstrs(varlist(Id)) ResName) [owise] .
 
     var TFunc : TypedFunc .
     var TFuncs : List{TypedFunc} .

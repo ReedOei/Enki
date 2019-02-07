@@ -2,12 +2,16 @@ load enki-syntax.maude
 
 mod ENKI-TYPECHECK-SORTS-SYNTAX is
     protecting ENKI-SYNTAX .
+    protecting LIST{EnkiType} .
+    protecting MAP{String, Id} .
 
     sorts TypedFunc TypedId TypedExpr .
 
     op tid : Id EnkiType -> TypedId .
     op typedExpr : TypedId -> TypedExpr .
     op typedf : Id EnkiType TypedExpr -> TypedFunc .
+
+    op fcall : Id List{EnkiType} Map{String, Id} -> Id .
 endm
 
 view TypedId from TRIV to ENKI-TYPECHECK-SORTS-SYNTAX is
@@ -28,20 +32,12 @@ mod ENKI-TYPECHECK is
     protecting ENKI-SYNTAX .
     protecting ENKI-TYPECHECK-SORTS .
 
-    protecting LIST{TypedId} .
-    protecting LIST{Id} .
     protecting LIST{EnkiFunc} .
-    protecting LIST{EnkiType} .
     protecting LIST{TypedFunc} .
 
-    protecting SET{TypedId} .
     protecting SET{EnkiType} .
 
-    protecting MAP{String, Id} .
-
     protecting CONVERSION .
-
-    var TS : Set{TypedId} .
 
     vars S S1 S2 : String .
     var I : Int .
@@ -138,10 +134,17 @@ mod ENKI-TYPECHECK is
     eq funcNameMatches(comp(nil), comp(nil)) = true .
     eq funcNameMatches(comp(Id1 Ids1), comp(Id2 Ids2)) = funcNameMatches(Id1, Id2) and funcNameMatches(comp(Ids1), comp(Ids2)) .
 
+    op funcUnify : Id Id -> Map{String, Id} .
+    eq funcUnify(v(S), Id) = S |-> Id .
+    eq funcUnify(s(S), s(S)) = empty .
+    eq funcUnify(comp(nil), comp(nil)) = empty .
+    eq funcUnify(comp(Id1 Ids1), comp(Id2 Ids2)) = funcUnify(Id1, Id2), funcUnify(comp(Ids1), comp(Ids2)) .
+
     op findFuncType : Set{TypedId} Id -> TypedId .
     ceq findFuncType((tid(fid(Id1), T), TIDS), Id2) = tid(Id1, T)
         if funcNameMatches(Id1, Id2) .
 
+    var FuncType : EnkiType .
     op inferId : Set{TypedId} Id -> Set{TypedId} .
     ceq inferId(TIDS, Id) = unify(unify(TIDS, Id1, Id2), Id, Id1)
         if comp(Id1 s("=") Id2) := Id .
@@ -149,20 +152,48 @@ mod ENKI-TYPECHECK is
         if comp(Id1 s(S) Id2) := Id /\
            isArith(S) .
     ceq inferId(TIDS, Id) = unifyType(unifyList(TIDS, Types, Ids), Id, T)
-        if tid(Id1, func(T1, T2)) := findFuncType(TIDS, Id) /\
-           Ids           := varlist(Id) /\
-           T             := returnType(func(T1, T2)) /\
-           Types         := funcTypeList(func(T1, T2)) .
+        if tid(Id1, FuncType) := findFuncType(TIDS, Id) /\
+           Ids                := varlist(Id)            /\
+           T                  := returnType(FuncType)   /\
+           Types              := funcTypeList(FuncType) .
     eq inferId(TIDS, Id) = TIDS [owise] .
 
     op makeFuncType : Set{TypedId} Id Id -> EnkiType .
     eq makeFuncType(TIDS, Id1, Id2) = functype(attachVars(TIDS, varlist(Id1)) attachType(TIDS, Id2)) .
 
+    var VarMap : Map{String, Id} .
+    var FuncId : Id .
+    var RestTIDS : Set{TypedId} .
+
+    var DummyT1 DummyT2 : EnkiType .
+    var TempTIDS1 TempTIDS2 : Set{TypedId} .
+
+    op resolve : Set{TypedId} TypedId -> TypedId .
+    eq resolve(TIDS,  tid(v(S), T))     = tid(v(S), T) .
+    eq resolve(TIDS,  tid(b(B), T))     = tid(b(B), T) .
+    eq resolve(TIDS,  tid(i(I), T))     = tid(i(I), T) .
+    eq resolve(TIDS,  tid(s(S), T))     = tid(s(S), T) .
+    ceq resolve(TIDS, tid(t(Id, T), T)) = tid(t(Id1, T), T)
+        if tid(Id1, T1) := resolve(TIDS, tid(Id, T)) .
+    eq resolve(TIDS,  tid(comp(nil), T)) = tid(comp(nil), T) .
+    --- Lookup the function call, if applicable
+    ceq resolve(TIDS, tid(comp(Ids), T1)) = tid(fcall(FuncId, funcTypeList(T), VarMap), T1)
+        if (tid(fid(FuncId), T), RestTIDS) := TIDS /\
+           VarMap                          := funcUnify(FuncId, comp(Ids)) .
+    --- Otherwise, resolve each in sequence (important for things like "X + Y")
+    ceq resolve(TIDS, tid(comp(Id Ids), T1)) = tid(concatIds(Id1, comp(Ids)), T1)
+        --- Generate a new dummy types (if necessary)
+        if (tid(Id, DummyT1), TempTIDS1)        := freshtype(TIDS, Id) /\
+           tid(Id1, DummyT1)                    := resolve((tid(Id, DummyT1), TempTIDS1), tid(Id, DummyT1)) /\
+           (tid(comp(Ids), DummyT2), TempTIDS2) := freshtype(TIDS, comp(Ids)) /\
+           tid(Id2, DummyT2)                    := resolve((tid(comp(Ids), DummyT2), TempTIDS2), tid(comp(Ids), DummyT2)) .
+
     var Expr : Expr .
     var NewTIDS : Set{TypedId} .
     op inferFunc : Set{TypedId} EnkiFunc -> TypedFunc .
-    ceq inferFunc(TIDS, f(Id1, e(Id2))) = typedf(Id1, makeFuncType(NewTIDS, Id1, Id2), typedExpr(attachType(NewTIDS, Id2)))
-        if NewTIDS := inferId(freshtypes(TIDS, idList(Id1) idList(Id2)), Id2) .
+    ceq inferFunc(TIDS, f(Id1, e(Id2))) = typedf(Id1, makeFuncType(NewTIDS, Id1, Id2), TExpr)
+        if NewTIDS := inferId(freshtypes(TIDS, append(idList(Id1), idList(Id2))), Id2) /\
+           TExpr := typedExpr(resolve(NewTIDS, attachType(NewTIDS, Id2))) .
 
     var Func : EnkiFunc .
     var Funcs : List{EnkiFunc} .
