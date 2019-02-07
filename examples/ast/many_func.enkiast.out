@@ -1,0 +1,20 @@
+#!/usr/bin/env swipl
+
+:- use_module(library(clpfd)).
+
+add_to(X,Y,Result_add_to) :- Result_add_to #= (X + Y).
+
+increment(X,Result_increment) :-
+    Temp1 #= 1,
+    Temp0 #= X,
+    add_to(Temp0,Temp1,Result_increment).
+
+addTwice_to(X,Y,Result_addTwice_to) :-
+    Temp2 #= Y,
+    Temp1 #= X,
+    add_to(Temp1,Temp2,Temp3),
+    Temp0 #= X,
+    add_to(Temp0,Temp3,Result_addTwice_to).
+
+distance_from_to(X1,Y1,X2,Y2,Result_distance_from_to) :- Result_distance_from_to #= (((X1 - X2) ^ 2) + ((Y1 - Y2) ^ 2)).
+
