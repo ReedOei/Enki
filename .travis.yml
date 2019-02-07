@@ -4,5 +4,6 @@ before_install:
     - sudo apt install -y maude swi-prolog
 
 script:
+    - ./setup
     - make test
 

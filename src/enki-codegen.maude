@@ -10,7 +10,7 @@ mod ENKI-CODEGEN is
 
     sort GenResult .
 
-    op genRes : Int Map{String, String} String -> GenResult .
+    op genRes : Int Map{String, String} List{String} -> GenResult .
 
     var Id Id1 Id2 : Id .
     vars S S1 S2 : String .
@@ -60,7 +60,7 @@ mod ENKI-CODEGEN is
     op genFuncCall : Id String -> String .
     eq genFuncCall(FuncId, ResName) = genFuncCallParams(FuncId, idMap(varstrs(varlist(FuncId))), ResName) .
 
-    var Lines : List{String} .
+    var NewLines Lines : List{String} .
     vars I1 I2 FinalI : Int .
     vars Vars1 Vars2 : Map{String, Id} .
 
@@ -68,42 +68,48 @@ mod ENKI-CODEGEN is
     var TempVarMap AllVars : Map{String, String} .
 
     op genParams : List{EnkiType} List{Id} Map{String, Id} List{String} Int -> GenResult .
-    eq genParams(Types, nil, VarMap, Current, I) = genRes(I, empty, intercalate(",\n    ", Current)) .
+    eq genParams(Types, nil, VarMap, Current, I) = genRes(I, empty, Current) .
     ceq genParams(T Types, v(S) Ids, (S |-> fcall(FuncId, FuncTypes, FuncMap), VarMap), Current, I) =
-        genRes(FinalI, (S |-> NewIdStr, AllVars), Str)
-        if genRes(NewI, NewVarMap, Line) := genParams(FuncTypes, varlist(FuncId), FuncMap, nil, I) /\
+        genRes(FinalI, (S |-> NewIdStr, AllVars), NewLines)
+        if genRes(NewI, NewVarMap, Lines) := genParams(FuncTypes, varlist(FuncId), FuncMap, nil, I) /\
            NewIdStr                      := "Temp" + string(NewI, 10) /\
            NewLine                       := genFuncCallParams(FuncId, NewVarMap, NewIdStr) /\
-           genRes(FinalI, AllVars, Str)  := genParams(Types, Ids, VarMap, Line NewLine Current, NewI + 1) .
+           genRes(FinalI, AllVars, NewLines)  := genParams(Types, Ids, VarMap, append(Lines NewLine, Current), NewI + 1) .
     ceq genParams(T Types, v(S) Ids, (S |-> Id, VarMap), Current, I) =
-        genRes(FinalI, (S |-> NewIdStr, NewVarMap), Str)
+        genRes(FinalI, (S |-> NewIdStr, NewVarMap), Lines)
         if NewIdStr                       := "Temp" + string(I, 10) /\
            NewLine                        := NewIdStr + " " + eqSign(T) + " " + genId(Id) /\
-           genRes(FinalI, NewVarMap, Str) := genParams(Types, Ids, VarMap, NewLine Current, I + 1) .
+           genRes(FinalI, NewVarMap, Lines) := genParams(Types, Ids, VarMap, NewLine Current, I + 1) .
 
-    op genId : Id -> String .
+    op genId : Id -> List{String} .
     eq genId(v(S)) = S .
     eq genId(s(S)) = "\"" + S + "\"" .
     eq genId(i(I)) = string(I, 10) .
     ceq genId(comp(Id1 s(S) Id2)) = "(" + genId(Id1) + " " + prologArith(S) + " " + genId(Id2) + ")"
         if isArith(S) .
 
-    op genFunc : TypedFunc -> String .
+    op genFunc : TypedFunc -> List{String} .
     ceq genFunc(typedf(Id, T, typedExpr(tid(fcall(FuncId, Types, VarMap), T2)))) =
-        genFuncCall(Id, ResName) + " :- \n    " +
-        Str + ",\n    " +
-        genFuncCallParams(FuncId, AllVars, ResName) + "."
+        (genFuncCall(Id, ResName) + " :- ")
+        Lines
+        genFuncCallParams(FuncId, AllVars, ResName)
         if ResName := "Result_" + funcName(Id) /\
-           genRes(FinalI, AllVars, Str) := genParams(Types, varlist(FuncId), VarMap, nil, 0) .
+           genRes(FinalI, AllVars, Lines) := genParams(Types, varlist(FuncId), VarMap, nil, 0) .
     ceq genFunc(typedf(FuncId, T, typedExpr(tid(Id2, T2)))) =
-        genFuncCall(FuncId, ResName) + " :- " + ResName + " " + eqSign(T) + " " + genId(Id2) + "."
+        genFuncCall(FuncId, ResName) + " :- " + ResName + " " + eqSign(T) + " " + genId(Id2)
         if ResName := "Result_" + funcName(FuncId) [owise] .
+
+    op isEmpty : List{String} -> Bool .
+    eq isEmpty(nil) = true .
+    eq isEmpty(S Strs) = false .
 
     var TFunc : TypedFunc .
     var TFuncs : List{TypedFunc} .
     op genFuncs : List{TypedFunc} -> String .
-    eq genFuncs(nil)          = "" .
-    eq genFuncs(TFunc TFuncs) = intercalate("\n\n", genFunc(TFunc) genFuncs(TFuncs)) .
+    eq genFuncs(nil)           = "" .
+    ceq genFuncs(TFunc TFuncs) = intercalate("\n\n", NewLine genFuncs(TFuncs))
+        if (Line Lines) := genFunc(TFunc) /\
+           NewLine := if isEmpty(Lines) then (Line + ".") else (Line + "\n    " + intercalate(",\n    ", Lines) + ".") fi .
 
     op genHeader : -> String .
     eq genHeader = "#!/usr/bin/env swipl\n\n:- use_module(library(clpfd))." .

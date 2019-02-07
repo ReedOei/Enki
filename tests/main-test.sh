@@ -35,7 +35,7 @@ run_test "inferFunc(empty, f($add_fid, e($add_body)))" "TypedFunc: typedf($add_f
 run_test "findFuncType(tid(fid($add_fid), $add_type), comp(s(\"add\") i(10) s(\"to\") comp(v(\"X\") s(\"+\") v(\"Y\"))))" "TypedId: tid(comp(s(\"add\") v(\"X\") s(\"to\") v(\"Y\")), func(int, func(int, int)))"
 run_test "inferFuncs(empty, f($add_fid, e($add_body)) f($add_twice_fid, e($add_twice_body)))" "NeList{TypedFunc}: typedf(comp(s(\"add\") v(\"X\") s(\"to\") v(\"Y\")), func(int, func(int, int)), typedExpr(tid(comp(v(\"X\") s(\"+\") v(\"Y\")), int))) typedf(comp(s(\"addTwice\") v(\"X\") s(\"to\") v(\"Y\")), func(int, func(int, int)), typedExpr(tid(fcall(comp(s(\"add\") v(\"X\") s(\"to\") v(\"Y\")), int int int, (\"X\" |-> v(\"X\"), \"Y\" |-> fcall(comp(s(\"add\") v(\"X\") s(\"to\") v(\"Y\")), int int int, (\"X\" |-> v(\"X\"), \"Y\" |-> v( \"Y\"))))), int)))"
 run_test "genId($add_body)" "String: \"(X + Y)\""
-run_test "genFunc(inferFunc(empty, f($add_fid, e($add_body))))" "String: \"add_to(X,Y,Result_add_to) :- Result_add_to #= (X + Y).\""
+run_test "genFunc(inferFunc(empty, f($add_fid, e($add_body))))" "String: \"add_to(X,Y,Result_add_to) :- Result_add_to #= (X + Y)\""
 
 distance_fid="comp(s(\"distance\") s(\"from\") v(\"X1\") v(\"Y1\") s(\"to\") v(\"X2\") v(\"Y2\"))"
 distance_body="comp(comp(comp(v(\"X1\") s(\"-\") v(\"X2\")) s(\"^\") i(2)) s(\"+\") comp(comp(v(\"Y1\") s(\"-\") v(\"Y2\")) s(\"^\") i(2)))"
@@ -44,7 +44,7 @@ distance_f="$(make_func "$distance_fid" "$distance_body")"
 
 run_test "resolve(tid(fid($add_fid), $add_type), tid($distance_body, int))" "TypedId: tid($distance_body, int)"
 
-run_test "genFunc(inferFunc(empty, f($distance_fid, e($distance_body))))" "String: \"distance_from_to(X1,Y1,X2,Y2,Result_distance_from_to) :- Result_distance_from_to #= (((X1 - X2) ^ 2) + ((Y1 - Y2) ^ 2)).\""
+run_test "genFunc(inferFunc(empty, f($distance_fid, e($distance_body))))" "String: \"distance_from_to(X1,Y1,X2,Y2,Result_distance_from_to) :- Result_distance_from_to #= (((X1 - X2) ^ 2) + ((Y1 - Y2) ^ 2))\""
 
 run_test "genFuncs(inferFuncs(empty, f($add_fid, e($add_body)) f($add_twice_fid, e($add_twice_body))))" "String : \"add_to(X,Y,Result_add_to) :- Result_add_to #= (X + Y).\n\naddTwice_to(X,Y,Result_addTwice_to) :- \nTemp2 #= Y,\nTemp1 #= X,\nadd_to(Temp1,Temp2,Temp3),\nTemp0 #= X,\nadd_to(Temp0,Temp3,Result_addTwice_to).\n\n\""
 
