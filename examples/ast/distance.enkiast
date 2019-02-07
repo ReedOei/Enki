@@ -1,0 +1,1 @@
+f(comp(s("distance") s("from") v("X1") v("Y1") s("to") v("X2") v("Y2")), e(comp(comp(comp(v("X1") s("-") v("X2")) s("^") i(2)) s("+") comp(comp(v("Y1") s("-") v("Y2")) s("^") i(2)))))

@@ -12,4 +12,6 @@ try_run() {
 }
 
 try_run "add.enkiast"
+try_run "distance.enkiast"
+try_run "many_func.enkiast"
 

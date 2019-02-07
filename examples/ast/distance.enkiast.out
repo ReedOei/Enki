@@ -1,0 +1,6 @@
+#!/usr/bin/env swipl
+
+:- use_module(library(clpfd)).
+
+distance_from_to(X1,Y1,X2,Y2,Result_distance_from_to) :- Result_distance_from_to #= (((X1 - X2) ^ 2) + ((Y1 - Y2) ^ 2)).
+

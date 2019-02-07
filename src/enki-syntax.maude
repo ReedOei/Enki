@@ -90,6 +90,16 @@ mod ENKI-SYNTAX is
     eq varstrs(v(S) L)       = S varstrs(L) .
     eq varstrs(t(v(S), T) L) = S varstrs(L) .
 
+    op nonVarStrs : List{Id} -> List{String} .
+    eq nonVarStrs(nil)          = nil .
+    eq nonVarStrs(s(S))         = S .
+    eq nonVarStrs(t(s(S), T))   = S .
+    eq nonVarStrs(b(B))         = nil .
+    eq nonVarStrs(i(I))         = nil .
+    eq nonVarStrs(v(S))         = nil .
+    eq nonVarStrs(comp(nil))    = nil .
+    eq nonVarStrs(comp(Id Ids)) = append(nonVarStrs(Id), nonVarStrs(comp(Ids))) .
+
     op strlist : Id -> List{String} .
     eq strlist(s(S))           = S .
     eq strlist(i(I))           = nil .

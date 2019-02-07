@@ -1,1 +1,6 @@
-add_X_to_Y(X,Y,add_X_to_Y_Result) :- add_X_to_Y_Result #= (X + Y).
+#!/usr/bin/env swipl
+
+:- use_module(library(clpfd)).
+
+add_to(X,Y,Result_add_to) :- Result_add_to #= (X + Y).
+

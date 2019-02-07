@@ -47,7 +47,7 @@ compile_string(Str, CompileStr) :-
     atomic_list_concat(Temp, '\n', Str),
     include(\=(''), Temp, Definitions),
     atomic_list_concat(Definitions, ' ', DefList),
-    surround_atom('genFuncs(inferFuncs(empty, ', '))', DefList, CompileStr).
+    surround_atom('genFile(inferFuncs(empty, ', '))', DefList, CompileStr).
 
 compile_result(Result, CompileResult) :-
     surround_atom('"', '"', InnerStr, Result),

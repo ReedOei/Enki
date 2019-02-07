@@ -50,9 +50,12 @@ mod ENKI-CODEGEN is
     eq idMap(nil) = empty .
     eq idMap(S Strs) = (S |-> S, idMap(Strs)) .
 
+    op funcName : Id -> String .
+    eq funcName(FuncId) = intercalate("_", nonVarStrs(FuncId)) .
+
     op genFuncCallParams : Id Map{String, String} String -> String .
     eq genFuncCallParams(FuncId, StrVarMap, ResName) =
-        intercalate("_", strlist(FuncId)) + "(" + intercalate(",", mapVars(varstrs(varlist(FuncId)), StrVarMap) ResName) + ")" .
+        funcName(FuncId) + "(" + intercalate(",", mapVars(varstrs(varlist(FuncId)), StrVarMap) ResName) + ")" .
 
     op genFuncCall : Id String -> String .
     eq genFuncCall(FuncId, ResName) = genFuncCallParams(FuncId, idMap(varstrs(varlist(FuncId))), ResName) .
@@ -65,7 +68,7 @@ mod ENKI-CODEGEN is
     var TempVarMap AllVars : Map{String, String} .
 
     op genParams : List{EnkiType} List{Id} Map{String, Id} List{String} Int -> GenResult .
-    eq genParams(Types, nil, VarMap, Current, I) = genRes(I, empty, intercalate(",\n", Current)) .
+    eq genParams(Types, nil, VarMap, Current, I) = genRes(I, empty, intercalate(",\n    ", Current)) .
     ceq genParams(T Types, v(S) Ids, (S |-> fcall(FuncId, FuncTypes, FuncMap), VarMap), Current, I) =
         genRes(FinalI, (S |-> NewIdStr, AllVars), Str)
         if genRes(NewI, NewVarMap, Line) := genParams(FuncTypes, varlist(FuncId), FuncMap, nil, I) /\
@@ -87,19 +90,25 @@ mod ENKI-CODEGEN is
 
     op genFunc : TypedFunc -> String .
     ceq genFunc(typedf(Id, T, typedExpr(tid(fcall(FuncId, Types, VarMap), T2)))) =
-        genFuncCall(Id, ResName) + " :- \n" +
-        Str + ",\n" +
+        genFuncCall(Id, ResName) + " :- \n    " +
+        Str + ",\n    " +
         genFuncCallParams(FuncId, AllVars, ResName) + "."
-        if ResName := intercalate("_", strlist(Id)) + "_Result" /\
+        if ResName := "Result_" + funcName(Id) /\
            genRes(FinalI, AllVars, Str) := genParams(Types, varlist(FuncId), VarMap, nil, 0) .
     ceq genFunc(typedf(FuncId, T, typedExpr(tid(Id2, T2)))) =
         genFuncCall(FuncId, ResName) + " :- " + ResName + " " + eqSign(T) + " " + genId(Id2) + "."
-        if ResName := intercalate("_", strlist(FuncId)) + "_Result" [owise] .
+        if ResName := "Result_" + funcName(FuncId) [owise] .
 
     var TFunc : TypedFunc .
     var TFuncs : List{TypedFunc} .
     op genFuncs : List{TypedFunc} -> String .
     eq genFuncs(nil)          = "" .
     eq genFuncs(TFunc TFuncs) = intercalate("\n\n", genFunc(TFunc) genFuncs(TFuncs)) .
+
+    op genHeader : -> String .
+    eq genHeader = "#!/usr/bin/env swipl\n\n:- use_module(library(clpfd))." .
+
+    op genFile : List{TypedFunc} -> String .
+    eq genFile(TFuncs) = genHeader + "\n\n" + genFuncs(TFuncs) .
 endm
 

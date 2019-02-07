@@ -186,7 +186,8 @@ mod ENKI-TYPECHECK is
     --- Lookup the function call, if applicable
     ceq resolve(TIDS, tid(comp(Ids), T1)) = tid(fcall(FuncId, funcTypeList(T), resolveMap(TIDS, VarMap)), T1)
         if (tid(fid(FuncId), T), RestTIDS) := TIDS /\
-           VarMap                          := funcUnify(FuncId, comp(Ids)) .
+           VarMap                          := funcUnify(FuncId, comp(Ids)) /\
+           funcNameMatches(FuncId, comp(Ids)) .
     --- Otherwise, resolve each in sequence (important for things like "X + Y")
     ceq resolve(TIDS, tid(comp(Id Ids), T1)) = tid(prependIds(Id1, Id2), T1)
         --- Generate a new dummy types (if necessary)
