@@ -1,6 +1,6 @@
 before_install:
     - sudo apt update
-    - sudo apt install -y maude prolog
+    - sudo apt install -y maude swi-prolog
 
 script:
     - make test
