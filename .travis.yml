@@ -1,0 +1,6 @@
+before_install:
+    - sudo apt install -y maude
+
+script:
+    - make
+

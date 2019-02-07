@@ -162,11 +162,18 @@ mod ENKI-TYPECHECK is
     eq makeFuncType(TIDS, Id1, Id2) = functype(attachVars(TIDS, varlist(Id1)) attachType(TIDS, Id2)) .
 
     var VarMap : Map{String, Id} .
-    var FuncId : Id .
-    var RestTIDS : Set{TypedId} .
 
-    var DummyT1 DummyT2 : EnkiType .
-    var TempTIDS1 TempTIDS2 : Set{TypedId} .
+    var DummyT : EnkiType .
+    var ResolvedId : Id .
+
+    op resolveMap : Set{TypedId} Map{String, Id} -> Map{String, Id} .
+    eq resolveMap(TIDS, empty) = empty .
+    ceq resolveMap(TIDS, (S |-> Id, VarMap)) = (S |-> ResolvedId, resolveMap(TIDS, VarMap))
+        if DummyT := firstUnused(types(TIDS), 0) /\
+           tid(ResolvedId, DummyT) := resolve(TIDS, tid(Id, DummyT)) .
+
+    var RestTIDS : Set{TypedId} .
+    var FuncId : Id .
 
     op resolve : Set{TypedId} TypedId -> TypedId .
     eq resolve(TIDS,  tid(v(S), T))     = tid(v(S), T) .
@@ -177,15 +184,15 @@ mod ENKI-TYPECHECK is
         if tid(Id1, T1) := resolve(TIDS, tid(Id, T)) .
     eq resolve(TIDS,  tid(comp(nil), T)) = tid(comp(nil), T) .
     --- Lookup the function call, if applicable
-    ceq resolve(TIDS, tid(comp(Ids), T1)) = tid(fcall(FuncId, funcTypeList(T), VarMap), T1)
+    ceq resolve(TIDS, tid(comp(Ids), T1)) = tid(fcall(FuncId, funcTypeList(T), resolveMap(TIDS, VarMap)), T1)
         if (tid(fid(FuncId), T), RestTIDS) := TIDS /\
            VarMap                          := funcUnify(FuncId, comp(Ids)) .
     --- Otherwise, resolve each in sequence (important for things like "X + Y")
     ceq resolve(TIDS, tid(comp(Id Ids), T1)) = tid(concatIds(Id1, comp(Ids)), T1)
         --- Generate a new dummy types (if necessary)
-        if DummyT1 := firstUnused(types(TIDS), 0) /\
-           tid(Id1, DummyT1) := resolve(TIDS, tid(Id, DummyT1)) /\
-           tid(Id2, DummyT1) := resolve(TIDS, tid(comp(Ids), DummyT1)) .
+        if DummyT := firstUnused(types(TIDS), 0) /\
+           tid(Id1, DummyT) := resolve(TIDS, tid(Id, DummyT)) /\
+           tid(Id2, DummyT) := resolve(TIDS, tid(comp(Ids), DummyT)) .
 
     var Expr : Expr .
     var NewTIDS : Set{TypedId} .
