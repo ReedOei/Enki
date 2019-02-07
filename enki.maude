@@ -1,6 +1,6 @@
 load src/enki-codegen.maude
 
-mod ENKI-LANG is
+mod ENKI is
     protecting ENKI-CODEGEN .
 endm
 
