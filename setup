@@ -3,5 +3,5 @@
 :- initialization(main, main).
 
 main(_Argv) :-
-    pack_install('https://github.com/ReedOei/achelois/archive/0.4.6.zip', [interactive(false)]).
+    pack_install('https://github.com/ReedOei/achelois/archive/0.5.0.zip', [interactive(false)]).
 
