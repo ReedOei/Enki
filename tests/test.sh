@@ -55,7 +55,7 @@ run_test() {
             red_str="reduce in $module : $red ."
         fi
 
-        result="$(echo "reduce $red ." | maude -no-banner "$maude_file" | sed -n -e '/result /,$p' | head -n -1 | paste -sd "" | sed -E "s/result //g" | tr -d "[:space:]")"
+        result="$(echo "reduce $red ." | maude -no-banner -no-wrap "$maude_file" | sed -n -e '/result /,$p' | head -n -1 | sed -E "s/result //g" | tr -d "[:space:]")"
 
         if [[ "$result" == "$expected" ]]; then
             export PASSED="$((PASSED + 1))"

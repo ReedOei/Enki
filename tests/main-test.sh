@@ -1,3 +1,7 @@
+make_func() {
+    echo "f($1, e($2))"
+}
+
 run_test "firstUnused(empty, 0)" "EnkiType: any(\"T0\")"
 run_test "types(empty)" "Set{EnkiType}: (empty).Set{EnkiType}"
 run_test "freshtype(freshtype(empty, v(\"X\")), v(\"Y\"))" "NeSet{TypedId}: tid(v(\"X\"), any(\"T0\")), tid(v(\"Y\"), any(\"T1\"))"
@@ -17,10 +21,12 @@ run_test "inferId(freshtypes(empty, idList(comp(v(\"X\") s(\"+\") v(\"Y\")))), c
 add_fid="comp(s(\"add\") v(\"X\") s(\"to\") v(\"Y\"))"
 add_body="comp(v(\"X\") s(\"+\") v(\"Y\"))"
 add_type="func(int, func(int, int))"
+add_f="$(make_func "$add_fid" "$add_body")"
 
 add_twice_fid="comp(s(\"addTwice\") v(\"X\") s(\"to\") v(\"Y\"))"
 add_twice_body="comp(s(\"add\") v(\"X\") s(\"to\") comp(s(\"add\") v(\"X\") s(\"to\") v(\"Y\")))"
 add_twice_type="func(int, func(int, int))"
+add_twice_f="$(make_func "$add_twice_fid" "$add_twice_body")"
 
 run_test "inferId((tid(s(\"add\"), string), tid(s(\"addTwice\"), string), tid(s(\"to\"), string), tid(v(\"X\"), any(\"T0\")), tid(v(\"Y\"), any(\"T1\")), tid(fid($add_fid), $add_type)), $add_twice_body)" "NeSet{TypedId}: tid(s(\"add\"), string), tid(s(\"addTwice\"), string), tid(s(\"to\"), string), tid(v(\"X\"), int), tid(v(\"Y\"), int), tid(fid($add_fid), $add_type), tid($add_twice_body, int)"
 run_test "inferFunc(empty, f($add_fid, e($add_body)))" "TypedFunc: typedf($add_fid, $add_type, typedExpr(tid($add_body, int)))"
@@ -32,6 +38,16 @@ run_test "genFunc(inferFunc(empty, f($add_fid, e($add_body))))" "String: \"add_X
 distance_fid="comp(s(\"distance\") s(\"from\") v(\"X1\") v(\"Y1\") s(\"to\") v(\"X2\") v(\"Y2\"))"
 distance_body="comp(comp(comp(v(\"X1\") s(\"-\") v(\"X2\")) s(\"^\") i(2)) s(\"+\") comp(comp(v(\"Y1\") s(\"-\") v(\"Y2\")) s(\"^\") i(2)))"
 distance_type="func(int, func(int, func(int, func(int, int))))"
+distance_f="$(make_func "$distance_fid" "$distance_body")"
 
 run_test "genFunc(inferFunc(empty, f($distance_fid, e($distance_body))))" "String: \"distance_from_X1_Y1_to_X2_Y2(X1,Y1,X2,Y2,distance_from_X1_Y1_to_X2_Y2_Result) :- distance_from_X1_Y1_to_X2_Y2_Result #= (((X1 - X2) ^ 2) + ((Y1 - Y2) ^ 2)).\""
+
+run_test "genFuncs(inferFuncs(empty, f($add_fid, e($add_body)) f($add_twice_fid, e($add_twice_body))))" "String : \"add_X_to_Y(X,Y,add_X_to_Y_Result) :- add_X_to_Y_Result #= (X + Y).\n\naddTwice_X_to_Y(X,Y,addTwice_X_to_Y_Result) :- \nTemp2 #= Y,\nTemp1 #= X,\nadd_X_to_Y(Temp1,Temp2,Temp3),\nTemp0 #= X,\nadd_X_to_Y(Temp0,Temp3,addTwice_X_to_Y_Result).\n\n\""
+
+increment_fid="comp(s(\"increment\") v(\"X\"))"
+increment_body="comp(s(\"add\") v(\"X\") s(\"to\") i(1))"
+increment_type="func(int, int)"
+increment_f="$(make_func "$increment_fid" "$increment_body")"
+
+run_test "genFuncs(inferFuncs(empty, $add_f $increment_f))" "String: \"add_X_to_Y(X,Y,add_X_to_Y_Result) :- add_X_to_Y_Result #= (X + Y).\n\nincrement_X(X,increment_X_Result) :- \nTemp1 #= 1,\nTemp0 #= X,\nadd_X_to_Y(Temp0,Temp1,increment_X_Result).\n\n\""
 
