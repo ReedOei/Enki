@@ -1,4 +1,5 @@
 before_install:
+    - sudo apt-add-repository ppa:swi-prolog/stable
     - sudo apt update
     - sudo apt install -y maude swi-prolog
 
