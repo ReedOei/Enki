@@ -1,0 +1,37 @@
+run_test "firstUnused(empty, 0)" "EnkiType: any(\"T0\")"
+run_test "types(empty)" "Set{EnkiType}: (empty).Set{EnkiType}"
+run_test "freshtype(freshtype(empty, v(\"X\")), v(\"Y\"))" "NeSet{TypedId}: tid(v(\"X\"), any(\"T0\")), tid(v(\"Y\"), any(\"T1\"))"
+run_test "freshtypes(empty, v(\"X\") v(\"Y\") v(\"X\") v(\"Z\"))" "NeSet{TypedId}: tid(v(\"X\"), any(\"T0\")), tid(v(\"Y\"), any(\"T1\")), tid(v(\"Z\"), any(\"T2\"))"
+run_test "varlist(comp(s(\"add\") v(\"X\") s(\"to\") v(\"Y\")))" "NeList{Id}: v(\"X\") v(\"Y\")"
+run_test "attachVars(empty, varlist(comp(s(\"add\") v(\"X\") s(\"to\") v(\"Y\"))))" "NeList{TypedId}: tid(v(\"X\"), any(\"T0\")) tid(v(\"Y\"), any(\"T1\"))"
+run_test "functype(attachVars(empty, varlist(comp(s(\"add\") v(\"X\") s(\"to\") v(\"Y\")))))" "EnkiType: func(any(\"T0\"), any(\"T1\"))"
+run_test "functype(tid(v(\"S\"), int) tid(v(\"T\"), int))" "EnkiType: func(int, int)"
+run_test "join(int, int)" "EnkiType: int"
+run_test "join(int, any(\"T0\"))" "EnkiType: int"
+run_test "join(bool, any(\"T0\"))" "EnkiType: bool"
+run_test "unify(freshtypes(empty, v(\"X\") v(\"Y\")), v(\"X\"), v(\"Y\"))" "NeSet{TypedId}: tid(v(\"X\"), any(\"T1\")), tid(v(\"Y\"), any(\"T1\"))"
+run_test "inferId(freshtypes(empty, v(\"X\") s(\"=\") v(\"Y\")), comp(v(\"X\") s(\"=\") v(\"Y\")))" "NeSet{TypedId}: tid(s(\"=\"), string), tid(v(\"X\"), any(\"T1\")), tid(v(\"Y\"), any(\"T1\")), tid(comp(v(\"X\") s(\"=\") v(\"Y\")), any(\"T1\"))"
+run_test "inferId(freshtypes(empty, v(\"X\") s(\"=\") i(40)), comp(v(\"X\") s(\"=\") i(40)))" "NeSet{TypedId}: tid(s(\"=\"), string), tid(i(40), int), tid(v(\"X\"), int), tid(comp(v(\"X\") s(\"=\") i(40)), int)"
+run_test "inferId(freshtypes(empty, idList(comp(v(\"X\") s(\"+\") v(\"Y\")))), comp(v(\"X\") s(\"+\") v(\"Y\")))" "NeSet{TypedId}: tid(s(\"+\"), string), tid(v(\"X\"), int), tid(v(\"Y\"), int), tid(comp(v(\"X\") s(\"+\") v(\"Y\")), int)"
+
+add_fid="comp(s(\"add\") v(\"X\") s(\"to\") v(\"Y\"))"
+add_body="comp(v(\"X\") s(\"+\") v(\"Y\"))"
+add_type="func(int, func(int, int))"
+
+add_twice_fid="comp(s(\"addTwice\") v(\"X\") s(\"to\") v(\"Y\"))"
+add_twice_body="comp(s(\"add\") v(\"X\") s(\"to\") comp(s(\"add\") v(\"X\") s(\"to\") v(\"Y\")))"
+add_twice_type="func(int, func(int, int))"
+
+run_test "inferId((tid(s(\"add\"), string), tid(s(\"addTwice\"), string), tid(s(\"to\"), string), tid(v(\"X\"), any(\"T0\")), tid(v(\"Y\"), any(\"T1\")), tid(fid($add_fid), $add_type)), $add_twice_body)" "NeSet{TypedId}: tid(s(\"add\"), string), tid(s(\"addTwice\"), string), tid(s(\"to\"), string), tid(v(\"X\"), int), tid(v(\"Y\"), int), tid(fid($add_fid), $add_type), tid($add_twice_body, int)"
+run_test "inferFunc(empty, f($add_fid, e($add_body)))" "TypedFunc: typedf($add_fid, $add_type, typedExpr(tid($add_body, int)))"
+run_test "findFuncType(tid(fid($add_fid), $add_type), comp(s(\"add\") i(10) s(\"to\") comp(v(\"X\") s(\"+\") v(\"Y\"))))" "TypedId: tid(comp(s(\"add\") v(\"X\") s(\"to\") v(\"Y\")), func(int, func(int, int)))"
+run_test "inferFuncs(empty, f($add_fid, e($add_body)) f($add_twice_fid, e($add_twice_body)))" "NeList{TypedFunc}: typedf($add_fid, $add_type, typedExpr(tid($add_body, int))) typedf($add_twice_fid, $add_twice_type, typedExpr(tid($add_twice_body, int)))"
+run_test "genId($add_body)" "String: \"(X + Y)\""
+run_test "genFunc(inferFunc(empty, f($add_fid, e($add_body))))" "String: \"add_X_to_Y(X,Y,add_X_to_Y_Result) :- add_X_to_Y_Result #= (X + Y).\""
+
+distance_fid="comp(s(\"distance\") s(\"from\") v(\"X1\") v(\"Y1\") s(\"to\") v(\"X2\") v(\"Y2\"))"
+distance_body="comp(comp(comp(v(\"X1\") s(\"-\") v(\"X2\")) s(\"^\") i(2)) s(\"+\") comp(comp(v(\"Y1\") s(\"-\") v(\"Y2\")) s(\"^\") i(2)))"
+distance_type="func(int, func(int, func(int, func(int, int))))"
+
+run_test "genFunc(inferFunc(empty, f($distance_fid, e($distance_body))))" "String: \"distance_from_X1_Y1_to_X2_Y2(X1,Y1,X2,Y2,distance_from_X1_Y1_to_X2_Y2_Result) :- distance_from_X1_Y1_to_X2_Y2_Result #= (((X1 - X2) ^ 2) + ((Y1 - Y2) ^ 2)).\""
+

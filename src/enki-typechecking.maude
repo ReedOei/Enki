@@ -138,8 +138,8 @@ mod ENKI-TYPECHECK is
     eq funcNameMatches(comp(nil), comp(nil)) = true .
     eq funcNameMatches(comp(Id1 Ids1), comp(Id2 Ids2)) = funcNameMatches(Id1, Id2) and funcNameMatches(comp(Ids1), comp(Ids2)) .
 
-    op findFuncType : Set{TypedId} Id -> EnkiType .
-    ceq findFuncType((tid(fid(Id1), T), TIDS), Id2) = T
+    op findFuncType : Set{TypedId} Id -> TypedId .
+    ceq findFuncType((tid(fid(Id1), T), TIDS), Id2) = tid(Id1, T)
         if funcNameMatches(Id1, Id2) .
 
     op inferId : Set{TypedId} Id -> Set{TypedId} .
@@ -149,7 +149,7 @@ mod ENKI-TYPECHECK is
         if comp(Id1 s(S) Id2) := Id /\
            isArith(S) .
     ceq inferId(TIDS, Id) = unifyType(unifyList(TIDS, Types, Ids), Id, T)
-        if func(T1, T2)  := findFuncType(TIDS, Id) /\
+        if tid(Id1, func(T1, T2)) := findFuncType(TIDS, Id) /\
            Ids           := varlist(Id) /\
            T             := returnType(func(T1, T2)) /\
            Types         := funcTypeList(func(T1, T2)) .
@@ -170,7 +170,8 @@ mod ENKI-TYPECHECK is
     var TExpr : TypedExpr .
     op inferFuncs : Set{TypedId} List{EnkiFunc} -> List{TypedFunc} .
     eq inferFuncs(TIDS, nil) = nil .
-    ceq inferFuncs(TIDS, f(Id1, e(Id2)) Funcs) = typedf(Id, T, TExpr) inferFuncs((tid(fid(Id), T), TIDS), Funcs)
-        if typedf(Id, T, TExpr) := inferFunc(TIDS, f(Id1, e(Id2))) .
+    ceq inferFuncs(TIDS, f(Id1, e(Id2)) Funcs) = TFunc inferFuncs((tid(fid(Id), T), TIDS), Funcs)
+        if TFunc := inferFunc(TIDS, f(Id1, e(Id2))) /\
+           typedf(Id, T, TExpr) := TFunc .
 endm
 
