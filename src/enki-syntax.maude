@@ -99,10 +99,8 @@ mod ENKI-SYNTAX is
     eq strlist(comp(nil))      = nil .
     eq strlist(comp(Id Ids))   = append(strlist(Id), strlist(comp(Ids))) .
 
-    op concatIds : Id Id -> Id .
-    eq concatIds(comp(Ids1), comp(Ids2)) = comp(append(Ids1, Ids2)) .
-    eq concatIds(Id, comp(Ids))          = comp(Id Ids) .
-    eq concatIds(comp(Ids), Id2)         = comp(Ids Id2) .
-    eq concatIds(Id1, Id2)               = comp(Id1 Id2) [owise] .
+    op prependIds : Id Id -> Id .
+    eq prependIds(Id, comp(Ids))          = comp(Id Ids) .
+    eq prependIds(Id1, Id2)               = comp(Id1 Id2) [owise] .
 endm
 

@@ -188,7 +188,7 @@ mod ENKI-TYPECHECK is
         if (tid(fid(FuncId), T), RestTIDS) := TIDS /\
            VarMap                          := funcUnify(FuncId, comp(Ids)) .
     --- Otherwise, resolve each in sequence (important for things like "X + Y")
-    ceq resolve(TIDS, tid(comp(Id Ids), T1)) = tid(concatIds(Id1, comp(Ids)), T1)
+    ceq resolve(TIDS, tid(comp(Id Ids), T1)) = tid(prependIds(Id1, Id2), T1)
         --- Generate a new dummy types (if necessary)
         if DummyT := firstUnused(types(TIDS), 0) /\
            tid(Id1, DummyT) := resolve(TIDS, tid(Id, DummyT)) /\
