@@ -1,0 +1,1 @@
+add_X_to_Y(X,Y,add_X_to_Y_Result) :- add_X_to_Y_Result #= (X + Y).

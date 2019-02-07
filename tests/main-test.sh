@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 make_func() {
     echo "f($1, e($2))"
 }

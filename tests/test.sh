@@ -44,6 +44,24 @@ print_color() {
     print_color_num "$cnum" "$msg" "$flag"
 }
 
+test_pass() {
+    test_name="$1"
+
+    export PASSED="$((PASSED + 1))"
+    print_color "green" "Passed: $test_name;"
+}
+
+test_fail() {
+    test_name="$1"
+    expected="$2"
+    result="$3"
+
+    export FAILED="$((FAILED + 1))"
+    print_color "red" "Failed: $test_name;"
+    print_color "red" "Expected: $expected"
+    print_color "red" "Got     : $result"
+}
+
 run_test() {
     red="$1"
     expected="$(echo "$2" | tr -d "[:space:]")"
@@ -58,13 +76,9 @@ run_test() {
         result="$(echo "reduce $red ." | maude -no-banner -no-wrap "$maude_file" | sed -n -e '/result /,$p' | head -n -1 | sed -E "s/result //g" | tr -d "[:space:]")"
 
         if [[ "$result" == "$expected" ]]; then
-            export PASSED="$((PASSED + 1))"
-            print_color "green" "Passed: $red_str;"
+            test_pass "$red_str"
         else
-            export FAILED="$((FAILED + 1))"
-            print_color "red" "Failed: $red_str;"
-            print_color "red" "Expected: $expected"
-            print_color "red" "Got     : $result"
+            test_fail "$red_str" "$expected" "$result"
         fi
     fi
 }
@@ -86,7 +100,7 @@ export -f print_color_num
 echo "Started at: $(date)"
 start_time="$(date +"%s")"
 
-for f in "${test_cases[@]}"; do
+for f in "${@:2}"; do
     source "$f" # Source to get the passed/failed counts
 done
 
