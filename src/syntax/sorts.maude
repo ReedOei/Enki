@@ -25,16 +25,18 @@ mod ENKI-SYNTAX-SORTS is
 
     sort Constraint .
     op c : Id -> Constraint .
-    op _ _ : Constraint Constraint -> Constraint [assoc] .
 
     sort Expr .
     op e : Id -> Expr .
 
+    sort EnkiDef .
     sort EnkiFunc .
-    op f : Id Expr -> EnkiFunc .
+    op f : Id Constraint Expr -> EnkiFunc .
 
     sort EnkiRule .
     op r : Id Constraint -> EnkiRule .
+
+    subsorts EnkiRule EnkiFunc < EnkiDef .
 endm
 
 view Id from TRIV to ENKI-SYNTAX-SORTS is
@@ -47,5 +49,9 @@ endv
 
 view EnkiFunc from TRIV to ENKI-SYNTAX-SORTS is
     sort Elt to EnkiFunc .
+endv
+
+view Constraint from TRIV to ENKI-SYNTAX-SORTS is
+    sort Elt to Constraint .
 endv
 

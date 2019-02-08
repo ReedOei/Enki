@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
 make_func() {
-    echo "f($1, e($2))"
+    if [[ ! -z "$3" ]]; then
+        echo "f($1, cs($2), e($3))"
+    else
+        echo "f($1, cs(nil), e($2))"
+    fi
 }
 
 run_test "firstUnused(empty, 0)" "EnkiType: any(\"T0\")"
@@ -31,7 +35,7 @@ add_twice_body="comp(s(\"add\") v(\"X\") s(\"to\") comp(s(\"add\") v(\"X\") s(\"
 add_twice_type="func(int, func(int, int))"
 add_twice_f="$(make_func "$add_twice_fid" "$add_twice_body")"
 
-run_test "inferFunc(empty, f($add_fid, e($add_body)))" "TypedFunc: typedf($add_fid, $add_type, typedExpr(tid($add_body, int)))"
+run_test "inferFunc(empty, $add_f)" "TypedFunc: typedf($add_fid, $add_type, typedExpr(tid($add_body, int)))"
 run_test "findFuncType(tid(fid($add_fid), $add_type), comp(s(\"add\") i(10) s(\"to\") comp(v(\"X\") s(\"+\") v(\"Y\"))))" "TypedId: tid(comp(s(\"add\") v(\"X\") s(\"to\") v(\"Y\")), func(int, func(int, int)))"
 run_test "inferFuncs(empty, $add_f $add_twice_f)" "NeList{TypedFunc}: typedf($add_fid, $add_type, typedExpr(tid($add_body, int))) typedf($add_twice_fid, $add_twice_type, typedExpr(tid(fcall($add_fid, int int int, (\"X\" |-> v(\"X\"), \"Y\" |-> fcall($add_fid, int int int, (\"X\" |-> v(\"X\"), \"Y\" |-> v( \"Y\"))))), int)))"
 run_test "genFunc(inferFunc(empty, $add_f))" "NeList{String}: \"add_to(X,Y,Temp0) :-\" \"Temp0#=X+Y\""

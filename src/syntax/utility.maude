@@ -2,6 +2,7 @@ mod ENKI-SYNTAX-UTILITY is
     protecting ENKI-SYNTAX-SORTS .
 
     protecting LIST{Id} .
+    protecting LIST{Constraint} .
     protecting LIST{String} .
 
     var S : String .
@@ -13,6 +14,7 @@ mod ENKI-SYNTAX-UTILITY is
     var L : List{Id} .
 
     op comp : List{Id} -> Id .
+    op cs : List{Constraint} -> Constraint .
 
     op idList : Id -> List{Id} .
     eq idList(v(S))         = v(S) .

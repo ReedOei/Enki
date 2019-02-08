@@ -1,8 +1,8 @@
-f(comp(s("add") v("X") s("to") v("Y")), e(comp(v("X") s("+") v("Y"))))
+f(comp(s("add") v("X") s("to") v("Y")), cs(nil), e(comp(v("X") s("+") v("Y"))))
 
-f(comp(s("increment") v("X")), e(comp(s("add") v("X") s("to") i(1))))
+f(comp(s("increment") v("X")), cs(nil), e(comp(s("add") v("X") s("to") i(1))))
 
-f(comp(s("addTwice") v("X") s("to") v("Y")), e(comp(s("add") v("X") s("to") comp(s("add") v("X") s("to") v("Y")))))
+f(comp(s("addTwice") v("X") s("to") v("Y")), cs(nil), e(comp(s("add") v("X") s("to") comp(s("add") v("X") s("to") v("Y")))))
 
-f(comp(s("distance") s("from") v("X1") v("Y1") s("to") v("X2") v("Y2")), e(comp(comp(comp(v("X1") s("-") v("X2")) s("^") i(2)) s("+") comp(comp(v("Y1") s("-") v("Y2")) s("^") i(2)))))
+f(comp(s("distance") s("from") v("X1") v("Y1") s("to") v("X2") v("Y2")), cs(nil), e(comp(comp(comp(v("X1") s("-") v("X2")) s("^") i(2)) s("+") comp(comp(v("Y1") s("-") v("Y2")) s("^") i(2)))))
 
