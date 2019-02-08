@@ -1,4 +1,4 @@
-load enki-syntax.maude
+load ../syntax/main.maude
 
 mod ENKI-TYPECHECK-SORTS-SYNTAX is
     protecting ENKI-SYNTAX .

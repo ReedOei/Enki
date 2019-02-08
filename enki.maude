@@ -1,4 +1,4 @@
-load src/enki-codegen.maude
+load src/codegen/generator.maude
 
 mod ENKI is
     protecting ENKI-CODEGEN .

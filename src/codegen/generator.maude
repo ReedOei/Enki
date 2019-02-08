@@ -1,5 +1,5 @@
-load enki-typechecking.maude
-load utility.maude
+load ../typechecking/checker.maude
+load ../utility.maude
 
 mod ENKI-CODEGEN is
     protecting ENKI-TYPECHECK .
