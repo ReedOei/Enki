@@ -31,7 +31,6 @@ add_twice_body="comp(s(\"add\") v(\"X\") s(\"to\") comp(s(\"add\") v(\"X\") s(\"
 add_twice_type="func(int, func(int, int))"
 add_twice_f="$(make_func "$add_twice_fid" "$add_twice_body")"
 
-run_test "inferId((tid(s(\"add\"), string), tid(s(\"addTwice\"), string), tid(s(\"to\"), string), tid(v(\"X\"), any(\"T0\")), tid(v(\"Y\"), any(\"T1\")), tid(fid($add_fid), $add_type)), $add_twice_body)" "NeSet{TypedId}: tid(s(\"add\"), string), tid(s(\"addTwice\"), string), tid(s(\"to\"), string), tid(v(\"X\"), int), tid(v(\"Y\"), int), tid(fid($add_fid), $add_type), tid($add_twice_body, int)"
 run_test "inferFunc(empty, f($add_fid, e($add_body)))" "TypedFunc: typedf($add_fid, $add_type, typedExpr(tid($add_body, int)))"
 run_test "findFuncType(tid(fid($add_fid), $add_type), comp(s(\"add\") i(10) s(\"to\") comp(v(\"X\") s(\"+\") v(\"Y\"))))" "TypedId: tid(comp(s(\"add\") v(\"X\") s(\"to\") v(\"Y\")), func(int, func(int, int)))"
 run_test "inferFuncs(empty, $add_f $add_twice_f)" "NeList{TypedFunc}: typedf($add_fid, $add_type, typedExpr(tid($add_body, int))) typedf($add_twice_fid, $add_twice_type, typedExpr(tid(fcall($add_fid, int int int, (\"X\" |-> v(\"X\"), \"Y\" |-> fcall($add_fid, int int int, (\"X\" |-> v(\"X\"), \"Y\" |-> v( \"Y\"))))), int)))"

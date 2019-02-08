@@ -115,6 +115,11 @@ mod ENKI-TYPECHECK is
     eq unifyList(TIDS, Types, nil)      = TIDS .
     eq unifyList(TIDS, T Types, Id Ids) = unifyList(unifyType(TIDS, Id, T), Types, Ids) .
 
+    var Strs : List{String} .
+    op unifyMap : Set{TypedId} List{EnkiType} List{String} Map{String, Id} -> Set{TypedId} .
+    eq unifyMap(TIDS, Types, nil, VarMap) = TIDS .
+    eq unifyMap(TIDS, T Types, S Strs, (S |-> Id, VarMap)) = unifyMap(inferId(unifyType(TIDS, Id, T), Id), Types, Strs, VarMap) .
+
     op isArith : String -> Bool .
     eq isArith("+") = true .
     eq isArith("-") = true .
@@ -125,7 +130,7 @@ mod ENKI-TYPECHECK is
 
     op isStrOp : String -> Bool .
     eq isStrOp("..") = true .
-    eq isStrOp(S)    = false .
+    eq isStrOp(S)    = false [owise] .
 
     op funcTypeList : EnkiType -> List{EnkiType} .
     eq funcTypeList(func(T1, T2)) = T1 funcTypeList(T2) .
@@ -158,11 +163,12 @@ mod ENKI-TYPECHECK is
     ceq inferId(TIDS, Id) = inferId(inferId(unify(unify(unifyType(TIDS, Id1, string), Id1, Id2), Id, Id1), Id1), Id2)
         if comp(Id1 s(S) Id2) := Id /\
            isStrOp(S) .
-    ceq inferId(TIDS, Id) = unifyType(unifyList(TIDS, Types, Ids), Id, T)
-        if tid(Id1, FuncType) := findFuncType(TIDS, Id) /\
-           Ids                := varlist(Id)            /\
-           T                  := returnType(FuncType)   /\
-           Types              := funcTypeList(FuncType) .
+    ceq inferId(TIDS, Id) = unifyType(unifyMap(TIDS, Types, varstrs(varlist(FuncId)), VarMap), Id, T)
+        if tid(FuncId, FuncType) := findFuncType(TIDS, Id) /\
+           Ids                   := varlist(Id)            /\
+           T                     := returnType(FuncType)   /\
+           Types                 := funcTypeList(FuncType) /\
+           VarMap                := funcUnify(FuncId, Id) .
     eq inferId(TIDS, Id) = TIDS [owise] .
 
     op makeFuncType : Set{TypedId} Id Id -> EnkiType .
@@ -207,7 +213,7 @@ mod ENKI-TYPECHECK is
     op inferFunc : Set{TypedId} EnkiFunc -> TypedFunc .
     ceq inferFunc(TIDS, f(Id1, e(Id2))) = typedf(Id1, makeFuncType(NewTIDS, Id1, Id2), TExpr)
         if NewTIDS := inferId(freshtypes(TIDS, append(idList(Id1), idList(Id2))), Id2) /\
-           TExpr := typedExpr(resolve(NewTIDS, attachType(NewTIDS, Id2))) .
+           TExpr   := typedExpr(resolve(TIDS, attachType(NewTIDS, Id2))) .
 
     var Func : EnkiFunc .
     var Funcs : List{EnkiFunc} .

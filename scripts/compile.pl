@@ -49,11 +49,17 @@ compile_string(Str, CompileStr) :-
     atomic_list_concat(Definitions, ' ', DefList),
     surround_atom('genFile(inferFuncs(empty, ', '))', DefList, CompileStr).
 
+replace_all(Str, Search, Rep, Res) :-
+    atomic_list_concat(Lines, Search, Str),
+    atomic_list_concat(Lines, Rep, Res).
+
 compile_result(Result, CompileResult) :-
     surround_atom('"', '"', InnerStr, Result),
-    % Get rid of the escaped newlines, and replace them with regular newlines
-    atomic_list_concat(Lines, '\\n', InnerStr),
-    atomic_list_concat(Lines, '\n', CompileResult).
+    % Get rid of the escaped characters, and replace them with regular newlines
+    replace_all(InnerStr, '\\n', '\n', NewLines),
+    replace_all(NewLines, '\\"', '"', Quotes),
+    replace_all(Quotes, '\\r', '\r', CR),
+    replace_all(CR, '\\t', '\t', CompileResult).
 
 compile(EnkiMain, File) :-
     read_file(File, Str),
