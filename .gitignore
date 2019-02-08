@@ -1,2 +1,5 @@
 .*.swp
+.stack-work/
+Parser.cabal
+*~
 
