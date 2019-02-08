@@ -87,7 +87,7 @@ mod ENKI-CODEGEN is
     eq genPrologOp(T, "..", NewIdStr, Res1, Res2) =
         "atom_concat(" + Res1 + "," + Res2 + "," + NewIdStr + ")" .
     ceq genPrologOp(T, S, NewIdStr, Res1, Res2) =
-        NewIdStr + " " + eqSign(T) + " " + Res1 + " " + S + " " + Res2
+        NewIdStr + " " + eqSign(T) + " " + Res1 + " " + prologArith(S) + " " + Res2
         if isArith(S) .
 
     op generate : TypedId Int -> GenVal .
