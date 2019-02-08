@@ -1,6 +1,3 @@
-load "sorts.maude"
-load "unification.maude"
-
 mod ENKI-TYPECHECK is
     protecting ENKI-SYNTAX-SORTS .
     protecting ENKI-SYNTAX-UTILITY .

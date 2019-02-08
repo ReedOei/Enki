@@ -1,6 +1,3 @@
-load "../syntax/sorts.maude"
-load "../syntax/utility.maude"
-
 mod ENKI-TYPECHECK-SORTS-SYNTAX is
     protecting ENKI-SYNTAX-SORTS .
     protecting LIST{EnkiType} .

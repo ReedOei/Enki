@@ -1,6 +1,3 @@
-load "../typechecking/checker.maude"
-load "../utility.maude"
-
 mod ENKI-CODEGEN is
     protecting ENKI-TYPECHECK .
     protecting UTILITY .
@@ -29,14 +26,12 @@ mod ENKI-CODEGEN is
     eq prologArith("*") = "*" .
     eq prologArith("^") = "^" .
 
-    var VarMap FuncMap : Map{String, Id} .
+    var VarMap : Map{String, Id} .
     var Ids : List{Id} .
     var FuncId : Id .
     var NewLine : String .
 
-    var FuncTypes : List{EnkiType} .
-
-    vars StrVarMap NewVarMap : Map{String, String} .
+    var StrVarMap : Map{String, String} .
 
     op mapVars : List{String} Map{String, String} -> List{String} .
     eq mapVars(nil, StrVarMap) = nil .

@@ -1,5 +1,3 @@
-load "environment.maude"
-
 mod ENKI-UNIFICATION is
     protecting ENKI-SYNTAX-SORTS .
     protecting ENKI-TYPECHECK-SORTS .
