@@ -68,6 +68,13 @@ mod ENKI-SYNTAX-UTILITY is
     eq prependIds(Id, comp(Ids))          = comp(Id Ids) .
     eq prependIds(Id1, Id2)               = comp(Id1 Id2) [owise] .
 
+    var C : Constraint .
+    var Cs : List{Constraint} .
+    op constraintIds : Constraint -> List{Id} .
+    eq constraintIds(c(Id))    = idList(Id) .
+    eq constraintIds(cs(nil))  = nil .
+    eq constraintIds(cs(C Cs)) = append(constraintIds(C), constraintIds(cs(Cs))) .
+
     op isArith : String -> Bool .
     eq isArith("+") = true .
     eq isArith("-") = true .

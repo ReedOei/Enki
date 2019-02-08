@@ -72,9 +72,10 @@ mod ENKI-TYPECHECK is
     ceq findFuncType((tid(fid(Id1), T), TIDS), Id2) = tid(Id1, T)
         if funcNameMatches(Id1, Id2) .
 
+    --- TODO: Weird that we need to unify again at the end for the first case (equality)--unifyAll should take care of this for us?
     var FuncType : EnkiType .
     op inferId : Set{TypedId} Id -> Set{TypedId} .
-    ceq inferId(TIDS, Id) = unify(unify(TIDS, Id1, Id2), Id, Id1)
+    ceq inferId(TIDS, Id) = unify(inferId(inferId(unify(unify(TIDS, Id1, Id2), Id, Id1), Id1), Id2), Id1, Id2)
         if comp(Id1 s("=") Id2) := Id .
     ceq inferId(TIDS, Id) = inferId(inferId(unify(unify(unifyType(TIDS, Id1, int), Id1, Id2), Id, Id1), Id1), Id2)
         if comp(Id1 s(S) Id2) := Id /\
@@ -89,6 +90,13 @@ mod ENKI-TYPECHECK is
            Types                 := funcTypeList(FuncType) /\
            VarMap                := funcUnify(FuncId, Id) .
     eq inferId(TIDS, Id) = TIDS [owise] .
+
+    var C : Constraint .
+    var Cs : List{Constraint} .
+    op inferConstraint : Set{TypedId} Constraint -> Set{TypedId} .
+    eq inferConstraint(TIDS, c(Id))    = inferId(TIDS, Id) .
+    eq inferConstraint(TIDS, cs(nil))  = TIDS .
+    eq inferConstraint(TIDS, cs(C Cs)) = inferConstraint(inferConstraint(TIDS, C), cs(Cs)) .
 
     op makeFuncType : Set{TypedId} Id Id -> EnkiType .
     eq makeFuncType(TIDS, Id1, Id2) = functype(attachVars(TIDS, varlist(Id1)) attachType(TIDS, Id2)) .
@@ -127,7 +135,8 @@ mod ENKI-TYPECHECK is
     var Constraint : Constraint .
     op inferFunc : Set{TypedId} EnkiFunc -> TypedFunc .
     ceq inferFunc(TIDS, f(Id1, Constraint, e(Id2))) = typedf(Id1, makeFuncType(NewTIDS, Id1, Id2), Constraint, TExpr)
-        if NewTIDS     := inferId(freshtypes(TIDS, append(idList(Id1), idList(Id2))), Id2) /\
+        if Ids := append(idList(Id1), append(idList(Id2), constraintIds(Constraint))) /\
+           NewTIDS     := inferConstraint(inferId(freshtypes(TIDS, Ids), Id2), Constraint) /\
            TExpr       := typedExpr(resolve(TIDS, attachType(NewTIDS, Id2))) .
 
     op inferFuncs : Set{TypedId} List{EnkiFunc} -> List{TypedFunc} .

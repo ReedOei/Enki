@@ -2,7 +2,7 @@
 
 make_func() {
     if [[ ! -z "$3" ]]; then
-        echo "f($1, cs($2), e($3))"
+        echo "f($1, $2, e($3))"
     else
         echo "f($1, cs(nil), e($2))"
     fi
@@ -74,4 +74,13 @@ surround_type="func(string, func(string, func(string, string)))"
 surround_f="$(make_func "$surround_fid" "$surround_body")"
 
 run_test "inferFunc(empty, $surround_f)" "TypedFunc:typedf(comp(s(\"surround\")v(\"X\")s(\"with\")v(\"Left\")v(\"Right\")),func(string,func(string,func(string,string))),cs(nil),typedExpr(tid(comp(comp(v(\"Left\")s(\"..\")v(\"X\"))s(\"..\")v(\"Right\")),string)))"
+
+
+half_fid="comp(s(\"half\") v(\"X\"))"
+half_const="c(comp(v(\"X\") s(\"=\") comp(i(2) s(\"*\") v(\"N\"))))"
+half_body="v(\"N\")"
+half_type="func(int, int)"
+half_f="$(make_func "$half_fid" "$half_const" "$half_body")"
+
+run_test "inferFunc(empty, $half_f)" "TypedFunc: typedf($half_fid, $half_type, $half_const, typedExpr(tid($half_body, int)))"
 
