@@ -6,7 +6,10 @@ mod ENKI-TYPECHECK is
     protecting ENKI-TYPECHECK-ENV .
 
     protecting LIST{EnkiFunc} .
+    protecting LIST{EnkiDef} .
+    protecting LIST{TypedDef} .
     protecting LIST{TypedFunc} .
+    protecting LIST{TypedConstraint} .
 
     protecting SET{EnkiType} .
 
@@ -42,6 +45,11 @@ mod ENKI-TYPECHECK is
     eq attachVars(TIDS, nil)                    = nil .
     ceq attachVars(TIDS, (Id Ids)) = tid(Id, T) attachVars((tid(Id, T), TIDS), Ids)
         if T := typeof(TIDS, Id) .
+
+    op attachConstraintTypes : Set{TypedId} Constraint -> List{TypedConstraint} .
+    eq attachConstraintTypes((tid(Id, T), TIDS), c(Id)) = typedConstraint(tid(Id, T)) .
+    eq attachConstraintTypes(TIDS, cs(nil)) = typedConstraints(nil) .
+    eq attachConstraintTypes(TIDS, cs(C Cs)) = attachConstraintTypes(TIDS, C) attachConstraintTypes(TIDS, cs(Cs)) .
 
     op functype : NeList{TypedId} -> EnkiType .
     eq functype(tid(Id, T))   = T .
@@ -132,17 +140,45 @@ mod ENKI-TYPECHECK is
            tid(Id1, DummyT) := resolve(TIDS, tid(Id, DummyT)) /\
            tid(Id2, DummyT) := resolve(TIDS, tid(comp(Ids), DummyT)) .
 
+    var TConstraint : TypedConstraint .
+    var TConstraints : List{TypedConstraint} .
+    vars TCs1 TCs2 : List{TypedConstraint} .
+
+    op combineConstraints : TypedConstraint TypedConstraint -> TypedConstraint .
+    eq combineConstraints(typedConstraints(nil), TConstraint) = TConstraint .
+    eq combineConstraints(TConstraint, typedConstraints(nil)) = TConstraint .
+    eq combineConstraints(typedConstraint(TID1), typedConstraint(TID2)) = typedConstraints(typedConstraint(TID1) typedConstraint(TID2)) .
+    eq combineConstraints(typedConstraints(TCs1), typedConstraints(TCs2)) = typedConstraints(append(TCs1, TCs2)) .
+
+    op flattenTConstraint : TypedConstraint -> TypedConstraint .
+    eq flattenTConstraint(typedConstraint(TID)) = typedConstraint(TID) .
+    eq flattenTConstraint(typedConstraints(nil)) = typedConstraints(nil) .
+    eq flattenTConstraint(typedConstraints(TConstraint TConstraints)) =
+        combineConstraints(flattenTConstraint(TConstraint), flattenTConstraint(typedConstraints(TConstraints))) .
+
+    op resolveConstraints : Set{TypedId} List{TypedConstraint} -> TypedConstraint .
+    eq resolveConstraints(TIDS, typedConstraints(nil)) = typedConstraints(nil) .
+    eq resolveConstraints(TIDS, typedConstraints(TConstraint TConstraints)) =
+        resolveConstraints(TIDS, TConstraint TConstraints) .
+    eq resolveConstraints(TIDS, nil) = typedConstraint(nil) .
+    eq resolveConstraints(TIDS, typedConstraint(TID) TConstraints) =
+        flattenTConstraint(typedConstraints(typedConstraint(resolve(TIDS, TID)) resolveConstraints(TIDS, TConstraints))) .
+
     var Constraint : Constraint .
     op inferFunc : Set{TypedId} EnkiFunc -> TypedFunc .
-    ceq inferFunc(TIDS, f(Id1, Constraint, e(Id2))) = typedf(Id1, makeFuncType(NewTIDS, Id1, Id2), Constraint, TExpr)
+    ceq inferFunc(TIDS, f(Id1, Constraint, e(Id2))) = typedf(Id1, makeFuncType(NewTIDS, Id1, Id2), TConstraint, TExpr)
         if Ids := append(idList(Id1), append(idList(Id2), constraintIds(Constraint))) /\
            NewTIDS     := inferConstraint(inferId(freshtypes(TIDS, Ids), Id2), Constraint) /\
-           TExpr       := typedExpr(resolve(TIDS, attachType(NewTIDS, Id2))) .
+           TExpr       := typedExpr(resolve(TIDS, attachType(NewTIDS, Id2))) /\
+           TConstraint := resolveConstraints(TIDS, attachConstraintTypes(NewTIDS, Constraint)) .
+           --- TConstraint := resolveConstraints(TIDS, attachConstraintTypes(NewTIDS, Constraint)) .
 
-    op inferFuncs : Set{TypedId} List{EnkiFunc} -> List{TypedFunc} .
-    eq inferFuncs(TIDS, nil) = nil .
-    ceq inferFuncs(TIDS, f(Id1, Constraint, e(Id2)) Funcs) = TFunc inferFuncs((tid(fid(Id), T), TIDS), Funcs)
-        if TFunc := inferFunc(TIDS, f(Id1, Constraint, e(Id2))) /\
-           typedf(Id, T, Constraint, TExpr) := TFunc .
+    var Defs : List{EnkiDef} .
+    var Func : EnkiFunc .
+    op inferDefs : Set{TypedId} List{EnkiDef} -> List{TypedDef} .
+    eq inferDefs(TIDS, nil) = nil .
+    ceq inferDefs(TIDS, def(Func) Defs) = def(TFunc) inferDefs((tid(fid(Id), T), TIDS), Defs)
+        if TFunc := inferFunc(TIDS, Func) /\
+           typedf(Id, T, TConstraint, TExpr) := TFunc .
 endm
 

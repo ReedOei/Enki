@@ -3,11 +3,16 @@ mod ENKI-TYPECHECK-SORTS-SYNTAX is
     protecting LIST{EnkiType} .
     protecting MAP{String, Id} .
 
-    sorts TypedFunc TypedId TypedExpr .
+    sorts TypedFunc TypedId TypedExpr TypedConstraint TypedDef TypedRule .
 
     op tid : Id EnkiType -> TypedId .
     op typedExpr : TypedId -> TypedExpr .
-    op typedf : Id EnkiType Constraint TypedExpr -> TypedFunc .
+    op typedf : Id EnkiType TypedConstraint TypedExpr -> TypedFunc .
+
+    op def : TypedFunc -> TypedDef .
+    op def : TypedRule -> TypedDef .
+
+    op typedConstraint : TypedId -> TypedConstraint .
 
     op fcall : Id List{EnkiType} Map{String, Id} -> Id .
 endm
@@ -20,9 +25,20 @@ view TypedFunc from TRIV to ENKI-TYPECHECK-SORTS-SYNTAX is
     sort Elt to TypedFunc .
 endv
 
+view TypedConstraint from TRIV to ENKI-TYPECHECK-SORTS-SYNTAX is
+    sort Elt to TypedConstraint .
+endv
+
+view TypedDef from TRIV to ENKI-TYPECHECK-SORTS-SYNTAX is
+    sort Elt to TypedDef .
+endv
+
 mod ENKI-TYPECHECK-SORTS is
     protecting ENKI-TYPECHECK-SORTS-SYNTAX .
     protecting SET{TypedId} .
     protecting LIST{TypedId} .
+    protecting LIST{TypedConstraint} .
+
+    op typedConstraints : List{TypedConstraint} -> TypedConstraint .
 endm
 

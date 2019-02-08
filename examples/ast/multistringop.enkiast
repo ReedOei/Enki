@@ -1,8 +1,8 @@
-f(comp(s("surround") v("X") s("with") v("Left") v("Right")), cs(nil), e(comp(comp(v("Left") s("..") v("X")) s("..") v("Right"))))
+def(f(comp(s("surround") v("X") s("with") v("Left") v("Right")), cs(nil), e(comp(comp(v("Left") s("..") v("X")) s("..") v("Right")))))
 
-f(comp(s("resolve") s("path") v("Parent") v("Child")), cs(nil), e(comp(comp(v("Parent") s("..") s("\"/\"")) s("..") v("Child"))))
+def(f(comp(s("resolve") s("path") v("Parent") v("Child")), cs(nil), e(comp(comp(v("Parent") s("..") s("\"/\"")) s("..") v("Child")))))
 
-f(comp(s("temp") v("X")), cs(nil), e(comp(v("X") s("..") v("X"))))
+def(f(comp(s("temp") v("X")), cs(nil), e(comp(v("X") s("..") v("X")))))
 
-f(comp(s("calllots") v("X") v("Y")), cs(nil), e(comp(s("resolve") s("path") comp(s("resolve") s("path") v("X") v("Y")) comp(s("resolve") s("path") v("X") comp(s("temp") comp(s("temp") comp(s("temp") v("X"))))))))
+def(f(comp(s("calllots") v("X") v("Y")), cs(nil), e(comp(s("resolve") s("path") comp(s("resolve") s("path") v("X") v("Y")) comp(s("resolve") s("path") v("X") comp(s("temp") comp(s("temp") comp(s("temp") v("X")))))))))
 

@@ -1,1 +1,1 @@
-f(comp(s("add") v("X") s("to") v("Y")), cs(nil), e(comp(v("X") s("+") v("Y"))))
+def(f(comp(s("add") v("X") s("to") v("Y")), cs(nil), e(comp(v("X") s("+") v("Y")))))

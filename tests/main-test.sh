@@ -2,7 +2,7 @@
 
 make_func() {
     if [[ ! -z "$3" ]]; then
-        echo "f($1, $2, e($3))"
+        echo "f($1, cs($2), e($3))"
     else
         echo "f($1, cs(nil), e($2))"
     fi
@@ -35,9 +35,9 @@ add_twice_body="comp(s(\"add\") v(\"X\") s(\"to\") comp(s(\"add\") v(\"X\") s(\"
 add_twice_type="func(int, func(int, int))"
 add_twice_f="$(make_func "$add_twice_fid" "$add_twice_body")"
 
-run_test "inferFunc(empty, $add_f)" "TypedFunc: typedf($add_fid, $add_type, cs(nil), typedExpr(tid($add_body, int)))"
+run_test "inferFunc(empty, $add_f)" "TypedFunc: typedf($add_fid, $add_type, typedConstraints(nil), typedExpr(tid($add_body, int)))"
 run_test "findFuncType(tid(fid($add_fid), $add_type), comp(s(\"add\") i(10) s(\"to\") comp(v(\"X\") s(\"+\") v(\"Y\"))))" "TypedId: tid(comp(s(\"add\") v(\"X\") s(\"to\") v(\"Y\")), func(int, func(int, int)))"
-run_test "inferFuncs(empty, $add_f $add_twice_f)" "NeList{TypedFunc}: typedf($add_fid, $add_type, cs(nil), typedExpr(tid($add_body, int))) typedf($add_twice_fid, $add_twice_type, cs(nil), typedExpr(tid(fcall($add_fid, int int int, (\"X\" |-> v(\"X\"), \"Y\" |-> fcall($add_fid, int int int, (\"X\" |-> v(\"X\"), \"Y\" |-> v( \"Y\"))))), int)))"
+run_test "inferDefs(empty, def($add_f) def($add_twice_f))" "NeList{TypedDef}: def(typedf($add_fid, $add_type, typedConstraints(nil), typedExpr(tid($add_body, int)))) def(typedf($add_twice_fid, $add_twice_type, typedConstraints(nil), typedExpr(tid(fcall($add_fid, int int int, (\"X\" |-> v(\"X\"), \"Y\" |-> fcall($add_fid, int int int, (\"X\" |-> v(\"X\"), \"Y\" |-> v( \"Y\"))))), int))))"
 run_test "genFunc(inferFunc(empty, $add_f))" "NeList{String}: \"add_to(X,Y,Temp0) :-\" \"Temp0#=X+Y\""
 
 distance_fid="comp(s(\"distance\") s(\"from\") v(\"X1\") v(\"Y1\") s(\"to\") v(\"X2\") v(\"Y2\"))"
@@ -49,14 +49,14 @@ run_test "resolve(tid(fid($add_fid), $add_type), tid($distance_body, int))" "Typ
 
 run_test "genFunc(inferFunc(empty, $distance_f))" "NeList{String}:\"distance_from_to(X1,Y1,X2,Y2,Temp0):-\" \"Temp2#=X1-X2\" \"Temp1#=Temp2^2\" \"Temp9#=Y1-Y2\" \"Temp8#=Temp9^2\" \"Temp0#=Temp1+Temp8\""
 
-run_test "genFuncs(inferFuncs(empty, $add_f $add_twice_f))" "String:\"add_to(X,Y,Temp0):-\nTemp0#=X+Y.\n\naddTwice_to(X,Y,Temp0):-\nadd_to(X,Y,Temp4),\nadd_to(X,Temp4,Temp0).\n\n\""
+run_test "genDefs(inferDefs(empty, def($add_f) def($add_twice_f)))" "String:\"add_to(X,Y,Temp0):-\nTemp0#=X+Y.\n\naddTwice_to(X,Y,Temp0):-\nadd_to(X,Y,Temp4),\nadd_to(X,Temp4,Temp0).\n\n\""
 
 increment_fid="comp(s(\"increment\") v(\"X\"))"
 increment_body="comp(s(\"add\") v(\"X\") s(\"to\") i(1))"
 increment_type="func(int, int)"
 increment_f="$(make_func "$increment_fid" "$increment_body")"
 
-run_test "genFuncs(inferFuncs(empty, $add_f $increment_f))" "String:\"add_to(X,Y,Temp0):-\nTemp0#=X+Y.\n\nincrement(X,Temp0):-\nadd_to(X,1,Temp0).\n\n\""
+run_test "genDefs(inferDefs(empty, def($add_f) def($increment_f)))" "String:\"add_to(X,Y,Temp0):-\nTemp0#=X+Y.\n\nincrement(X,Temp0):-\nadd_to(X,1,Temp0).\n\n\""
 
 run_test "generate(tid(v(\"X\"), int), 0)" "GenVal: genVal(nil, \"X\", 0)"
 run_test "generate(tid(i(102321), int), 0)" "GenVal: genVal(nil, \"102321\", 0)"
@@ -73,14 +73,14 @@ surround_body="comp(comp(v(\"Left\") s(\"..\") v(\"X\")) s(\"..\") v(\"Right\"))
 surround_type="func(string, func(string, func(string, string)))"
 surround_f="$(make_func "$surround_fid" "$surround_body")"
 
-run_test "inferFunc(empty, $surround_f)" "TypedFunc:typedf(comp(s(\"surround\")v(\"X\")s(\"with\")v(\"Left\")v(\"Right\")),func(string,func(string,func(string,string))),cs(nil),typedExpr(tid(comp(comp(v(\"Left\")s(\"..\")v(\"X\"))s(\"..\")v(\"Right\")),string)))"
+run_test "inferFunc(empty, $surround_f)" "TypedFunc:typedf(comp(s(\"surround\")v(\"X\")s(\"with\")v(\"Left\")v(\"Right\")),func(string,func(string,func(string,string))),typedConstraints(nil),typedExpr(tid(comp(comp(v(\"Left\")s(\"..\")v(\"X\"))s(\"..\")v(\"Right\")),string)))"
 
 
 half_fid="comp(s(\"half\") v(\"X\"))"
-half_const="c(comp(v(\"X\") s(\"=\") comp(i(2) s(\"*\") v(\"N\"))))"
+half_const="comp(v(\"X\") s(\"=\") comp(i(2) s(\"*\") v(\"N\")))"
 half_body="v(\"N\")"
 half_type="func(int, int)"
-half_f="$(make_func "$half_fid" "$half_const" "$half_body")"
+half_f="$(make_func "$half_fid" "c($half_const)" "$half_body")"
 
-run_test "inferFunc(empty, $half_f)" "TypedFunc: typedf($half_fid, $half_type, $half_const, typedExpr(tid($half_body, int)))"
+run_test "inferFunc(empty, $half_f)" "TypedFunc: typedf($half_fid, $half_type, typedConstraint(tid($half_const, int)), typedExpr(tid($half_body, int)))"
 

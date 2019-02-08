@@ -12,7 +12,7 @@ mod ENKI-CODEGEN is
     var T T2 : EnkiType .
     var Types : List{EnkiType} .
     var Tid : TypedId .
-    vars Name ResName Params : String .
+    vars Name ResName : String .
 
     op eqSign : EnkiType -> String .
     ceq eqSign(T) = "#="
@@ -44,9 +44,11 @@ mod ENKI-CODEGEN is
     op funcName : Id -> String .
     eq funcName(FuncId) = intercalate("_", nonVarStrs(FuncId)) .
 
+    var Params : List{String} .
     op genFuncCallParams : Id Map{String, String} String -> String .
-    eq genFuncCallParams(FuncId, StrVarMap, ResName) =
-        funcName(FuncId) + "(" + intercalate(",", mapVars(varstrs(FuncId), StrVarMap) ResName) + ")" .
+    ceq genFuncCallParams(FuncId, StrVarMap, ResName) =
+        funcName(FuncId) + "(" + intercalate(",", mapVars(varstrs(FuncId), StrVarMap) ResName) + ")"
+        if Params := mapVars(varstrs(FuncId), StrVarMap) (if ResName == "" then nil else ResName fi) .
 
     op genFuncCall : Id String -> String .
     eq genFuncCall(FuncId, ResName) = genFuncCallParams(FuncId, idMap(varstrs(FuncId)), ResName) .
@@ -81,6 +83,8 @@ mod ENKI-CODEGEN is
     op genPrologOp : EnkiType String String String String -> String .
     eq genPrologOp(T, "..", NewIdStr, Res1, Res2) =
         "atom_concat(" + Res1 + "," + Res2 + "," + NewIdStr + ")" .
+    eq genPrologOp(T, "=", NewIdStr, Res1, Res2) =
+        Res1 + " = " + Res2 . --- NewIdStr is unused, because this is an expression, so we don't care about the result
     ceq genPrologOp(T, S, NewIdStr, Res1, Res2) =
         NewIdStr + " " + eqSign(T) + " " + Res1 + " " + prologArith(S) + " " + Res2
         if isArith(S) .
@@ -101,31 +105,40 @@ mod ENKI-CODEGEN is
     --- Handle arithmetic operations
     ceq generate(tid(comp(Id1 s(S) Ids), T), Counter) =
         genVal(append(Lines1, Lines2 NewLine), NewIdStr, Counter2 + 1)
-        if (isArith(S) or isStrOp(S)) /\
+        if (isArith(S) or isStrOp(S) or (S == "=")) /\
            genVal(Lines1, Res1, Counter1) := generate(tid(Id1, T), Counter + 1) /\
            genVal(Lines2, Res2, Counter2) := generate(tid(comp(Ids), T), Counter1 + 1) /\
            NewIdStr                       := "Temp" + string(Counter, 10) /\
            NewLine                        := genPrologOp(T, S, NewIdStr, Res1, Res2) .
 
+    var C : TypedConstraint .
+    var Cs : List{TypedConstraint} .
+    op generateConstraint : TypedConstraint Int -> GenVal .
+    eq generateConstraint(typedConstraint(TID), Counter)    = generate(TID, Counter) .
+    eq generateConstraint(typedConstraints(nil), Counter)   = genVal(nil, "Unused", Counter) .
+    ceq generateConstraint(typedConstraints(C Cs), Counter) = genVal(append(Lines1, Lines2), Res2, Counter2)
+        if genVal(Lines1, Res1, Counter1) := generateConstraint(C, Counter) /\
+           genVal(Lines2, Res2, Counter2) := generateConstraint(typedConstraints(Cs), Counter1) .
+
     var TID : TypedId .
-    var Constraint : Constraint .
     op genFunc : TypedFunc -> List{String} .
-    ceq genFunc(typedf(FuncId, T, Constraint, typedExpr(TID))) =
-        (genFuncCall(FuncId, ResName) + " :- ") Lines
-        if genVal(Lines, ResName, Counter) := generate(TID, 0) .
+    ceq genFunc(typedf(FuncId, T, C, typedExpr(TID))) =
+        append((genFuncCall(FuncId, Res2) + " :- ") Lines1, Lines2)
+        if genVal(Lines1, Res1, Counter)  := generateConstraint(C, 0) /\
+           genVal(Lines2, Res2, Counter1) := generate(TID, Counter) .
 
     var TFunc : TypedFunc .
-    var TFuncs : List{TypedFunc} .
-    op genFuncs : List{TypedFunc} -> String .
-    eq genFuncs(nil)           = "" .
-    ceq genFuncs(TFunc TFuncs) = intercalate("\n\n", NewLine genFuncs(TFuncs))
+    var TDefs : List{TypedDef} .
+    op genDefs : List{TypedDef} -> String .
+    eq genDefs(nil)           = "" .
+    ceq genDefs(def(TFunc) TDefs) = intercalate("\n\n", NewLine genDefs(TDefs))
         if (Line Lines) := genFunc(TFunc) /\
-           NewLine := if isEmpty(Lines) then (Line + ".") else (Line + "\n    " + intercalate(",\n    ", Lines) + ".") fi .
+           NewLine := Line + "\n    " + intercalate(",\n    ", Lines) + "." .
 
     op genHeader : -> String .
     eq genHeader = "#!/usr/bin/env swipl\n\n:- use_module(library(clpfd))." .
 
-    op genFile : List{TypedFunc} -> String .
-    eq genFile(TFuncs) = genHeader + "\n\n" + genFuncs(TFuncs) .
+    op genFile : List{TypedDef} -> String .
+    eq genFile(TDefs) = genHeader + "\n\n" + genDefs(TDefs) .
 endm
 

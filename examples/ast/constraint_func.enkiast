@@ -1,0 +1,1 @@
+def(f(comp(s("half") v("X")), cs(c(comp(v("X") s("=") comp(i(2) s("*") v("N"))))), e(v("N"))))

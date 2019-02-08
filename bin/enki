@@ -7,7 +7,7 @@
 
 root(Root) :-
     source_file(File),
-    atom_concat(_, 'scripts/compile.pl', File),
+    atom_concat(_, 'bin/enki', File),
     file_directory_name(File, Root).
 
 main(Argv) :-
@@ -16,7 +16,7 @@ main(Argv) :-
     directory_file_path(ProjRoot, 'enki.maude', EnkiMain),
     Argv = [File|_] -> forall(member(File, Argv), process_file(EnkiMain, File));
 
-    writeln('Usage: ./compile.pl FILE'),
+    writeln('Usage: enki FILE'),
     writeln('FILE - The file to compile. Should be either a .enki file or a .enkiast file').
 
 process_file(EnkiMain, File) :-
@@ -47,7 +47,7 @@ compile_string(Str, CompileStr) :-
     atomic_list_concat(Temp, '\n', Str),
     include(\=(''), Temp, Definitions),
     atomic_list_concat(Definitions, ' ', DefList),
-    surround_atom('genFile(inferFuncs(empty, ', '))', DefList, CompileStr).
+    surround_atom('genFile(inferDefs(empty, ', '))', DefList, CompileStr).
 
 replace_all(Str, Search, Rep, Res) :-
     atomic_list_concat(Lines, Search, Str),
