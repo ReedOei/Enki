@@ -11,6 +11,3 @@ mod ENKI is
     protecting ENKI-CODEGEN .
 endm
 
-reduce inferRule(empty, r(comp(s("even") v("X")), cs(c(comp(v("X") s("=") comp(i(2) s("*") v("X"))))))) .
-reduce inferRule(empty, r(comp(v("A") s("divides") v("B")), cs(c(comp(v("A") s("=") comp(v("N") s("*") v("X"))))))) .
-

@@ -8,6 +8,10 @@ make_func() {
     fi
 }
 
+make_rule() {
+    echo "r($1, cs($2))"
+}
+
 run_test "firstUnused(empty, 0)" "EnkiType: any(\"T0\")"
 run_test "firstUnused(any(\"T0\"), 0)" "EnkiType: any(\"T1\")"
 run_test "types(empty)" "Set{EnkiType}: (empty).Set{EnkiType}"
@@ -37,7 +41,7 @@ add_twice_f="$(make_func "$add_twice_fid" "$add_twice_body")"
 
 run_test "inferFunc(empty, $add_f)" "TypedFunc: typed($add_fid, $add_type, typedConstraints(nil), typedExpr(tid($add_body, int)))"
 run_test "findFuncType(tid(fid($add_fid), $add_type), comp(s(\"add\") i(10) s(\"to\") comp(v(\"X\") s(\"+\") v(\"Y\"))))" "TypedId: tid(comp(s(\"add\") v(\"X\") s(\"to\") v(\"Y\")), func(int, func(int, int)))"
-run_test "inferDefs(empty, def($add_f) def($add_twice_f))" "NeList{TypedDef}: def(typed($add_fid, $add_type, typedConstraints(nil), typedExpr(tid($add_body, int)))) def(typed($add_twice_fid, $add_twice_type, typedConstraints(nil), typedExpr(tid(fcall($add_fid, int int int, (\"X\" |-> v(\"X\"), \"Y\" |-> fcall($add_fid, int int int, (\"X\" |-> v(\"X\"), \"Y\" |-> v( \"Y\"))))), int))))"
+run_test "inferDefs(empty, def($add_f) def($add_twice_f))" "NeList{TypedDef}: def(typed($add_fid, $add_type, typedConstraints(nil), typedExpr(tid($add_body, int)))) def(typed($add_twice_fid, $add_twice_type, typedConstraints(nil), typedExpr(tid(fcall($add_fid, func(int, func(int, int)), (\"X\" |-> v(\"X\"), \"Y\" |-> fcall($add_fid, func(int, func(int, int)), (\"X\" |-> v(\"X\"), \"Y\" |-> v( \"Y\"))))), int))))"
 run_test "genFunc(inferFunc(empty, $add_f))" "NeList{String}: \"add_to(X,Y,Temp0) :-\" \"Temp0#=X+Y\""
 
 distance_fid="comp(s(\"distance\") s(\"from\") v(\"X1\") v(\"Y1\") s(\"to\") v(\"X2\") v(\"Y2\"))"
@@ -83,4 +87,18 @@ half_type="func(int, int)"
 half_f="$(make_func "$half_fid" "c($half_const)" "$half_body")"
 
 run_test "inferFunc(empty, $half_f)" "TypedFunc: typed($half_fid, $half_type, typedConstraint(tid($half_const, int)), typedExpr(tid($half_body, int)))"
+
+even_rid="comp(s(\"even\") v(\"X\"))"
+even_body="comp(v(\"X\") s(\"=\") comp(i(2) s(\"*\") v(\"X\")))"
+even_type="int"
+even_r="$(make_rule "$even_rid" "c($even_body)")"
+
+run_test "inferRule(empty, $even_r)" "TypedRule: typed($even_rid, $even_type, typedConstraint(tid($even_body, int)))"
+
+divides_rid="comp(v(\"A\") s(\"divides\") v(\"B\"))"
+divides_body="comp(v(\"A\") s(\"=\") comp(v(\"N\") s(\"*\") v(\"B\")))"
+divides_type="rule(int, int)"
+divides_r="$(make_rule "$divides_rid" "c($divides_body)")"
+
+run_test "inferRule(empty, $divides_r)" "TypedRule: typed($divides_rid, $divides_type, typedConstraint(tid($divides_body, int)))"
 

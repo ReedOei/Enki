@@ -19,4 +19,6 @@ try_run "many_func.enkiast"
 try_run "surround.enkiast"
 try_run "multistringop.enkiast"
 try_run "constraint_func.enkiast"
+try_run "basic_rule.enkiast"
+try_run "rule_call.enkiast"
 

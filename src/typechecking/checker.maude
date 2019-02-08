@@ -55,6 +55,10 @@ mod ENKI-TYPECHECK is
     eq functype(tid(Id, T))   = T .
     eq functype(tid(Id, T) L) = func(T, functype(L)) .
 
+    op ruletype : NeList{TypedId} -> EnkiType .
+    eq ruletype(tid(Id, T))   = T .
+    eq ruletype(tid(Id, T) L) = rule(T, ruletype(L)) .
+
     op unifyMap : Set{TypedId} List{EnkiType} List{String} Map{String, Id} -> Set{TypedId} .
     eq unifyMap(TIDS, Types, nil, VarMap) = TIDS .
     eq unifyMap(TIDS, T Types, S Strs, (S |-> Id, VarMap)) = unifyMap(inferId(unifyType(TIDS, Id, T), Id), Types, Strs, VarMap) .
@@ -110,7 +114,7 @@ mod ENKI-TYPECHECK is
     eq makeFuncType(TIDS, Id1, Id2) = functype(attachVars(TIDS, varlist(Id1)) attachType(TIDS, Id2)) .
 
     op makeRuleType : Set{TypedId} Id -> EnkiType .
-    eq makeRuleType(TIDS, RuleId) = functype(attachVars(TIDS, varlist(RuleId))) .
+    eq makeRuleType(TIDS, RuleId) = ruletype(attachVars(TIDS, varlist(RuleId))) .
 
     var VarMap : Map{String, Id} .
 
@@ -132,7 +136,7 @@ mod ENKI-TYPECHECK is
         if tid(Id1, T1) := resolve(TIDS, tid(Id, T)) .
     eq resolve(TIDS,  tid(comp(nil), T)) = tid(comp(nil), T) .
     --- Lookup the function call, if applicable
-    ceq resolve(TIDS, tid(comp(Ids), T1)) = tid(fcall(FuncId, funcTypeList(T), resolveMap(TIDS, VarMap)), T1)
+    ceq resolve(TIDS, tid(comp(Ids), T1)) = tid(fcall(FuncId, T, resolveMap(TIDS, VarMap)), T1)
         if (tid(fid(FuncId), T), RestTIDS) := TIDS /\
            VarMap                          := funcUnify(FuncId, comp(Ids)) /\
            funcNameMatches(FuncId, comp(Ids)) .
@@ -192,7 +196,7 @@ mod ENKI-TYPECHECK is
     ceq inferDefs(TIDS, def(Func) Defs) = def(TFunc) inferDefs((tid(fid(Id), T), TIDS), Defs)
         if TFunc := inferFunc(TIDS, Func) /\
            typed(Id, T, TConstraint, TExpr) := TFunc .
-    ceq inferDefs(TIDS, def(Rule) Defs) = def(TRule) inferDefs((tid(rid(Id), T), TIDS), Defs)
+    ceq inferDefs(TIDS, def(Rule) Defs) = def(TRule) inferDefs((tid(fid(Id), T), TIDS), Defs)
         if TRule := inferRule(TIDS, Rule) /\
            typed(Id, T, TConstraint) := TRule .
 endm

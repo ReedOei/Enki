@@ -4,11 +4,12 @@ mod ENKI-SYNTAX-UTILITY is
     protecting LIST{Id} .
     protecting LIST{Constraint} .
     protecting LIST{String} .
+    protecting LIST{EnkiType} .
 
     var S : String .
     var I : Int .
     var B : Bool .
-    var T : EnkiType .
+    vars T T1 T2 : EnkiType .
     vars Id Id1 Id2 : Id .
     vars Ids Ids1 Ids2 : List{Id} .
     var L : List{Id} .
@@ -86,5 +87,10 @@ mod ENKI-SYNTAX-UTILITY is
     op isStrOp : String -> Bool .
     eq isStrOp("..") = true .
     eq isStrOp(S)    = false [owise] .
+
+    op typeList : EnkiType -> List{EnkiType} .
+    eq typeList(func(T1, T2)) = T1 typeList(T2) .
+    eq typeList(rule(T1, T2)) = T1 typeList(T2) .
+    eq typeList(T)            = T [owise] .
 endm
 

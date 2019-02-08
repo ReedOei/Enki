@@ -47,7 +47,7 @@ mod ENKI-CODEGEN is
     var Params : List{String} .
     op genFuncCallParams : Id Map{String, String} String -> String .
     ceq genFuncCallParams(FuncId, StrVarMap, ResName) =
-        funcName(FuncId) + "(" + intercalate(",", mapVars(varstrs(FuncId), StrVarMap) ResName) + ")"
+        funcName(FuncId) + "(" + intercalate(",", Params) + ")"
         if Params := mapVars(varstrs(FuncId), StrVarMap) (if ResName == "" then nil else ResName fi) .
 
     op genFuncCall : Id String -> String .
@@ -89,6 +89,8 @@ mod ENKI-CODEGEN is
         NewIdStr + " " + eqSign(T) + " " + Res1 + " " + prologArith(S) + " " + Res2
         if isArith(S) .
 
+    var Type : EnkiType .
+
     op generate : TypedId Int -> GenVal .
     eq generate(tid(b(true), T), Counter)  = genVal(nil, "true", Counter) .
     eq generate(tid(b(false), T), Counter) = genVal(nil, "false", Counter) .
@@ -97,11 +99,11 @@ mod ENKI-CODEGEN is
     eq generate(tid(s(S), T), Counter)     = genVal(nil, S, Counter) .
     eq generate(tid(t(Id, T), T), Counter) = generate(tid(Id, T), Counter) .
     eq generate(tid(comp(Id), T), Counter) = generate(tid(Id, T), Counter) .
-    ceq generate(tid(fcall(FuncId, Types, VarMap), T), Counter) =
+    ceq generate(tid(fcall(FuncId, Type, VarMap), T), Counter) =
         genVal(Lines NewLine, NewIdStr, FinalI + 1)
-        if paramRes(Lines, AllVars, FinalI) := genParams(Types, varlist(FuncId), VarMap, Counter + 1) /\
+        if paramRes(Lines, AllVars, FinalI) := genParams(typeList(Type), varlist(FuncId), VarMap, Counter + 1) /\
            NewIdStr                         := "Temp" + string(Counter, 10) /\
-           NewLine                          := genFuncCallParams(FuncId, AllVars, NewIdStr) .
+           NewLine                          := genFuncCallParams(FuncId, AllVars, if isFunc(Type) then NewIdStr else "" fi) .
     --- Handle arithmetic operations
     ceq generate(tid(comp(Id1 s(S) Ids), T), Counter) =
         genVal(append(Lines1, Lines2 NewLine), NewIdStr, Counter2 + 1)
@@ -127,13 +129,22 @@ mod ENKI-CODEGEN is
         if genVal(Lines1, Res1, Counter)  := generateConstraint(C, 0) /\
            genVal(Lines2, Res2, Counter1) := generate(TID, Counter) .
 
+    var RuleId : Id .
+    op genRule : TypedRule -> List{String} .
+    ceq genRule(typed(RuleId, T, C)) = (genFuncCall(RuleId, "") + " :- ") Lines
+        if genVal(Lines, ResName, Counter)  := generateConstraint(C, 0) .
+
     var TFunc : TypedFunc .
+    var TRule : TypedRule .
     var TDefs : List{TypedDef} .
     op genDefs : List{TypedDef} -> String .
     eq genDefs(nil)           = "" .
     ceq genDefs(def(TFunc) TDefs) = intercalate("\n\n", NewLine genDefs(TDefs))
         if (Line Lines) := genFunc(TFunc) /\
-           NewLine := Line + "\n    " + intercalate(",\n    ", Lines) + "." .
+           NewLine      := Line + "\n    " + intercalate(",\n    ", Lines) + "." .
+    ceq genDefs(def(TRule) TDefs) = intercalate("\n\n", NewLine genDefs(TDefs))
+        if (Line Lines) := genRule(TRule) /\
+           NewLine      := Line + "\n    " + intercalate(",\n    ", Lines) + "." .
 
     op genHeader : -> String .
     eq genHeader = "#!/usr/bin/env swipl\n\n:- use_module(library(clpfd))." .

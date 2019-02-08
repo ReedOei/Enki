@@ -1,0 +1,4 @@
+def(r(comp(s("even") v("X")), cs(c(comp(v("X") s("=") comp(i(2) s("*") v("X")))))))
+
+def(r(comp(v("A") s("divides") v("B")), cs(c(comp(v("B") s("=") comp(v("N") s("*") v("A")))))))
+

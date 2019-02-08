@@ -9,11 +9,16 @@ mod ENKI-SYNTAX-SORTS is
     op string : -> EnkiType .
     op any : String -> EnkiType .
     op func : EnkiType EnkiType -> EnkiType .
+    op rule : EnkiType EnkiType -> EnkiType .
 
-    vars T1 T2 : EnkiType .
+    vars T T1 T2 : EnkiType .
     op returnType : EnkiType -> EnkiType .
     eq returnType(func(T1, T2)) = returnType(T2) .
     eq returnType(T1)           = T1 [owise] .
+
+    op isFunc : EnkiType -> Bool .
+    eq isFunc(func(T1, T2)) = true .
+    eq isFunc(T)            = false [owise] .
 
     sort Id .
     op s : String -> Id .
@@ -22,7 +27,6 @@ mod ENKI-SYNTAX-SORTS is
     op v : String -> Id .
     op t : Id EnkiType -> Id .
     op fid : Id -> Id .
-    op rid : Id -> Id .
 
     sort Constraint .
     op c : Id -> Constraint .
