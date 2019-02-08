@@ -74,19 +74,25 @@ mod ENKI-TYPECHECK is
     eq funcNameMatches(comp(nil), comp(nil)) = true .
     eq funcNameMatches(comp(Id1 Ids1), comp(Id2 Ids2)) = funcNameMatches(Id1, Id2) and funcNameMatches(comp(Ids1), comp(Ids2)) .
 
+    --- Take the function id (first) and the id to unify it with (second)
+    --- Returns a map from the variables in the function id to idenitifiers in the second id
+    --- NOTE: Be sure to call funcNameMatches too, to make sure this function won't get stuck!
     op funcUnify : Id Id -> Map{String, Id} .
     eq funcUnify(v(S), Id) = S |-> Id .
     eq funcUnify(s(S), s(S)) = empty .
     eq funcUnify(comp(nil), comp(nil)) = empty .
     eq funcUnify(comp(Id1 Ids1), comp(Id2 Ids2)) = funcUnify(Id1, Id2), funcUnify(comp(Ids1), comp(Ids2)) .
 
+    --- Return the typed id of the function matching the Id passed in, if any matches
     op findFuncType : Set{TypedId} Id -> TypedId .
     ceq findFuncType((tid(fid(Id1), T), TIDS), Id2) = tid(Id1, T)
         if funcNameMatches(Id1, Id2) .
 
     --- TODO: Weird that we need to unify again at the end for the first case (equality)--unifyAll should take care of this for us?
+    --- TODO: handle builtins better
     var FuncType : EnkiType .
     op inferId : Set{TypedId} Id -> Set{TypedId} .
+    eq inferId(TIDS, comp(s("display") Id)) = inferId(unify(unifyType(TIDS, Id, string), comp(s("display") Id), Id), Id) .
     ceq inferId(TIDS, Id) = unify(inferId(inferId(unify(unify(TIDS, Id1, Id2), Id, Id1), Id1), Id2), Id1, Id2)
         if comp(Id1 s("=") Id2) := Id .
     ceq inferId(TIDS, Id) = inferId(inferId(unify(unify(unifyType(TIDS, Id1, int), Id1, Id2), Id, Id1), Id1), Id2)
@@ -136,6 +142,7 @@ mod ENKI-TYPECHECK is
         if tid(Id1, T1) := resolve(TIDS, tid(Id, T)) .
     eq resolve(TIDS,  tid(comp(nil), T)) = tid(comp(nil), T) .
     --- Lookup the function call, if applicable
+    eq resolve(TIDS, tid(comp(s("display") Id), T)) = tid(fcall(comp(s("writeln") v("Str")), string, resolveMap(TIDS, "Str" |-> Id)), T) .
     ceq resolve(TIDS, tid(comp(Ids), T1)) = tid(fcall(FuncId, T, resolveMap(TIDS, VarMap)), T1)
         if (tid(fid(FuncId), T), RestTIDS) := TIDS /\
            VarMap                          := funcUnify(FuncId, comp(Ids)) /\

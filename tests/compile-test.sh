@@ -21,4 +21,5 @@ try_run "multistringop.enkiast"
 try_run "constraint_func.enkiast"
 try_run "basic_rule.enkiast"
 try_run "rule_call.enkiast"
+try_run "use_display.enkiast"
 
