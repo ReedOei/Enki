@@ -7,7 +7,7 @@ mod ENKI-TYPECHECK-SORTS-SYNTAX is
 
     op tid : Id EnkiType -> TypedId .
     op typedExpr : TypedId -> TypedExpr .
-    op typedf : Id EnkiType TypedExpr -> TypedFunc .
+    op typedf : Id EnkiType Constraint TypedExpr -> TypedFunc .
 
     op fcall : Id List{EnkiType} Map{String, Id} -> Id .
 endm

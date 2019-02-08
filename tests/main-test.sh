@@ -35,9 +35,9 @@ add_twice_body="comp(s(\"add\") v(\"X\") s(\"to\") comp(s(\"add\") v(\"X\") s(\"
 add_twice_type="func(int, func(int, int))"
 add_twice_f="$(make_func "$add_twice_fid" "$add_twice_body")"
 
-run_test "inferFunc(empty, $add_f)" "TypedFunc: typedf($add_fid, $add_type, typedExpr(tid($add_body, int)))"
+run_test "inferFunc(empty, $add_f)" "TypedFunc: typedf($add_fid, $add_type, cs(nil), typedExpr(tid($add_body, int)))"
 run_test "findFuncType(tid(fid($add_fid), $add_type), comp(s(\"add\") i(10) s(\"to\") comp(v(\"X\") s(\"+\") v(\"Y\"))))" "TypedId: tid(comp(s(\"add\") v(\"X\") s(\"to\") v(\"Y\")), func(int, func(int, int)))"
-run_test "inferFuncs(empty, $add_f $add_twice_f)" "NeList{TypedFunc}: typedf($add_fid, $add_type, typedExpr(tid($add_body, int))) typedf($add_twice_fid, $add_twice_type, typedExpr(tid(fcall($add_fid, int int int, (\"X\" |-> v(\"X\"), \"Y\" |-> fcall($add_fid, int int int, (\"X\" |-> v(\"X\"), \"Y\" |-> v( \"Y\"))))), int)))"
+run_test "inferFuncs(empty, $add_f $add_twice_f)" "NeList{TypedFunc}: typedf($add_fid, $add_type, cs(nil), typedExpr(tid($add_body, int))) typedf($add_twice_fid, $add_twice_type, cs(nil), typedExpr(tid(fcall($add_fid, int int int, (\"X\" |-> v(\"X\"), \"Y\" |-> fcall($add_fid, int int int, (\"X\" |-> v(\"X\"), \"Y\" |-> v( \"Y\"))))), int)))"
 run_test "genFunc(inferFunc(empty, $add_f))" "NeList{String}: \"add_to(X,Y,Temp0) :-\" \"Temp0#=X+Y\""
 
 distance_fid="comp(s(\"distance\") s(\"from\") v(\"X1\") v(\"Y1\") s(\"to\") v(\"X2\") v(\"Y2\"))"
@@ -73,5 +73,5 @@ surround_body="comp(comp(v(\"Left\") s(\"..\") v(\"X\")) s(\"..\") v(\"Right\"))
 surround_type="func(string, func(string, func(string, string)))"
 surround_f="$(make_func "$surround_fid" "$surround_body")"
 
-run_test "inferFunc(empty, $surround_f)" "TypedFunc:typedf(comp(s(\"surround\")v(\"X\")s(\"with\")v(\"Left\")v(\"Right\")),func(string,func(string,func(string,string))),typedExpr(tid(comp(comp(v(\"Left\")s(\"..\")v(\"X\"))s(\"..\")v(\"Right\")),string)))"
+run_test "inferFunc(empty, $surround_f)" "TypedFunc:typedf(comp(s(\"surround\")v(\"X\")s(\"with\")v(\"Left\")v(\"Right\")),func(string,func(string,func(string,string))),cs(nil),typedExpr(tid(comp(comp(v(\"Left\")s(\"..\")v(\"X\"))s(\"..\")v(\"Right\")),string)))"
 

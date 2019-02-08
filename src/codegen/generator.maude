@@ -108,8 +108,9 @@ mod ENKI-CODEGEN is
            NewLine                        := genPrologOp(T, S, NewIdStr, Res1, Res2) .
 
     var TID : TypedId .
+    var Constraint : Constraint .
     op genFunc : TypedFunc -> List{String} .
-    ceq genFunc(typedf(FuncId, T, typedExpr(TID))) =
+    ceq genFunc(typedf(FuncId, T, Constraint, typedExpr(TID))) =
         (genFuncCall(FuncId, ResName) + " :- ") Lines
         if genVal(Lines, ResName, Counter) := generate(TID, 0) .
 
