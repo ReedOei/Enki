@@ -20,7 +20,6 @@ mod ENKI-SYNTAX-SORTS is
     op i : Int -> Id .
     op b : Bool -> Id .
     op v : String -> Id .
-    op vmap : String String -> Id .
     op fid : Id -> Id .
     op t : Id EnkiType -> Id .
 

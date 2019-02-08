@@ -97,6 +97,7 @@ export -f run_test
 export -f print_color
 export -f print_color_num
 
+git rev-parse HEAD
 echo "Started at: $(date)"
 start_time="$(date +"%s")"
 

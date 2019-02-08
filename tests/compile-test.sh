@@ -9,6 +9,8 @@ try_run() {
     else
         test_fail "$fname" "$(cat examples/ast/$fname.out)" "$(cat temp)"
     fi
+
+    rm temp
 }
 
 try_run "add.enkiast"

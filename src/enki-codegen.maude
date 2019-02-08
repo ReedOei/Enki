@@ -8,10 +8,6 @@ mod ENKI-CODEGEN is
     protecting CONVERSION .
     protecting MAP{String, String} .
 
-    sort GenResult .
-
-    op genRes : Int Map{String, String} List{String} -> GenResult .
-
     var Id Id1 Id2 : Id .
     vars S S1 S2 : String .
     vars Strs Current : List{String} .
@@ -67,37 +63,60 @@ mod ENKI-CODEGEN is
     vars Line NewIdStr Str : String .
     var TempVarMap AllVars : Map{String, String} .
 
-    op genParams : List{EnkiType} List{Id} Map{String, Id} List{String} Int -> GenResult .
-    eq genParams(Types, nil, VarMap, Current, I) = genRes(I, empty, Current) .
-    ceq genParams(T Types, v(S) Ids, (S |-> fcall(FuncId, FuncTypes, FuncMap), VarMap), Current, I) =
-        genRes(FinalI, (S |-> NewIdStr, AllVars), NewLines)
-        if genRes(NewI, NewVarMap, Lines) := genParams(FuncTypes, varlist(FuncId), FuncMap, nil, I) /\
-           NewIdStr                      := "Temp" + string(NewI, 10) /\
-           NewLine                       := genFuncCallParams(FuncId, NewVarMap, NewIdStr) /\
-           genRes(FinalI, AllVars, NewLines)  := genParams(Types, Ids, VarMap, append(Lines NewLine, Current), NewI + 1) .
-    ceq genParams(T Types, v(S) Ids, (S |-> Id, VarMap), Current, I) =
-        genRes(FinalI, (S |-> NewIdStr, NewVarMap), Lines)
-        if NewIdStr                       := "Temp" + string(I, 10) /\
-           NewLine                        := NewIdStr + " " + eqSign(T) + " " + genId(Id) /\
-           genRes(FinalI, NewVarMap, Lines) := genParams(Types, Ids, VarMap, NewLine Current, I + 1) .
+    --- Represents a value that was generated, with the lines to generate it, the name of the variable the result
+    --- was stored in, and the fresh var counter number after generating it.
+    sort GenVal .
+    op genVal : List{String} String Int -> GenVal .
 
-    op genId : Id -> List{String} .
-    eq genId(v(S)) = S .
-    eq genId(s(S)) = "\"" + S + "\"" .
-    eq genId(i(I)) = string(I, 10) .
-    ceq genId(comp(Id1 s(S) Id2)) = "(" + genId(Id1) + " " + prologArith(S) + " " + genId(Id2) + ")"
+    sort ParamRes .
+    op paramRes : List{String} Map{String, String} Int -> ParamRes .
+
+    op genParams : List{EnkiType} List{Id} Map{String, Id} Int -> ParamRes .
+    eq genParams(Types, nil, VarMap, Counter)                     = paramRes(nil, empty, Counter) .
+    ceq genParams(T Types, v(S) Ids, (S |-> Id, VarMap), Counter) =
+        paramRes(append(Lines1, Lines2), (S |-> ResName, AllVars), FinalI)
+        if genVal(Lines1, ResName, Counter1) := generate(tid(Id, T), Counter + 1) /\
+           paramRes(Lines2, AllVars, FinalI) := genParams(Types, Ids, VarMap, Counter1 + 1) .
+
+    vars Counter Counter1 Counter2 : Int .
+    vars Lines1 Lines2 : List{String} .
+    vars Res1 Res2 : String .
+
+    var Op : String .
+    op genPrologOp : EnkiType String String String String -> String .
+    eq genPrologOp(T, "..", NewIdStr, Res1, Res2) =
+        "atom_concat(" + Res1 + "," + Res2 + "," + NewIdStr + ")" .
+    ceq genPrologOp(T, S, NewIdStr, Res1, Res2) =
+        NewIdStr + " " + eqSign(T) + " " + Res1 + " " + S + " " + Res2
         if isArith(S) .
 
+    op generate : TypedId Int -> GenVal .
+    eq generate(tid(b(true), T), Counter)  = genVal(nil, "true", Counter) .
+    eq generate(tid(b(false), T), Counter) = genVal(nil, "false", Counter) .
+    eq generate(tid(i(I), T), Counter)     = genVal(nil, string(I, 10), Counter) .
+    eq generate(tid(v(S), T), Counter)     = genVal(nil, S, Counter) .
+    eq generate(tid(s(S), T), Counter)     = genVal(nil, S, Counter) .
+    eq generate(tid(t(Id, T), T), Counter) = generate(tid(Id, T), Counter) .
+    eq generate(tid(comp(Id), T), Counter) = generate(tid(Id, T), Counter) .
+    ceq generate(tid(fcall(FuncId, Types, VarMap), T), Counter) =
+        genVal(Lines NewLine, NewIdStr, FinalI + 1)
+        if paramRes(Lines, AllVars, FinalI) := genParams(Types, varlist(FuncId), VarMap, Counter + 1) /\
+           NewIdStr                         := "Temp" + string(Counter, 10) /\
+           NewLine                          := genFuncCallParams(FuncId, AllVars, NewIdStr) .
+    --- Handle arithmetic operations
+    ceq generate(tid(comp(Id1 s(S) Ids), T), Counter) =
+        genVal(append(Lines1, Lines2 NewLine), NewIdStr, Counter2 + 1)
+        if (isArith(S) or isStrOp(S)) /\
+           genVal(Lines1, Res1, Counter1) := generate(tid(Id1, T), Counter + 1) /\
+           genVal(Lines2, Res2, Counter2) := generate(tid(comp(Ids), T), Counter1 + 1) /\
+           NewIdStr                       := "Temp" + string(Counter, 10) /\
+           NewLine                        := genPrologOp(T, S, NewIdStr, Res1, Res2) .
+
+    var TID : TypedId .
     op genFunc : TypedFunc -> List{String} .
-    ceq genFunc(typedf(Id, T, typedExpr(tid(fcall(FuncId, Types, VarMap), T2)))) =
-        (genFuncCall(Id, ResName) + " :- ")
-        Lines
-        genFuncCallParams(FuncId, AllVars, ResName)
-        if ResName := "Result_" + funcName(Id) /\
-           genRes(FinalI, AllVars, Lines) := genParams(Types, varlist(FuncId), VarMap, nil, 0) .
-    ceq genFunc(typedf(FuncId, T, typedExpr(tid(Id2, T2)))) =
-        genFuncCall(FuncId, ResName) + " :- " + ResName + " " + eqSign(T) + " " + genId(Id2)
-        if ResName := "Result_" + funcName(FuncId) [owise] .
+    ceq genFunc(typedf(FuncId, T, typedExpr(TID))) =
+        (genFuncCall(FuncId, ResName) + " :- ") Lines
+        if genVal(Lines, ResName, Counter) := generate(TID, 0) .
 
     var TFunc : TypedFunc .
     var TFuncs : List{TypedFunc} .
