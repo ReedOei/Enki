@@ -1,0 +1,44 @@
+load "environment.maude"
+
+mod ENKI-UNIFICATION is
+    protecting ENKI-SYNTAX-SORTS .
+    protecting ENKI-TYPECHECK-SORTS .
+    protecting ENKI-TYPECHECK-ENV .
+
+    protecting LIST{String} .
+    protecting LIST{EnkiFunc} .
+    protecting SET{EnkiType} .
+
+    var S : String .
+    var Strs : List{String} .
+    vars T T1 T2 : EnkiType .
+    vars Id Id1 Id2 : Id .
+    var Ids : List{Id} .
+    vars RestTIDS TIDS : Set{TypedId} .
+    var Types : List{EnkiType} .
+    var VarMap : Map{String, Id} .
+
+    op join : EnkiType EnkiType -> EnkiType [comm] .
+    eq join(any(S), T) = T .
+    eq join(T, T)      = T .
+
+    op unifyAll : Set{TypedId} EnkiType EnkiType -> Set{TypedId} .
+    eq unifyAll(empty, T1, T2)               = empty .
+    eq unifyAll((tid(Id, T1), TIDS), T1, T2) = (tid(Id, T2), unifyAll(TIDS, T1, T2)) .
+    eq unifyAll(TIDS, T1, T2)                = TIDS [owise] .
+
+    op unify : Set{TypedId} Id Id -> Set{TypedId} .
+    ceq unify(TIDS, Id1, Id2) = unifyAll(unifyAll(TIDS, T1, T), T2, T)
+        if (tid(Id1, T1), tid(Id2, T2), RestTIDS) := TIDS /\
+           T                                      := join(T1, T2) .
+    eq unify(TIDS, Id1, Id2) = (tid(Id1, typeof(TIDS, Id2)), TIDS) .
+
+    op unifyType : Set{TypedId} Id EnkiType -> Set{TypedId} .
+    eq unifyType((tid(Id, T1), TIDS), Id, T2) = unifyAll((tid(Id, T1), TIDS), T1, join(T1, T2)) .
+    eq unifyType(TIDS, Id, T2)                = (tid(Id, T2), TIDS) [owise] .
+
+    op unifyList : Set{TypedId} List{EnkiType} List{Id} -> Set{TypedId} .
+    eq unifyList(TIDS, Types, nil)      = TIDS .
+    eq unifyList(TIDS, T Types, Id Ids) = unifyList(unifyType(TIDS, Id, T), Types, Ids) .
+endm
+

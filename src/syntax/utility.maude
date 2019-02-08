@@ -1,55 +1,4 @@
-mod ENKI-SYNTAX-SORTS is
-    protecting INT .
-    protecting BOOL .
-    protecting STRING .
-
-    sort EnkiType .
-    op int : -> EnkiType .
-    op bool : -> EnkiType .
-    op string : -> EnkiType .
-    op any : String -> EnkiType .
-    op func : EnkiType EnkiType -> EnkiType .
-
-    vars T1 T2 : EnkiType .
-    op returnType : EnkiType -> EnkiType .
-    eq returnType(func(T1, T2)) = returnType(T2) .
-    eq returnType(T1)           = T1 [owise] .
-
-    sort Id .
-    op s : String -> Id .
-    op i : Int -> Id .
-    op b : Bool -> Id .
-    op v : String -> Id .
-    op fid : Id -> Id .
-    op t : Id EnkiType -> Id .
-
-    sort Constraint .
-    op c : Id -> Constraint .
-    op _ _ : Constraint Constraint -> Constraint [assoc] .
-
-    sort Expr .
-    op e : Id -> Expr .
-
-    sort EnkiFunc .
-    op f : Id Expr -> EnkiFunc .
-
-    sort EnkiRule .
-    op r : Id Constraint -> EnkiRule .
-endm
-
-view Id from TRIV to ENKI-SYNTAX-SORTS is
-    sort Elt to Id .
-endv
-
-view EnkiType from TRIV to ENKI-SYNTAX-SORTS is
-    sort Elt to EnkiType .
-endv
-
-view EnkiFunc from TRIV to ENKI-SYNTAX-SORTS is
-    sort Elt to EnkiFunc .
-endv
-
-mod ENKI-SYNTAX is
+mod ENKI-SYNTAX-UTILITY is
     protecting ENKI-SYNTAX-SORTS .
 
     protecting LIST{Id} .
@@ -61,6 +10,7 @@ mod ENKI-SYNTAX is
     var T : EnkiType .
     vars Id Id1 Id2 : Id .
     vars Ids Ids1 Ids2 : List{Id} .
+    var L : List{Id} .
 
     op comp : List{Id} -> Id .
 
@@ -83,11 +33,15 @@ mod ENKI-SYNTAX is
     eq varlist(comp(nil))      = nil .
     eq varlist(comp(Id Ids))   = append(varlist(Id), varlist(comp(Ids))) .
 
-    var L : List{Id} .
     op varstrs : List{Id} -> List{String} .
-    eq varstrs(nil)          = nil .
-    eq varstrs(v(S) L)       = S varstrs(L) .
-    eq varstrs(t(v(S), T) L) = S varstrs(L) .
+    eq varstrs(s(S))           = nil .
+    eq varstrs(i(I))           = nil .
+    eq varstrs(b(B))           = nil .
+    eq varstrs(v(S))           = S .
+    eq varstrs(t(v(S), T))     = S .
+    eq varstrs(t(Id, T))       = nil .
+    eq varstrs(comp(nil))      = nil .
+    eq varstrs(comp(Id Ids))   = append(varstrs(Id), varstrs(comp(Ids))) .
 
     op nonVarStrs : List{Id} -> List{String} .
     eq nonVarStrs(nil)          = nil .
@@ -111,5 +65,17 @@ mod ENKI-SYNTAX is
     op prependIds : Id Id -> Id .
     eq prependIds(Id, comp(Ids))          = comp(Id Ids) .
     eq prependIds(Id1, Id2)               = comp(Id1 Id2) [owise] .
+
+    op isArith : String -> Bool .
+    eq isArith("+") = true .
+    eq isArith("-") = true .
+    eq isArith("/") = true .
+    eq isArith("*") = true .
+    eq isArith("^") = true .
+    eq isArith(S)   = false [owise] .
+
+    op isStrOp : String -> Bool .
+    eq isStrOp("..") = true .
+    eq isStrOp(S)    = false [owise] .
 endm
 

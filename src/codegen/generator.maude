@@ -1,5 +1,5 @@
-load ../typechecking/checker.maude
-load ../utility.maude
+load "../typechecking/checker.maude"
+load "../utility.maude"
 
 mod ENKI-CODEGEN is
     protecting ENKI-TYPECHECK .
@@ -51,10 +51,10 @@ mod ENKI-CODEGEN is
 
     op genFuncCallParams : Id Map{String, String} String -> String .
     eq genFuncCallParams(FuncId, StrVarMap, ResName) =
-        funcName(FuncId) + "(" + intercalate(",", mapVars(varstrs(varlist(FuncId)), StrVarMap) ResName) + ")" .
+        funcName(FuncId) + "(" + intercalate(",", mapVars(varstrs(FuncId), StrVarMap) ResName) + ")" .
 
     op genFuncCall : Id String -> String .
-    eq genFuncCall(FuncId, ResName) = genFuncCallParams(FuncId, idMap(varstrs(varlist(FuncId))), ResName) .
+    eq genFuncCall(FuncId, ResName) = genFuncCallParams(FuncId, idMap(varstrs(FuncId)), ResName) .
 
     var NewLines Lines : List{String} .
     vars I1 I2 FinalI : Int .

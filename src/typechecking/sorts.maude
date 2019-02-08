@@ -1,0 +1,31 @@
+load "../syntax/sorts.maude"
+load "../syntax/utility.maude"
+
+mod ENKI-TYPECHECK-SORTS-SYNTAX is
+    protecting ENKI-SYNTAX-SORTS .
+    protecting LIST{EnkiType} .
+    protecting MAP{String, Id} .
+
+    sorts TypedFunc TypedId TypedExpr .
+
+    op tid : Id EnkiType -> TypedId .
+    op typedExpr : TypedId -> TypedExpr .
+    op typedf : Id EnkiType TypedExpr -> TypedFunc .
+
+    op fcall : Id List{EnkiType} Map{String, Id} -> Id .
+endm
+
+view TypedId from TRIV to ENKI-TYPECHECK-SORTS-SYNTAX is
+    sort Elt to TypedId .
+endv
+
+view TypedFunc from TRIV to ENKI-TYPECHECK-SORTS-SYNTAX is
+    sort Elt to TypedFunc .
+endv
+
+mod ENKI-TYPECHECK-SORTS is
+    protecting ENKI-TYPECHECK-SORTS-SYNTAX .
+    protecting SET{TypedId} .
+    protecting LIST{TypedId} .
+endm
+
