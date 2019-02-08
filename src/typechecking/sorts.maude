@@ -7,7 +7,8 @@ mod ENKI-TYPECHECK-SORTS-SYNTAX is
 
     op tid : Id EnkiType -> TypedId .
     op typedExpr : TypedId -> TypedExpr .
-    op typedf : Id EnkiType TypedConstraint TypedExpr -> TypedFunc .
+    op typed : Id EnkiType TypedConstraint TypedExpr -> TypedFunc .
+    op typed : Id EnkiType TypedConstraint -> TypedRule .
 
     op def : TypedFunc -> TypedDef .
     op def : TypedRule -> TypedDef .

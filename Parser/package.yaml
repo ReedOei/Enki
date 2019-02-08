@@ -21,6 +21,12 @@ description:         Please see the README on GitHub at <https://github.com/Reed
 
 dependencies:
 - base >= 4.7 && < 5
+- QuickCheck
+- parsec
+- containers
+- mtl
+- lens
+- optparse-applicative
 
 library:
   source-dirs: src

@@ -122,7 +122,7 @@ mod ENKI-CODEGEN is
 
     var TID : TypedId .
     op genFunc : TypedFunc -> List{String} .
-    ceq genFunc(typedf(FuncId, T, C, typedExpr(TID))) =
+    ceq genFunc(typed(FuncId, T, C, typedExpr(TID))) =
         append((genFuncCall(FuncId, Res2) + " :- ") Lines1, Lines2)
         if genVal(Lines1, Res1, Counter)  := generateConstraint(C, 0) /\
            genVal(Lines2, Res2, Counter1) := generate(TID, Counter) .

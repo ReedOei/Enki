@@ -20,8 +20,9 @@ mod ENKI-SYNTAX-SORTS is
     op i : Int -> Id .
     op b : Bool -> Id .
     op v : String -> Id .
-    op fid : Id -> Id .
     op t : Id EnkiType -> Id .
+    op fid : Id -> Id .
+    op rid : Id -> Id .
 
     sort Constraint .
     op c : Id -> Constraint .

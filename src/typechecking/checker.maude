@@ -109,6 +109,9 @@ mod ENKI-TYPECHECK is
     op makeFuncType : Set{TypedId} Id Id -> EnkiType .
     eq makeFuncType(TIDS, Id1, Id2) = functype(attachVars(TIDS, varlist(Id1)) attachType(TIDS, Id2)) .
 
+    op makeRuleType : Set{TypedId} Id -> EnkiType .
+    eq makeRuleType(TIDS, RuleId) = functype(attachVars(TIDS, varlist(RuleId))) .
+
     var VarMap : Map{String, Id} .
 
     var DummyT : EnkiType .
@@ -166,19 +169,31 @@ mod ENKI-TYPECHECK is
 
     var Constraint : Constraint .
     op inferFunc : Set{TypedId} EnkiFunc -> TypedFunc .
-    ceq inferFunc(TIDS, f(Id1, Constraint, e(Id2))) = typedf(Id1, makeFuncType(NewTIDS, Id1, Id2), TConstraint, TExpr)
-        if Ids := append(idList(Id1), append(idList(Id2), constraintIds(Constraint))) /\
+    ceq inferFunc(TIDS, f(Id1, Constraint, e(Id2))) = typed(Id1, makeFuncType(NewTIDS, Id1, Id2), TConstraint, TExpr)
+        if Ids         := append(idList(Id1), append(idList(Id2), constraintIds(Constraint))) /\
            NewTIDS     := inferConstraint(inferId(freshtypes(TIDS, Ids), Id2), Constraint) /\
            TExpr       := typedExpr(resolve(TIDS, attachType(NewTIDS, Id2))) /\
            TConstraint := resolveConstraints(TIDS, attachConstraintTypes(NewTIDS, Constraint)) .
-           --- TConstraint := resolveConstraints(TIDS, attachConstraintTypes(NewTIDS, Constraint)) .
+
+    var RuleId : Id .
+    op inferRule : Set{TypedId} EnkiRule -> TypedRule .
+    ceq inferRule(TIDS, r(RuleId, Constraint)) = typed(RuleId, makeRuleType(NewTIDS, RuleId), TConstraint)
+        if Ids  := append(idList(RuleId), constraintIds(Constraint)) /\
+           NewTIDS     := inferConstraint(freshtypes(TIDS, Ids), Constraint) /\
+           TConstraint := resolveConstraints(TIDS, attachConstraintTypes(NewTIDS, Constraint)) .
 
     var Defs : List{EnkiDef} .
     var Func : EnkiFunc .
+    var Rule : EnkiRule .
+    var TRule : TypedRule .
+
     op inferDefs : Set{TypedId} List{EnkiDef} -> List{TypedDef} .
     eq inferDefs(TIDS, nil) = nil .
     ceq inferDefs(TIDS, def(Func) Defs) = def(TFunc) inferDefs((tid(fid(Id), T), TIDS), Defs)
         if TFunc := inferFunc(TIDS, Func) /\
-           typedf(Id, T, TConstraint, TExpr) := TFunc .
+           typed(Id, T, TConstraint, TExpr) := TFunc .
+    ceq inferDefs(TIDS, def(Rule) Defs) = def(TRule) inferDefs((tid(rid(Id), T), TIDS), Defs)
+        if TRule := inferRule(TIDS, Rule) /\
+           typed(Id, T, TConstraint) := TRule .
 endm
 
