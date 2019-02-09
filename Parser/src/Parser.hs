@@ -74,6 +74,7 @@ func = do
     Constraint cs <- constraint
     wsSkip
     char '.'
+    optional newlines
 
     pure $ Func id (Constraint (init cs)) (Expr (last cs))
 
@@ -110,7 +111,11 @@ str = S <$> (many1 (oneOf cs) >>= \m -> notFollowedBy (oneOf ":,()") >> pure m)
         cs = ['a'..'z'] ++ ['+', '-', '=', '*', '/', '^']
 
 var :: Parser Id
-var = V <$> many1 (oneOf ['A'..'Z'])
+var = V <$> do
+    s <- oneOf ['A'..'Z']
+    ss <- many $ oneOf $ ['A'..'Z'] ++ ['a'..'z']
+
+    pure $ s:ss
 
 nonzeroDigit :: Parser Char
 nonzeroDigit = oneOf "123456789"
