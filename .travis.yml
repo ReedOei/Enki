@@ -1,3 +1,7 @@
+cache:
+    directories:
+        - $HOME/.stack
+
 before_install:
     - sudo apt-add-repository -y ppa:swi-prolog/stable
     - sudo apt update
@@ -10,4 +14,7 @@ before_install:
 
 script:
     - make test
+    - cd Parser
+    - stack --no-terminal --install-ghc test --only-dependencies
+    - stack --no-terminal test
 
