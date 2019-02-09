@@ -198,10 +198,18 @@ mod ENKI-TYPECHECK is
     var Rule : EnkiRule .
     var TRule : TypedRule .
 
+    op dummyFuncType : Set{TypedId} Id -> Set{TypedId} .
+    ceq dummyFuncType(TIDS, Id) = (tid(fid(Id), FuncType), TIDS)
+        if NewTIDS := freshtypes(TIDS, varlist(Id)) /\
+           any(S) := firstUnused(types(NewTIDS), 0) /\
+           FuncType := functype(attachVars((tid(v(S), any(S)), NewTIDS), varlist(Id)) tid(v(S), any(S))) .
+
+    var Expr : Expr .
     op inferDefs : Set{TypedId} List{EnkiDef} -> List{TypedDef} .
     eq inferDefs(TIDS, nil) = nil .
     ceq inferDefs(TIDS, def(Func) Defs) = def(TFunc) inferDefs((tid(fid(Id), T), TIDS), Defs)
-        if TFunc := inferFunc(TIDS, Func) /\
+        if f(FuncId, C, Expr) := Func /\
+           TFunc := inferFunc(dummyFuncType(TIDS, FuncId), Func) /\
            typed(Id, T, TConstraint, TExpr) := TFunc .
     ceq inferDefs(TIDS, def(Rule) Defs) = def(TRule) inferDefs((tid(fid(Id), T), TIDS), Defs)
         if TRule := inferRule(TIDS, Rule) /\

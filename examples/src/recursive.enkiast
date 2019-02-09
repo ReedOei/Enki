@@ -1,0 +1,1 @@
+def(f(comp(s("sum") v("N")),cs(nil),e(comp(comp(s("sum") comp(v("N") s("-") i(1))) s("+") v("N")))))
