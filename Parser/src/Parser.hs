@@ -33,7 +33,7 @@ class PrettyPrint a where
 
 maudeList :: [String] -> String
 maudeList [] = "nil"
-maudeList xs@(_:_) = intercalate " " xs
+maudeList xs@(_:_) = unwords xs
 
 instance PrettyPrint Id where
     prettyPrint (S str)      = "s(" ++ show str ++ ")"
@@ -70,6 +70,7 @@ func = do
     id <- enkiId
     wsSkip
     string "is:"
+    -- optional newlines
     wsSkip
     Constraint cs <- constraint
     wsSkip
@@ -113,7 +114,7 @@ str = S <$> (many1 (oneOf cs) >>= \m -> notFollowedBy (oneOf ":,()") >> pure m)
 var :: Parser Id
 var = V <$> do
     s <- oneOf ['A'..'Z']
-    ss <- many $ oneOf $ ['A'..'Z'] ++ ['a'..'z']
+    ss <- many $ oneOf $ ['A'..'Z'] ++ ['a'..'z'] ++ ['0'..'9']
 
     pure $ s:ss
 

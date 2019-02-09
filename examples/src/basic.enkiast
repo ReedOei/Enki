@@ -1,3 +1,3 @@
 def(f(comp(s("add") v("X") s("to") v("Y")),cs(nil),e(comp(v("X") s("+") v("Y")))))
 def(f(comp(s("half") v("X") v("H")),cs(nil),e(comp(v("X") s("=") comp(i(2) s("*") v("H"))))))
-def(f(comp(s("square") s("root") v("X") s("is") v("Root")),cs(nil),e(comp(comp(v("Root") s("^") i(2)) s("=") v("X")))))
+def(f(comp(s("square") s("root") v("X")),cs(c(comp(comp(v("Root") s("^") i(2)) s("=") v("X")))),e(comp(v("Root")))))
