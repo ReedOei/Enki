@@ -22,6 +22,8 @@ description:         Please see the README on GitHub at <https://github.com/Reed
 dependencies:
 - base >= 4.7 && < 5
 - QuickCheck
+- MissingH
+- hspec
 - parsec
 - containers
 - mtl
@@ -32,7 +34,7 @@ library:
   source-dirs: src
 
 executables:
-  Parser-exe:
+  Parser:
     main:                Main.hs
     source-dirs:         app
     ghc-options:

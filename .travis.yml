@@ -2,8 +2,12 @@ before_install:
     - sudo apt-add-repository -y ppa:swi-prolog/stable
     - sudo apt update
     - sudo apt install -y maude swi-prolog
+    - curl -sSL https://get.haskellstack.org/ | sh
+    - stack upgrade
+    - stack setup
+    - stack update
+    - ./setup
 
 script:
-    - ./setup
     - make test
 
