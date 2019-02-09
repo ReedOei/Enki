@@ -31,7 +31,7 @@ parse_and_compile(EnkiMain, File) :-
     compile(EnkiMain, OutputFile).
 
 parse_file(File, OutputFile) :-
-    format('Tried to parse ~w to ~w~n. Parsing is currently unimplemented.', [File, OutputFile]).
+    process(path('Parser'), [File, OutputFile]).
 
 maude_run(EnkiMain, Str, Result) :-
     atomic_list_concat(['reduce in ENKI : ', Str, ' .'], '', CompileStr),

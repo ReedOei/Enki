@@ -31,18 +31,22 @@ data Def = Func Id Constraint Expr
 class PrettyPrint a where
     prettyPrint :: a -> String
 
+maudeList :: [String] -> String
+maudeList [] = "nil"
+maudeList xs@(_:_) = intercalate " " xs
+
 instance PrettyPrint Id where
     prettyPrint (S str)      = "s(" ++ show str ++ ")"
     prettyPrint (I i)        = "i(" ++ show i ++ ")"
     prettyPrint (B b)        = "b(" ++ toLowerCase (show b) ++ ")"
     prettyPrint (V name)     = "v(" ++ show name ++ ")"
-    prettyPrint (Comp parts) = "comp(" ++ intercalate " " (map prettyPrint parts) ++ ")"
+    prettyPrint (Comp parts) = "comp(" ++ maudeList (map prettyPrint parts) ++ ")"
 
 instance PrettyPrint Expr where
     prettyPrint (Expr id) = "e(" ++ prettyPrint id ++ ")"
 
 instance PrettyPrint Constraint where
-    prettyPrint (Constraint ids) = "cs(" ++ intercalate " " (map (\id -> "c(" ++ prettyPrint id ++ ")") ids) ++ ")"
+    prettyPrint (Constraint ids) = "cs(" ++ maudeList (map (\id -> "c(" ++ prettyPrint id ++ ")") ids) ++ ")"
 
 instance PrettyPrint Def where
     prettyPrint (Func id c e) = "def(f(" ++ prettyPrint id ++ "," ++ prettyPrint c ++ "," ++ prettyPrint e ++ "))"
