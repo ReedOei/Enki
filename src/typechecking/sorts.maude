@@ -14,6 +14,7 @@ mod ENKI-TYPECHECK-SORTS-SYNTAX is
     op def : TypedRule -> TypedDef .
 
     op typedConstraint : TypedId -> TypedConstraint .
+    op typedWhen : TypedConstraint TypedConstraint -> TypedConstraint .
 
     op fcall : Id List{EnkiType} Map{String, Id} -> Id .
     --- Represents using a data constructor

@@ -1,8 +1,39 @@
+mod ENKI-CODEGEN-SORTS is
+    protecting STRING .
+
+    --- Represents a line of output, along with the way it should be combined with the next line
+    sort Line .
+    op andline : String -> Line .
+    op orline : String -> Line .
+    op hornline : String -> Line . --- A line with a :-
+    op synline : String -> Line . --- A line that is none of the above
+
+    var S : String .
+    op str : Line -> String .
+    eq str(andline(S))  = S .
+    eq str(orline(S))   = S .
+    eq str(synline(S))  = S .
+    eq str(hornline(S)) = S .
+
+    op lineend : Line -> String .
+    eq lineend(andline(S))  = "," .
+    eq lineend(orline(S))   = ";" .
+    eq lineend(hornline(S)) = " :-" . --- The space before ":-" is just to make it look nicer
+    eq lineend(synline(S))  = "" .
+endm
+
+view Line from TRIV to ENKI-CODEGEN-SORTS is
+    sort Elt to Line .
+endv
+
 mod ENKI-CODEGEN is
     protecting ENKI-TYPECHECK .
     protecting UTILITY .
 
+    protecting ENKI-CODEGEN-SORTS .
+
     protecting CONVERSION .
+    protecting LIST{Line} .
     protecting MAP{String, String} .
 
     var Id Id1 Id2 : Id .
@@ -29,7 +60,7 @@ mod ENKI-CODEGEN is
     var VarMap : Map{String, Id} .
     var Ids : List{Id} .
     var FuncId : Id .
-    var NewLine : String .
+    var NewLine : Line .
 
     var StrVarMap : Map{String, String} .
 
@@ -55,7 +86,7 @@ mod ENKI-CODEGEN is
     op genFuncCall : Id String -> String .
     eq genFuncCall(FuncId, ResName) = genFuncCallParams(FuncId, idMap(varstrs(FuncId)), ResName) .
 
-    var NewLines Lines : List{String} .
+    var NewLines Lines : List{Line} .
     vars I1 I2 FinalI : Int .
     vars Vars1 Vars2 : Map{String, Id} .
 
@@ -65,10 +96,10 @@ mod ENKI-CODEGEN is
     --- Represents a value that was generated, with the lines to generate it, the name of the variable the result
     --- was stored in, and the fresh var counter number after generating it.
     sort GenVal .
-    op genVal : List{String} String Int -> GenVal .
+    op genVal : List{Line} String Int -> GenVal .
 
     sort ParamRes .
-    op paramRes : List{String} Map{String, String} Int -> ParamRes .
+    op paramRes : List{Line} Map{String, String} Int -> ParamRes .
 
     op genParams : List{EnkiType} List{Id} Map{String, Id} Int -> ParamRes .
     eq genParams(Types, nil, VarMap, Counter)                     = paramRes(nil, empty, Counter) .
@@ -78,7 +109,7 @@ mod ENKI-CODEGEN is
            paramRes(Lines2, AllVars, FinalI) := genParams(Types, Ids, VarMap, Counter1 + 1) .
 
     vars Counter Counter1 Counter2 : Int .
-    vars Lines1 Lines2 : List{String} .
+    vars Lines1 Lines2 : List{Line} .
     vars Res1 Res2 : String .
 
     var Op : String .
@@ -106,15 +137,15 @@ mod ENKI-CODEGEN is
     eq generate(tid(t(Id, T), T), Counter) = generate(tid(Id, T), Counter) .
     eq generate(tid(comp(Id), T), Counter) = generate(tid(Id, T), Counter) .
     ceq generate(tid(fcall(FuncId, Type, VarMap), T), Counter) =
-        genVal(Lines, NewLine, FinalI + 1)
+        genVal(Lines, ResName, FinalI + 1)
         if isData(Type) /\
            paramRes(Lines, AllVars, FinalI) := genParams(typeList(Type), varlist(FuncId), VarMap, Counter + 1) /\
-           NewLine                          := genFuncCallParams(FuncId, AllVars, "") .
+           ResName                          := genFuncCallParams(FuncId, AllVars, "") .
     ceq generate(tid(fcall(FuncId, Type, VarMap), T), Counter) =
         genVal(Lines NewLine, NewIdStr, FinalI + 1)
         if paramRes(Lines, AllVars, FinalI) := genParams(typeList(Type), varlist(FuncId), VarMap, Counter + 1) /\
            NewIdStr                         := "Temp" + string(Counter, 10) /\
-           NewLine                          := genFuncCallParams(FuncId, AllVars, if isFunc(Type) then NewIdStr else "" fi) .
+           NewLine                          := andline(genFuncCallParams(FuncId, AllVars, if isFunc(Type) then NewIdStr else "" fi)) .
     --- Handle arithmetic operations
     ceq generate(tid(comp(Id1 s(S) Ids), T), Counter) =
         genVal(append(Lines1, Lines2 NewLine), NewIdStr, Counter2 + 1)
@@ -122,40 +153,55 @@ mod ENKI-CODEGEN is
            genVal(Lines1, Res1, Counter1) := generate(tid(Id1, T), Counter + 1) /\
            genVal(Lines2, Res2, Counter2) := generate(tid(comp(Ids), T), Counter1 + 1) /\
            NewIdStr                       := "Temp" + string(Counter, 10) /\
-           NewLine                        := genPrologOp(T, S, NewIdStr, Res1, Res2) .
+           NewLine                        := andline(genPrologOp(T, S, NewIdStr, Res1, Res2)) .
 
-    var C : TypedConstraint .
+    vars C TConstraint1 TConstraint2 : TypedConstraint .
     var Cs : List{TypedConstraint} .
+    var ThenLines : List{Line} .
     op generateConstraint : TypedConstraint Int -> GenVal .
     eq generateConstraint(typedConstraint(TID), Counter)    = generate(TID, Counter) .
+    ceq generateConstraint(typedWhen(TConstraint1, TConstraint2), Counter) =
+        genVal(synline("(") NewLines orline(")"), Res2, Counter2)
+        if genVal(Lines1, Res1, Counter1) := generateConstraint(TConstraint1, Counter) /\
+           genVal(Lines2, Res2, Counter2) := generateConstraint(TConstraint2, Counter1) /\
+           NewLine := synline(str(last(Lines1)) + " -> " + if Lines2 == nil then "true" else "" fi) /\
+           --- ThenLines are the lines inside the "->" part.
+           --- They need to be changed because we need to make sure that they don't end with a "," or ";"
+           ThenLines := if Lines2 == nil then nil else front(Lines2) synline(str(last(Lines2))) fi /\
+           NewLines := append(front(Lines1) NewLine, ThenLines) .
     eq generateConstraint(typedConstraints(nil), Counter)   = genVal(nil, "Unused", Counter) .
     ceq generateConstraint(typedConstraints(C Cs), Counter) = genVal(append(Lines1, Lines2), Res2, Counter2)
         if genVal(Lines1, Res1, Counter1) := generateConstraint(C, Counter) /\
            genVal(Lines2, Res2, Counter2) := generateConstraint(typedConstraints(Cs), Counter1) .
 
     var TID : TypedId .
-    op genFunc : TypedFunc -> List{String} .
+    op genFunc : TypedFunc -> List{Line} .
     ceq genFunc(typed(FuncId, T, C, typedExpr(TID))) =
-        append(genFuncCall(FuncId, Res2) Lines1, Lines2)
+        append(hornline(genFuncCall(FuncId, Res2)) Lines1, Lines2)
         if genVal(Lines1, Res1, Counter)  := generateConstraint(C, 0) /\
            genVal(Lines2, Res2, Counter1) := generate(TID, Counter) .
 
     var RuleId : Id .
-    op genRule : TypedRule -> List{String} .
-    ceq genRule(typed(RuleId, T, C)) = genFuncCall(RuleId, "") Lines
+    op genRule : TypedRule -> List{Line} .
+    ceq genRule(typed(RuleId, T, C)) = hornline(genFuncCall(RuleId, "")) Lines
         if genVal(Lines, ResName, Counter)  := generateConstraint(C, 0) .
+
+    var L : Line .
+    op combineLines : List{Line} -> String .
+    eq combineLines(L) = str(L) + "." .
+    eq combineLines(L Lines) = str(L) + lineend(L) + "\n    " + combineLines(Lines) .
 
     var TFunc : TypedFunc .
     var TRule : TypedRule .
     var TDefs : List{TypedDef} .
     op genDefs : List{TypedDef} -> String .
     eq genDefs(nil)           = "" .
-    ceq genDefs(def(TFunc) TDefs) = intercalate("\n\n", NewLine genDefs(TDefs))
-        if (Line Lines) := genFunc(TFunc) /\
-           NewLine      := if Lines == nil then Line + "." else Line + " :-\n    " + intercalate(",\n    ", Lines) + "." fi .
-    ceq genDefs(def(TRule) TDefs) = intercalate("\n\n", NewLine genDefs(TDefs))
-        if (Line Lines) := genRule(TRule) /\
-           NewLine      := if Lines == nil then Line + "." else Line + " :-\n    " + intercalate(",\n    ", Lines) + "." fi .
+    ceq genDefs(def(TFunc) TDefs) = intercalate("\n\n", S genDefs(TDefs))
+        if Lines := genFunc(TFunc) /\
+           S     := combineLines(Lines) .
+    ceq genDefs(def(TRule) TDefs) = intercalate("\n\n", S genDefs(TDefs))
+        if Lines := genRule(TRule) /\
+           S     := combineLines(Lines) .
 
     op genHeader : -> String .
     eq genHeader = "#!/usr/bin/env swipl\n\n:- use_module(library(clpfd))." .

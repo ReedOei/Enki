@@ -34,7 +34,7 @@ mod ENKI-SYNTAX-SORTS is
 
     sort Constraint .
     op c : Id -> Constraint .
-    op when : Id Constraint Constraint -> Constraint .
+    op when : Constraint Constraint -> Constraint .
 
     sort Expr .
     op e : Id -> Expr .

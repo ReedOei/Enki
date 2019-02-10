@@ -42,7 +42,7 @@ add_twice_f="$(make_func "$add_twice_fid" "$add_twice_body")"
 run_test "inferFunc(empty, $add_f)" "TypedFunc: typed($add_fid, $add_type, typedConstraints(nil), typedExpr(tid($add_body, int)))"
 run_test "findFuncType(tid(fid($add_fid), $add_type), comp(s(\"add\") i(10) s(\"to\") comp(v(\"X\") s(\"+\") v(\"Y\"))))" "TypedId: tid(comp(s(\"add\") v(\"X\") s(\"to\") v(\"Y\")), func(int, func(int, int)))"
 run_test "inferDefs(empty, def($add_f) def($add_twice_f))" "NeList{TypedDef}: def(typed($add_fid, $add_type, typedConstraints(nil), typedExpr(tid($add_body, int)))) def(typed($add_twice_fid, $add_twice_type, typedConstraints(nil), typedExpr(tid(fcall($add_fid, func(int, func(int, int)), (\"X\" |-> v(\"X\"), \"Y\" |-> fcall($add_fid, func(int, func(int, int)), (\"X\" |-> v(\"X\"), \"Y\" |-> v( \"Y\"))))), int))))"
-run_test "genFunc(inferFunc(empty, $add_f))" "NeList{String}: \"add_to(X,Y,Temp0)\" \"Temp0#=X+Y\""
+run_test "genFunc(inferFunc(empty, $add_f))" "NeList{Line}: hornline(\"add_to(X,Y,Temp0)\") andline(\"Temp0#=X+Y\")"
 
 distance_fid="comp(s(\"distance\") s(\"from\") v(\"X1\") v(\"Y1\") s(\"to\") v(\"X2\") v(\"Y2\"))"
 distance_body="comp(comp(comp(v(\"X1\") s(\"-\") v(\"X2\")) s(\"^\") i(2)) s(\"+\") comp(comp(v(\"Y1\") s(\"-\") v(\"Y2\")) s(\"^\") i(2)))"
@@ -50,8 +50,6 @@ distance_type="func(int, func(int, func(int, func(int, int))))"
 distance_f="$(make_func "$distance_fid" "$distance_body")"
 
 run_test "resolve(tid(fid($add_fid), $add_type), tid($distance_body, int))" "TypedId: tid($distance_body, int)"
-
-run_test "genFunc(inferFunc(empty, $distance_f))" "NeList{String}:\"distance_from_to(X1,Y1,X2,Y2,Temp0)\" \"Temp2#=X1-X2\" \"Temp1#=Temp2^2\" \"Temp9#=Y1-Y2\" \"Temp8#=Temp9^2\" \"Temp0#=Temp1+Temp8\""
 
 run_test "genDefs(inferDefs(empty, def($add_f) def($add_twice_f)))" "String:\"add_to(X,Y,Temp0):-\nTemp0#=X+Y.\n\naddTwice_to(X,Y,Temp0):-\nadd_to(X,Y,Temp4),\nadd_to(X,Temp4,Temp0).\n\n\""
 
@@ -70,7 +68,7 @@ run_test "generate(tid(s(\"test\"), string), 0)" "GenVal: genVal(nil, \"test\", 
 run_test "generate(tid(s(\"+\"), string), 0)" "GenVal: genVal(nil, \"+\", 0)"
 run_test "generate(tid(comp(s(\"blah\")), string), 0)" "GenVal: genVal(nil, \"blah\", 0)"
 run_test "generate(tid(comp(v(\"Y\")), string), 0)" "GenVal: genVal(nil, \"Y\", 0)"
-run_test "generate(tid(comp(v(\"X\") s(\"+\") v(\"Y\")), int), 0)" "GenVal: genVal(\"Temp0 #= X + Y\", \"Temp0\", 3)"
+run_test "generate(tid(comp(v(\"X\") s(\"+\") v(\"Y\")), int), 0)" "GenVal: genVal(andline(\"Temp0 #= X + Y\"), \"Temp0\", 3)"
 
 surround_fid="comp(s(\"surround\") v(\"X\") s(\"with\") v(\"Left\") v(\"Right\"))"
 surround_body="comp(comp(v(\"Left\") s(\"..\") v(\"X\")) s(\"..\") v(\"Right\"))"

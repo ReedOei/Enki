@@ -35,7 +35,9 @@ parse_file(File, OutputFile) :-
 
 maude_run(EnkiMain, Str, Result) :-
     atomic_list_concat(['reduce in ENKI : ', Str, ' .'], '', CompileStr),
-    process(path(maude), ['-no-banner', '-no-wrap', '-no-advise', EnkiMain], [input(CompileStr), lines(Lines)]),
+    process(path(maude), ['-no-banner', '-no-wrap', '-no-advise', EnkiMain], [input(CompileStr), output(Output)]),
+    writeln(user_error, Output),
+    atomic_list_concat(Lines, '\n', Output),
     member(Line, Lines),
     atom_concat('result ', WithType, Line),
     atom_concat(TypeWithColon, Result, WithType),
