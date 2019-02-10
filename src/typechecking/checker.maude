@@ -59,12 +59,18 @@ mod ENKI-TYPECHECK is
     eq ruletype(tid(Id, T))   = T .
     eq ruletype(tid(Id, T) L) = rule(T, ruletype(L)) .
 
+    op datatype : NeList{TypedId} -> EnkiType .
+    eq datatype(tid(Id, T))   = T .
+    eq datatype(tid(Id, T) L) = data(T, datatype(L)) .
+
     op unifyMap : Set{TypedId} List{EnkiType} List{String} Map{String, Id} -> Set{TypedId} .
     eq unifyMap(TIDS, Types, nil, VarMap) = TIDS .
     eq unifyMap(TIDS, T Types, S Strs, (S |-> Id, VarMap)) = unifyMap(inferId(unifyType(TIDS, Id, T), Id), Types, Strs, VarMap) .
 
     op funcTypeList : EnkiType -> List{EnkiType} .
     eq funcTypeList(func(T1, T2)) = T1 funcTypeList(T2) .
+    eq funcTypeList(data(T1, T2)) = T1 funcTypeList(T2) .
+    eq funcTypeList(rule(T1, T2)) = T1 funcTypeList(T2) .
     eq funcTypeList(T)            = T [owise] .
 
     vars Ids1 Ids2 : List{Id} .
@@ -198,11 +204,30 @@ mod ENKI-TYPECHECK is
     var Rule : EnkiRule .
     var TRule : TypedRule .
 
+    --- This exists to allow functions to call themselves
+    --- It just provides a dummy type that has no type information, it just serves to say that a function exists.
     op dummyFuncType : Set{TypedId} Id -> Set{TypedId} .
     ceq dummyFuncType(TIDS, Id) = (tid(fid(Id), FuncType), TIDS)
-        if NewTIDS := freshtypes(TIDS, varlist(Id)) /\
-           any(S) := firstUnused(types(NewTIDS), 0) /\
+        if NewTIDS  := freshtypes(TIDS, varlist(Id)) /\
+           any(S)   := firstUnused(types(NewTIDS), 0) /\
            FuncType := functype(attachVars((tid(v(S), any(S)), NewTIDS), varlist(Id)) tid(v(S), any(S))) .
+
+    var Constructor : Constructor .
+    var Constructors : List{Constructor} .
+    var Field : Field .
+    var Fields : List{Field} .
+
+    op fieldTypes : List{Field} -> List{TypedId} .
+    eq fieldTypes(nil) = nil .
+    eq fieldTypes(field(Id, T) Fields) = tid(Id, T) fieldTypes(Fields) .
+
+    var TypeId : Id .
+    op constructorType : Id Constructor -> TypedId .
+    eq constructorType(TypeId, constructor(Id, Fields)) = tid(fid(Id), datatype(fieldTypes(Fields) tid(TypeId, type(TypeId)))) .
+
+    op constructorTypes : Id List{Constructor} -> Set{TypedId} .
+    eq constructorTypes(Id, nil) = empty .
+    eq constructorTypes(Id, Constructor Constructors) = constructorType(Id, Constructor), constructorTypes(Id, Constructors) .
 
     var Expr : Expr .
     op inferDefs : Set{TypedId} List{EnkiDef} -> List{TypedDef} .
@@ -214,5 +239,7 @@ mod ENKI-TYPECHECK is
     ceq inferDefs(TIDS, def(Rule) Defs) = def(TRule) inferDefs((tid(fid(Id), T), TIDS), Defs)
         if TRule := inferRule(TIDS, Rule) /\
            typed(Id, T, TConstraint) := TRule .
+    ceq inferDefs(TIDS, def(d(Id, Constructors)) Defs) = inferDefs((NewTIDS, TIDS), Defs)
+        if NewTIDS := constructorTypes(Id, Constructors) .
 endm
 

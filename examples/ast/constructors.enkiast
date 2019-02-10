@@ -1,0 +1,4 @@
+def(d(s("list"), constructor(comp(s("empty")), nil) constructor(comp(s("cons") v("Head") v("Tail")), field(s("Head"), int) field(s("Tail"), type(s("list"))))))
+def(f(comp(s("prepend") v("X") v("List")), cs(nil), e(comp(s("cons") v("X") v("List")))))
+def(f(comp(s("head") v("List")), cs(c(comp(v("List") s("=") comp(s("cons") v("Head") v("Tail"))))), e(v("Head"))))
+

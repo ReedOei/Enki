@@ -17,8 +17,8 @@ mod ENKI-UNIFICATION is
     var VarMap : Map{String, Id} .
 
     op join : EnkiType EnkiType -> EnkiType [comm] .
-    eq join(any(S), T) = T .
     eq join(T, T)      = T .
+    eq join(any(S), T) = T .
 
     op unifyAll : Set{TypedId} EnkiType EnkiType -> Set{TypedId} .
     eq unifyAll(empty, T1, T2)               = empty .

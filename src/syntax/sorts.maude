@@ -10,6 +10,9 @@ mod ENKI-SYNTAX-SORTS is
     op any : String -> EnkiType .
     op func : EnkiType EnkiType -> EnkiType .
     op rule : EnkiType EnkiType -> EnkiType .
+    op data : EnkiType EnkiType -> EnkiType .
+    --- Represents a type constructor (Name, followed by type parameters)
+    op type : Id -> EnkiType .
 
     vars T T1 T2 : EnkiType .
     op returnType : EnkiType -> EnkiType .
@@ -27,9 +30,11 @@ mod ENKI-SYNTAX-SORTS is
     op v : String -> Id .
     op t : Id EnkiType -> Id .
     op fid : Id -> Id .
+    op dataid : Id -> Id .
 
     sort Constraint .
     op c : Id -> Constraint .
+    op when : Id Constraint Constraint -> Constraint .
 
     sort Expr .
     op e : Id -> Expr .
@@ -40,9 +45,17 @@ mod ENKI-SYNTAX-SORTS is
     sort EnkiRule .
     op r : Id Constraint -> EnkiRule .
 
+    --- data constructors
+    --- structural subtyping
+    --- "collection-like" e.g., between some delimeters
+    sort EnkiData .
+    sort Constructor .
+    sort Field .
+
     sort EnkiDef .
     op def : EnkiFunc -> EnkiDef .
     op def : EnkiRule -> EnkiDef .
+    op def : EnkiData -> EnkiDef .
 endm
 
 view Id from TRIV to ENKI-SYNTAX-SORTS is
@@ -63,5 +76,13 @@ endv
 
 view EnkiDef from TRIV to ENKI-SYNTAX-SORTS is
     sort Elt to EnkiDef .
+endv
+
+view Constructor from TRIV to ENKI-SYNTAX-SORTS is
+    sort Elt to Constructor .
+endv
+
+view Field from TRIV to ENKI-SYNTAX-SORTS is
+    sort Elt to Field .
 endv
 

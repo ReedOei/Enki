@@ -16,6 +16,8 @@ mod ENKI-TYPECHECK-SORTS-SYNTAX is
     op typedConstraint : TypedId -> TypedConstraint .
 
     op fcall : Id List{EnkiType} Map{String, Id} -> Id .
+    --- Represents using a data constructor
+    op dcall : Id List{EnkiType} Map{String, Id} -> Id .
 endm
 
 view TypedId from TRIV to ENKI-TYPECHECK-SORTS-SYNTAX is

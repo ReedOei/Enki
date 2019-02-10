@@ -5,6 +5,8 @@ mod ENKI-SYNTAX-UTILITY is
     protecting LIST{Constraint} .
     protecting LIST{String} .
     protecting LIST{EnkiType} .
+    protecting LIST{Constructor} .
+    protecting LIST{Field} .
 
     var S : String .
     var I : Int .
@@ -13,6 +15,14 @@ mod ENKI-SYNTAX-UTILITY is
     vars Id Id1 Id2 : Id .
     vars Ids Ids1 Ids2 : List{Id} .
     var L : List{Id} .
+
+    op field : Id EnkiType -> Field .
+
+    --- Represents a single constructor several type constructors
+    op constructor : Id List{Field} -> Constructor .
+
+    op d : Id List{Constructor} -> EnkiData .
+    op def : EnkiData -> EnkiDef .
 
     op comp : List{Id} -> Id .
     op cs : List{Constraint} -> Constraint .
@@ -91,6 +101,7 @@ mod ENKI-SYNTAX-UTILITY is
     op typeList : EnkiType -> List{EnkiType} .
     eq typeList(func(T1, T2)) = T1 typeList(T2) .
     eq typeList(rule(T1, T2)) = T1 typeList(T2) .
+    eq typeList(data(T1, T2)) = T1 typeList(T2) .
     eq typeList(T)            = T [owise] .
 endm
 
