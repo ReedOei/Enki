@@ -51,13 +51,16 @@ instance PrettyPrint Constraint where
 instance PrettyPrint Def where
     prettyPrint (Func id c e) = "def(f(" ++ prettyPrint id ++ "," ++ prettyPrint c ++ "," ++ prettyPrint e ++ "))"
 
-parseFile :: String -> String -> IO ()
+parseFile :: String -> Maybe String -> IO ()
 parseFile fname output = do
     contents <- readFile fname
     case parseDef contents of
         Left err -> error $ show err
         Right parsed ->
-            writeFile output $ intercalate "\n" $ map prettyPrint parsed
+            let outputStr = intercalate "\n" $ map prettyPrint parsed
+            in case output of
+                Nothing -> putStrLn outputStr
+                Just file -> writeFile file outputStr
 
 parseDef :: String -> Either ParseError [Def]
 parseDef = parse enkiDef ""
@@ -70,7 +73,8 @@ func = do
     id <- enkiId
     wsSkip
     string "is:"
-    -- optional newlines
+    wsSkip
+    optional newlines
     wsSkip
     Constraint cs <- constraint
     wsSkip
@@ -83,7 +87,9 @@ expr :: Parser Expr
 expr = Expr <$> enkiId
 
 constraint :: Parser Constraint
-constraint = Constraint <$> sepEndBy1 enkiId (wsSkip >> string "," >> wsSkip)
+constraint = Constraint <$> sepEndBy1 enkiId sep
+    where
+        sep = wsSkip >> string "," >> wsSkip >> optional newlines >> wsSkip
 
 withWs :: Stream s m Char => ParsecT s st m a -> ParsecT s st m a
 withWs parser = do

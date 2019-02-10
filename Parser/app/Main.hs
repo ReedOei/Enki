@@ -9,6 +9,7 @@ main = do
     args <- getArgs
 
     case args of
-        [fname, output] -> parseFile fname output
-        _ -> putStrLn $ "Usage: Parser FILE OUTPUT_FILE"
+        [fname] -> parseFile fname Nothing
+        [fname, output] -> parseFile fname $ Just output
+        _ -> putStrLn $ "Usage: Parser FILE [OUTPUT_FILE]"
 

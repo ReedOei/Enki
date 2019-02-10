@@ -8,13 +8,13 @@ import Text.Parsec
 
 import Parser
 
-testCompile fname = do
+testCompile fname = it fname $ do
     let outputFile = fname ++ "ast"
-    expectedOutput <- strip <$> readFile (outputFile ++ ".out")
 
-    liftIO $ parseFile fname outputFile
+    liftIO $ parseFile fname $ Just outputFile
 
     output <- strip <$> readFile outputFile
+    expectedOutput <- strip <$> readFile (outputFile ++ ".out")
 
     output `shouldBe` expectedOutput
 
@@ -61,7 +61,7 @@ main = hspec $ do
         it "parses a single string" $ do
             let (Right v) = parse str "" "hello"
             v `shouldBe` S "hello"
-        it "does not parse strings ending in a ':'" $ do
+        it "does not parse strings ending in a ':'" $
             isLeft (parse str "" "is:") `shouldBe` True
 
     describe "int" $ do
@@ -90,5 +90,8 @@ main = hspec $ do
             v `shouldBe` Comp [S "factorial", V "X"]
 
     describe "runParser" $ do
-        it "runs the parser and writes a file" $ testCompile "examples/basic.enki"
+        testCompile "examples/basic.enki"
+        testCompile "examples/recursive.enki"
+        testCompile "examples/func_call.enki"
+        testCompile "examples/many_func.enki"
 
