@@ -66,7 +66,6 @@ compile_result(Result, CompileResult) :-
 compile(EnkiMain, File) :-
     read_file(File, Str),
     compile_string(Str, CompileStr),
-    writeln(user_error, CompileStr),
     maude_run(EnkiMain, CompileStr, Result),
     compile_result(Result, CompileResult),
     writeln(CompileResult).

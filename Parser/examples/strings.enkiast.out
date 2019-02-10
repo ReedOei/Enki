@@ -1,0 +1,2 @@
+def(f(comp(s("concat") v("X") v("Y") s("and") v("Z")),cs(nil),e(comp(comp(v("X") s("..") v("Y")) s("..") v("Z")))))
+def(f(comp(s("test") v("X") v("A") v("B") v("C")),cs(nil),e(comp(comp(comp(s("concat") v("X") v("C") s("and") v("C")) s("..") comp(s("concat") v("A") v("C") s("and") v("C"))) s("..") comp(s("concat") v("X") v("A") s("and") v("B"))))))

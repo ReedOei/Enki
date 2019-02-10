@@ -94,4 +94,5 @@ main = hspec $ do
         testCompile "examples/recursive.enki"
         testCompile "examples/func_call.enki"
         testCompile "examples/many_func.enki"
+        testCompile "examples/strings.enki"
 

@@ -113,9 +113,11 @@ paren :: Parser Id
 paren = between (string "(" >> wsSkip) (wsSkip >> string ")") enkiId
 
 str :: Parser Id
-str = S <$> (many1 (oneOf cs) >>= \m -> notFollowedBy (oneOf ":,()") >> pure m)
+str = S <$> (symbols <|> concatOp)
     where
+        symbols = many1 (oneOf cs) >>= \m -> notFollowedBy (oneOf ":,()") >> pure m
         cs = ['a'..'z'] ++ ['+', '-', '=', '*', '/', '^']
+        concatOp = string ".."
 
 var :: Parser Id
 var = V <$> do
