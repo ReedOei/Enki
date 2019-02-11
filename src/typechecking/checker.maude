@@ -66,15 +66,15 @@ mod ENKI-TYPECHECK is
     eq datatype(tid(Id, T))   = T .
     eq datatype(tid(Id, T) L) = data(T, datatype(L)) .
 
-    op unifyMap : Set{TypedId} List{EnkiType} List{String} Map{String, Id} -> Set{TypedId} .
-    eq unifyMap(TIDS, Types, nil, VarMap) = TIDS .
-    eq unifyMap(TIDS, T Types, S Strs, (S |-> Id, VarMap)) = unifyMap(inferId(unifyType(TIDS, Id, T), Id), Types, Strs, VarMap) .
-
     op funcTypeList : EnkiType -> List{EnkiType} .
     eq funcTypeList(func(T1, T2)) = T1 funcTypeList(T2) .
     eq funcTypeList(data(T1, T2)) = T1 funcTypeList(T2) .
     eq funcTypeList(rule(T1, T2)) = T1 funcTypeList(T2) .
     eq funcTypeList(T)            = T [owise] .
+
+    op unifyMap : Set{TypedId} List{EnkiType} List{String} Map{String, Id} -> Set{TypedId} .
+    eq unifyMap(TIDS, Types, nil, VarMap) = TIDS .
+    eq unifyMap(TIDS, T Types, S Strs, (S |-> Id, VarMap)) = unifyMap(inferId(unifyType(TIDS, Id, T), Id), Types, Strs, VarMap) .
 
     vars Ids1 Ids2 : List{Id} .
     op funcNameMatches : Id Id -> Bool .
@@ -214,8 +214,8 @@ mod ENKI-TYPECHECK is
     var Rule : EnkiRule .
     var TRule : TypedRule .
 
-    --- This exists to allow functions to call themselves
-    --- It just provides a dummy type that has no type information, it just serves to say that a function exists.
+    --- These exist to allow functions/rules to call themselves
+    --- It just provides a dummy type that has no type information, it just serves to say the definition exists.
     op dummyFuncType : Set{TypedId} Id -> Set{TypedId} .
     ceq dummyFuncType(TIDS, Id) = (tid(fid(Id), FuncType), TIDS)
         if NewTIDS  := freshtypes(TIDS, varlist(Id)) /\

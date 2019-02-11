@@ -1,0 +1,1 @@
+def(r(comp(v("X") s("is") s("even")),cs(c(comp(v("X") s("=") comp(i(2) s("*") v("N")))))))

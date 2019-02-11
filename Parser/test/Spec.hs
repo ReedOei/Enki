@@ -96,3 +96,5 @@ main = hspec $ do
         testCompile "examples/many_func.enki"
         testCompile "examples/strings.enki"
 
+        testCompile "examples/basic_rule.enki"
+

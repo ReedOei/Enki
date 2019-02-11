@@ -26,6 +26,7 @@ data Constraint = Constraint [Id]
     deriving (Eq, Show)
 
 data Def = Func Id Constraint Expr
+         | Rule Id Constraint
     deriving (Eq, Show)
 
 class PrettyPrint a where
@@ -50,6 +51,7 @@ instance PrettyPrint Constraint where
 
 instance PrettyPrint Def where
     prettyPrint (Func id c e) = "def(f(" ++ prettyPrint id ++ "," ++ prettyPrint c ++ "," ++ prettyPrint e ++ "))"
+    prettyPrint (Rule id c) = "def(r(" ++ prettyPrint id ++ "," ++ prettyPrint c ++ "))"
 
 parseFile :: String -> Maybe String -> IO ()
 parseFile fname output = do
@@ -66,7 +68,22 @@ parseDef :: String -> Either ParseError [Def]
 parseDef = parse enkiDef ""
 
 enkiDef :: Parser [Def]
-enkiDef = many (try func)
+enkiDef = many (try func <|> try rule)
+
+rule :: Parser Def
+rule = do
+    id <- enkiId
+    wsSkip
+    choice $ map string $ ["if:", "where:"]
+    wsSkip
+    optional newlines
+    wsSkip
+    Constraint cs <- constraint
+    wsSkip
+    char '.'
+    optional newlines
+
+    pure $ Rule id $ Constraint cs
 
 func :: Parser Def
 func = do
@@ -81,7 +98,7 @@ func = do
     char '.'
     optional newlines
 
-    pure $ Func id (Constraint (init cs)) (Expr (last cs))
+    pure $ Func id (Constraint (init cs)) $ Expr $ last cs
 
 expr :: Parser Expr
 expr = Expr <$> enkiId
