@@ -30,16 +30,16 @@ main = hspec $ do
             let e = Expr $ Comp [I 1, S "+",I 2]
             prettyPrint e `shouldBe` "e(comp(i(1) s(\"+\") i(2)))"
         it "prints functions" $ do
-            let f = Func (Comp [S "test",V "X",S "and",V "Y"]) (Constraint []) (Expr (Comp [I 1,S "+",I 2]))
+            let f = Func (Comp [S "test",V "X",S "and",V "Y"]) (Constraints []) (Expr (Comp [I 1,S "+",I 2]))
             prettyPrint f `shouldBe` "def(f(comp(s(\"test\") v(\"X\") s(\"and\") v(\"Y\")),cs(nil),e(comp(i(1) s(\"+\") i(2)))))"
 
     describe "func" $ do
         it "parses function declarations" $ do
             let (Right v) = parse func "" "test X and Y is: 1 + 2."
-            v `shouldBe` Func (Comp [S "test",V "X",S "and",V "Y"]) (Constraint []) (Expr (Comp [I 1,S "+",I 2]))
+            v `shouldBe` Func (Comp [S "test",V "X",S "and",V "Y"]) (Constraints []) (Expr (Comp [I 1,S "+",I 2]))
         it "parses functions with constraints" $ do
             let (Right v) = parse func "" "test X and Y is: X = Y, X + 2."
-            v `shouldBe` Func (Comp [S "test",V "X",S "and",V "Y"]) (Constraint [Comp [V "X",S "=",V "Y"]]) (Expr (Comp [V "X",S "+",I 2]))
+            v `shouldBe` Func (Comp [S "test",V "X",S "and",V "Y"]) (Constraints [Constraint (Comp [V "X",S "=",V "Y"])]) (Expr (Comp [V "X",S "+",I 2]))
 
     describe "expr" $ do
         it "parses arithmetic" $ do
@@ -97,4 +97,6 @@ main = hspec $ do
         testCompile "examples/strings.enki"
 
         testCompile "examples/basic_rule.enki"
+        testCompile "examples/complicated_rule.enki"
+        testCompile "examples/collatz.enki"
 

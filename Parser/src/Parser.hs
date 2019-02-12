@@ -22,7 +22,9 @@ data Id = S String
 data Expr = Expr Id
     deriving (Eq, Show)
 
-data Constraint = Constraint [Id]
+data Constraint = Constraint Id
+                | Constraints [Constraint]
+                | When Constraint Constraint
     deriving (Eq, Show)
 
 data Def = Func Id Constraint Expr
@@ -47,7 +49,9 @@ instance PrettyPrint Expr where
     prettyPrint (Expr id) = "e(" ++ prettyPrint id ++ ")"
 
 instance PrettyPrint Constraint where
-    prettyPrint (Constraint ids) = "cs(" ++ maudeList (map (\id -> "c(" ++ prettyPrint id ++ ")") ids) ++ ")"
+    prettyPrint (Constraint id) = "c(" ++ prettyPrint id ++ ")"
+    prettyPrint (Constraints cs) = "cs(" ++ maudeList (map prettyPrint cs) ++ ")"
+    prettyPrint (When condition body) = "when(" ++ prettyPrint condition ++ "," ++ prettyPrint body ++ ")"
 
 instance PrettyPrint Def where
     prettyPrint (Func id c e) = "def(f(" ++ prettyPrint id ++ "," ++ prettyPrint c ++ "," ++ prettyPrint e ++ "))"
@@ -70,43 +74,82 @@ parseDef = parse enkiDef ""
 enkiDef :: Parser [Def]
 enkiDef = many (try func <|> try rule)
 
+lineSep :: Parser ()
+lineSep = do
+    wsSkip
+    optional newlines
+    wsSkip
+
 rule :: Parser Def
 rule = do
+    lineSep
     id <- enkiId
     wsSkip
-    choice $ map string $ ["if:", "where:"]
-    wsSkip
-    optional newlines
-    wsSkip
-    Constraint cs <- constraint
+    choice $ map string ["if:", "where:"]
+    lineSep
+    c <- constraint
     wsSkip
     char '.'
-    optional newlines
 
-    pure $ Rule id $ Constraint cs
+    pure $ Rule id c
 
 func :: Parser Def
 func = do
+    lineSep
     id <- enkiId
     wsSkip
     string "is:"
-    wsSkip
-    optional newlines
-    wsSkip
-    Constraint cs <- constraint
+    lineSep
+    constr <- constraint
     wsSkip
     char '.'
-    optional newlines
 
-    pure $ Func id (Constraint (init cs)) $ Expr $ last cs
+    pure $ case constr of
+        Constraint cid -> Func id (Constraints []) $ Expr cid
+        Constraints cs ->
+            let (Constraint cid) = last cs
+            in Func id (Constraints (init cs)) $ Expr cid
+        When _ _ -> error "Cannot have a function with only a when branch for it's body"
 
 expr :: Parser Expr
 expr = Expr <$> enkiId
 
 constraint :: Parser Constraint
-constraint = Constraint <$> sepEndBy1 enkiId sep
+constraint = Constraints <$> ((sepBy1 (when <|> otherwiseBranch) lineSep) <|>
+                              (map Constraint <$> (sepBy1 enkiId sep)))
     where
         sep = wsSkip >> string "," >> wsSkip >> optional newlines >> wsSkip
+
+when :: Parser Constraint
+when = do
+    lineSep
+    string "when"
+    lineSep
+    condition <- constraint
+    lineSep
+
+    body <- optionMaybe $ do
+        string "then:"
+        lineSep
+        body <- constraint
+        lineSep
+        pure body
+    char '.'
+    lineSep
+
+    pure $ When condition $ fromMaybe (Constraints []) body
+
+otherwiseBranch :: Parser Constraint
+otherwiseBranch = do
+    lineSep
+    string "otherwise"
+    lineSep
+    string "then:"
+    lineSep
+    body <- constraint
+    lineSep
+
+    pure $ When body $ Constraints []
 
 withWs :: Stream s m Char => ParsecT s st m a -> ParsecT s st m a
 withWs parser = do
@@ -132,7 +175,7 @@ paren = between (string "(" >> wsSkip) (wsSkip >> string ")") enkiId
 str :: Parser Id
 str = S <$> (symbols <|> concatOp)
     where
-        symbols = many1 (oneOf cs) >>= \m -> notFollowedBy (oneOf ":,()") >> pure m
+        symbols = many1 (oneOf cs) >>= \m -> notFollowedBy (oneOf ":") >> pure m
         cs = ['a'..'z'] ++ ['+', '-', '=', '*', '/', '^']
         concatOp = string ".."
 
@@ -147,7 +190,7 @@ nonzeroDigit :: Parser Char
 nonzeroDigit = oneOf "123456789"
 
 int :: Parser Id
-int = do
+int = I . read <$> string "0" <|> do
     neg <- optionMaybe $ try $ string "-"
     digits <- (:) <$> nonzeroDigit <*> many digit
 
@@ -157,14 +200,11 @@ bool :: Parser Id
 bool = B . read . titleCase <$> choice [string "true", string "false"]
 
 wsSkip :: Parser ()
-wsSkip = many (oneOf " \r\t") >> pure ()
-
-wsSkip1 :: Parser ()
-wsSkip1 = many1 (oneOf " \r\t") >> pure ()
+wsSkip = skipMany $ oneOf " \r\t"
 
 whitespace :: Parser ()
-whitespace = skipMany1 (oneOf " \t\n\r")
+whitespace = skipMany1 $ oneOf " \t\n\r"
 
 newlines :: Parser ()
-newlines = many1 (wsSkip >> char '\n' >> wsSkip) >> pure ()
+newlines = skipMany1 (wsSkip >> char '\n' >> wsSkip)
 

@@ -195,19 +195,25 @@ mod ENKI-TYPECHECK is
         flatten(typedConstraints(typedConstraint(resolve(TIDS, TID)) resolveConstraints(TIDS, TConstraints))) .
 
     var Constraint : Constraint .
+    var FinalTIDS : Set{TypedId} .
     op inferFunc : Set{TypedId} EnkiFunc -> TypedFunc .
-    ceq inferFunc(TIDS, f(Id1, Constraint, e(Id2))) = typed(Id1, makeFuncType(NewTIDS, Id1, Id2), TConstraint, TExpr)
+    ceq inferFunc(TIDS, f(Id1, Constraint, e(Id2))) = typed(Id1, FuncType, TConstraint, TExpr)
         if Ids         := append(idList(Id1), append(idList(Id2), constraintIds(Constraint))) /\
            NewTIDS     := inferConstraint(inferId(freshtypes(TIDS, Ids), Id2), Constraint) /\
-           TExpr       := typedExpr(resolve(TIDS, attachType(NewTIDS, Id2))) /\
-           TConstraint := resolveConstraints(TIDS, attachConstraintTypes(NewTIDS, Constraint)) .
+           FuncType    := makeFuncType(NewTIDS, Id1, Id2) /\
+           FinalTIDS   := unifyType(NewTIDS, fid(Id1), FuncType) /\
+           TExpr       := typedExpr(resolve(FinalTIDS, attachType(NewTIDS, Id2))) /\
+           TConstraint := resolveConstraints(FinalTIDS, attachConstraintTypes(NewTIDS, Constraint)) .
 
     var RuleId : Id .
+    var RuleType : EnkiType .
     op inferRule : Set{TypedId} EnkiRule -> TypedRule .
-    ceq inferRule(TIDS, r(RuleId, Constraint)) = typed(RuleId, makeRuleType(NewTIDS, RuleId), TConstraint)
+    ceq inferRule(TIDS, r(RuleId, Constraint)) = typed(RuleId, RuleType, TConstraint)
         if Ids  := append(idList(RuleId), constraintIds(Constraint)) /\
            NewTIDS     := inferConstraint(freshtypes(TIDS, Ids), Constraint) /\
-           TConstraint := resolveConstraints(TIDS, attachConstraintTypes(NewTIDS, Constraint)) .
+           RuleType    := makeRuleType(NewTIDS, RuleId) /\
+           FinalTIDS   := unifyType(NewTIDS, fid(RuleId), RuleType) /\
+           TConstraint := resolveConstraints(FinalTIDS, attachConstraintTypes(FinalTIDS, Constraint)) .
 
     var Defs : List{EnkiDef} .
     var Func : EnkiFunc .

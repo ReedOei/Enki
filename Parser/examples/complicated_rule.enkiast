@@ -1,0 +1,2 @@
+def(r(comp(s("collatz") v("X") s("is") v("N")),cs(when(cs(c(comp(v("X") s("=") comp(comp(i(2) s("*") v("K")) s("+") i(1))))),cs(c(comp(v("N") s("=") comp(comp(i(3) s("*") v("X")) s("+") i(1)))))) when(cs(c(comp(s("display") v("X"))) c(comp(v("X") s("=") comp(i(2) s("*") v("N"))))),cs(nil)))))
+def(r(comp(s("collatz") s("sequence") s("on") v("X") s("takes") v("N") s("steps")),cs(c(comp(v("X") s("=") v("N"))))))
