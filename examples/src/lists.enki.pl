@@ -2,6 +2,9 @@
 
 :- use_module(library(clpfd)).
 
+construct(Head,Full,Tail) :-
+    Full = cons(Head,Tail).
+
 sum_is(List,N) :-
     (
     List = cons(H,T) -> 
@@ -9,38 +12,29 @@ sum_is(List,N) :-
     sum_is(T,Temp13)
     );
     (
-    N = 0 -> true
+    N = 0
     ).
 
 inc_is(List,NewList) :-
     (
     List = cons(H,T) -> 
-    inc_is(T,NewT),
-    Temp19 #= H + 1,
-    NewList = cons(Temp19,NewT)
+    Temp15 #= H + 1,
+    construct(Temp15,NewList,Temp13),
+    inc_is(T,Temp13)
     );
     (
-    NewList = empty -> true
-    ).
-
-tail_is(List,T) :-
-    (
-    List = cons(H,T) -> true
-    );
-    (
-    empty,
-    T = Temp11 -> true
+    NewList = empty
     ).
 
 zip_and_is(A,B,Zipped) :-
     (
     A = cons(HA,TA),
     B = cons(HB,TB) -> 
-    zip_and_is(TA,TB,TZipped),
-    Zipped = cons(pair_and(HA,HB),TZipped)
+    construct(pair_and(HA,HB),Zipped,Temp24),
+    zip_and_is(TA,TB,Temp24)
     );
     (
-    Zipped = empty -> true
+    Zipped = empty
     ).
 
 

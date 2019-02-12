@@ -5,7 +5,7 @@
 collatz_is(X,N) :-
     (
     Temp2 #= 2 * N,
-    X = Temp2 -> true
+    X = Temp2
     );
     (
     Temp9 #= 2 * K,

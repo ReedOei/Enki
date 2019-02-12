@@ -13,7 +13,7 @@ collatz_is(X,N) :-
     );
     (
     Temp20 #= 2 * N,
-    X = Temp20 -> true
+    X = Temp20
     ).
 
 collatz_sequence_on_takes_steps(X,N) :-
@@ -24,7 +24,7 @@ collatz_sequence_on_takes_steps(X,N) :-
     (
     collatz_is(X,K),
     Temp16 #= N - 1,
-    collatz_sequence_on_takes_steps(K,Temp16) -> true
+    collatz_sequence_on_takes_steps(K,Temp16)
     ).
 
 

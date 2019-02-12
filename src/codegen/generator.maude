@@ -136,7 +136,7 @@ mod ENKI-CODEGEN is
         genVal(synline("(") NewLines orline(")"), Res2, Counter2)
         if genVal(Lines1, Res1, Counter1) := generateConstraint(TConstraint1, Counter) /\
            genVal(Lines2, Res2, Counter2) := generateConstraint(TConstraint2, Counter1) /\
-           NewLine := synline(str(last(Lines1)) + " -> " + if Lines2 == nil then "true" else "" fi) /\
+           NewLine := synline(str(last(Lines1)) + if Lines2 == nil then "" else " -> " fi) /\
            --- ThenLines are the lines inside the "->" part.
            --- They need to be changed because we need to make sure that they don't end with a "," or ";"
            ThenLines := if Lines2 == nil then nil else front(Lines2) synline(str(last(Lines2))) fi /\
