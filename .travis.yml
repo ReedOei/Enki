@@ -17,6 +17,7 @@ script:
     - cd Parser
     - stack --no-terminal --install-ghc test --only-dependencies
     - stack --no-terminal test
+    - stack install
     - cd ..
     - make test
 
