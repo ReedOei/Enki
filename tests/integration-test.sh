@@ -17,4 +17,5 @@ try_compile "func_call.enki"
 try_compile "recursive.enki"
 try_compile "lists.enki"
 try_compile "fib.enki"
+try_compile "collatz_func.enki"
 
