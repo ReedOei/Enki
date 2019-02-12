@@ -1,0 +1,29 @@
+pair may be:
+    pair X and Y has: X : int, Y : int.
+
+list may be:
+    empty.
+    cons Head Tail has:
+        Head : int,
+        Tail : list.
+
+sum List is N where:
+    when List = (cons H T) then: sum T is (N - H).
+    otherwise then: N = 0.
+
+inc List is NewList where:
+    when List = (cons H T) then:
+        inc T is NewT,
+        NewList = (cons (H + 1) NewT).
+    otherwise then: NewList = empty.
+
+tail List is T where:
+    when List = (cons H T).
+    otherwise then: T = empty.
+
+zip A and B is Zipped where:
+    when A = (cons HA TA), B = (cons HB TB) then:
+        zip TA and TB is TZipped,
+        Zipped = (cons (pair HA and HB) TZipped).
+    otherwise then: Zipped = empty.
+
