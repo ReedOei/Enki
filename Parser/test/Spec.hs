@@ -35,10 +35,10 @@ main = hspec $ do
 
     describe "func" $ do
         it "parses function declarations" $ do
-            let (Right v) = parse func "" "test X and Y is: 1 + 2."
+            let (Right v) = parse func "" "test X and Y is 1 + 2."
             v `shouldBe` Func (Comp [S "test",V "X",S "and",V "Y"]) (Constraints []) (Expr (Comp [I 1,S "+",I 2]))
         it "parses functions with constraints" $ do
-            let (Right v) = parse func "" "test X and Y is: X = Y, X + 2."
+            let (Right v) = parse func "" "test X and Y is X = Y, X + 2."
             v `shouldBe` Func (Comp [S "test",V "X",S "and",V "Y"]) (Constraints [Constraint (Comp [V "X",S "=",V "Y"])]) (Expr (Comp [V "X",S "+",I 2]))
 
     describe "expr" $ do
@@ -62,7 +62,7 @@ main = hspec $ do
             let (Right v) = parse (str []) "" "hello"
             v `shouldBe` S "hello"
         it "does not parse strings ending in a ':'" $
-            isLeft (parse (str ["is:"]) "" "is:") `shouldBe` True
+            isLeft (parse (str ["is"]) "" "is") `shouldBe` True
 
     describe "int" $ do
         it "parses integers" $ do
@@ -82,11 +82,8 @@ main = hspec $ do
         it "parses nested expressions" $ do
             let (Right v) = parse (enkiId []) "" "(1 + 2) + 4"
             v `shouldBe` Comp [Comp [I 1, S "+",I 2], S "+", I 4]
-        it "does not parse strings ending in a ':'" $ do
-            let (Right v) = parse (enkiId ["is:"]) "" "is:"
-            v `shouldBe` Comp []
-        it "parses up to an identifier ending in a colon" $ do
-            let (Right v) = parse (enkiId ["is:"]) "" "factorial X is:"
+        it "parses up to an excluded identifier" $ do
+            let (Right v) = parse (enkiId ["is"]) "" "factorial X is"
             v `shouldBe` Comp [S "factorial", V "X"]
 
     describe "enkiType" $ do
@@ -105,7 +102,7 @@ main = hspec $ do
         it "parses function types" $ do
             let (Right v) = parse enkiType "" "T1 -> T2"
             v `shouldBe` FuncType (Any "T1") (Any "T2")
-        it "parses function types with multiple paremeters" $ do
+        it "parses function types with multiple parameters" $ do
             let (Right v) = parse enkiType "" "T1 -> T2 -> bool"
             v `shouldBe` FuncType (Any "T1") (FuncType (Any "T2") EnkiBool)
         it "parses types in parentheses" $ do
@@ -131,22 +128,22 @@ main = hspec $ do
 
     describe "constructor" $ do
         it "parses a single constructor" $ do
-            let (Right v) = parse constructor "" "pair X and Y has: X : int, Y : int."
+            let (Right v) = parse constructor "" "pair X and Y has X : int, Y : int."
             v `shouldBe` Constructor (Comp [S "pair", V "X", S "and", V "Y"])
                             [Field (Comp [V "X"]) EnkiInt, Field (Comp [V "Y"]) EnkiInt]
         it "parses a constructor with fields of complicated types" $ do
-            let (Right v) = parse constructor "" "stored value X for a function F has: X : T, F : T -> T."
+            let (Right v) = parse constructor "" "stored value X for a function F has X : T, F : T -> T."
             v `shouldBe` Constructor (Comp [S "stored",S "value",V "X",S "for",S "a",S "function",V "F"])
                             [Field (Comp [V "X"]) (Any "T"),Field (Comp [V "F"]) (FuncType (Any "T") (Any "T"))]
 
     describe "dataDef" $ do
         it "parses the declaration of a new datatype" $ do
-            let (Right v) = parse dataDef "" "pair may be: pair of X and Y has: X : int, Y : int."
+            let (Right v) = parse dataDef "" "pair may be pair of X and Y has X : int, Y : int."
             v `shouldBe` Data (Comp [S "pair"])
                             [Constructor (Comp [S "pair",S "of",V "X",S "and",V "Y"])
                                 [Field (Comp [V "X"]) EnkiInt,Field (Comp [V "Y"]) EnkiInt]]
         it "parses types with multiple constructors" $ do
-            let (Right v) = parse dataDef "" "list may be: empty. cons Head Tail has: Head : int, Tail : list."
+            let (Right v) = parse dataDef "" "list may be empty. cons Head Tail has Head : int, Tail : list."
             v `shouldBe` Data (Comp [S "list"])
                             [Constructor (Comp [S "empty"]) [],
                              Constructor (Comp [S "cons",V "Head",V "Tail"])

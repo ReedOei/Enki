@@ -1,5 +1,5 @@
-fib N is F where:
-    when N > 1 then:
+fib N is F where
+    when N > 1 then
         fib (N - 1) is F1, fib (N - 2) is F2, F = (F1 + F2).
-    otherwise then: F = N.
+    otherwise then F = N.
 

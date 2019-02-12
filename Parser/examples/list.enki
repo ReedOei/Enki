@@ -1,8 +1,8 @@
-list may be:
+list may be
     empty.
-    cons Head Tail has: Head : int, Tail : list.
+    cons Head Tail has Head : int, Tail : list.
 
-head List is H if:
-    when List = (cons H T).
-    otherwise then: H = 0.
+head List is H if
+    when List = cons H T.
+    otherwise then H = 0.
 

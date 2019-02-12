@@ -1,6 +1,6 @@
-concat X Y and Z is:
-    (X .. Y) .. Z.
+concat X Y and Z is
+    X .. Y .. Z.
 
-test X A B C is:
-    ((concat X C and C) .. (concat A C and C)) .. (concat X A and B).
+test X A B C is
+    concat X C and C .. concat A C and C .. concat X A and B.
 

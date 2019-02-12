@@ -118,9 +118,9 @@ lineSep = do
 rule :: Parser Def
 rule = do
     lineSep
-    id <- enkiId ["if:", "where:"]
+    id <- enkiId ["if", "where"]
     lineSep
-    choice $ map string ["if:", "where:"]
+    choice $ map string ["if", "where"]
     lineSep
     c <- constraint
     lineSep
@@ -130,22 +130,41 @@ rule = do
 
 func :: Parser Def
 func = do
-    id <- symbol $ enkiId ["is:"]
-    symbol $ string "is:"
+    id <- symbol $ enkiId ["is"]
+    symbol $ string "is"
     constr <- symbol constraint
     symbol $ char '.'
 
     pure $ case constr of
         Constraint cid -> Func id (Constraints []) $ Expr cid
+        Constraints cs | allWhenBranches cs ->
+            Func id (Constraints (map makeResult cs)) $ Expr $ Comp [V "result"]
+
         Constraints cs ->
             let (Constraint cid) = last cs
             in Func id (Constraints (init cs)) $ Expr cid
         When _ _       -> error "Cannot have a function with only a when branch for it's body"
 
+makeResult :: Constraint -> Constraint
+makeResult (When cond (Constraints [])) = When (makeResult cond) $ Constraints []
+makeResult (When cond body)             = When cond $ makeResult body
+makeResult (Constraints cs)             =
+    -- TODO: Handle other cases (if they exist?)
+    case last cs of
+        Constraint id -> Constraints $ init cs ++ [Constraint (Comp [V "result", S "=", id])]
+makeResult c@(Constraint id) = Constraint $ Comp [V "result", S "=", id]
+
+allWhenBranches :: [Constraint] -> Bool
+allWhenBranches = all isWhen
+    where
+        isWhen (When _ _) = True
+        isWhen _          = False
+
 dataDef :: Parser Def
 dataDef = do
-    id <- symbol $ enkiId ["may", "be:"]
-    symbol $ string "may be:"
+    id <- symbol $ enkiId ["may", "be"]
+    symbol $ string "may"
+    symbol $ string "be"
     constructors <- many (symbol constructor)
     lineSep
 
@@ -163,15 +182,15 @@ unitConstructor = do
 
 constructorWithFields :: Parser Constructor
 constructorWithFields = do
-    id <- symbol $ enkiId ["has:"]
-    symbol $ string "has:"
+    id <- symbol $ enkiId ["has"]
+    symbol $ string "has"
     fields <- sepBy1 field $ symbol $ string ","
     symbol $ char '.'
     pure $ Constructor id fields
 
 field :: Parser Field
 field = do
-    id <- symbol $ enkiId [":"]
+    id <- symbol $ baseEnkiId [":"]
     symbol $ string ":"
     t <- symbol enkiType
 
@@ -198,7 +217,7 @@ singleEnkiType = choice $ map try [namedType "int" EnkiInt, namedType "bool" Enk
 
 dataTypeName :: Parser Type
 dataTypeName = do
-    id <- symbol $ enkiId ["->", "~", "*"]
+    id <- symbol $ baseEnkiId []
     pure $ case id of
         Comp [V s] -> Any s
         _ -> TypeName id
@@ -219,7 +238,7 @@ expr = Expr <$> enkiId []
 
 constraint :: Parser Constraint
 constraint = Constraints <$> ((sepBy1 (when <|> otherwiseBranch) lineSep) <|>
-                              (map Constraint <$> (sepBy1 (enkiId ["then:"]) sep)))
+                              (map Constraint <$> (sepBy1 (enkiId ["then"]) sep)))
     where
         sep = wsSkip >> string "," >> wsSkip >> optional newlines >> wsSkip
 
@@ -229,7 +248,7 @@ when = do
     condition <- constraint
 
     body <- optionMaybe $ do
-        symbol $ string "then:"
+        symbol $ string "then"
         body <- symbol constraint
         pure body
     symbol $ char '.'
@@ -241,7 +260,7 @@ otherwiseBranch = do
     lineSep
     string "otherwise"
     lineSep
-    string "then:"
+    string "then"
     lineSep
     body <- constraint
     lineSep
@@ -254,8 +273,11 @@ withWs parser = do
     wsSkip
     pure a
 
-enkiId :: [String] -> Parser Id
-enkiId excluded =
+enkiId :: Stream s m Char => [String] -> ParsecT s st m Id
+enkiId = buildExpressionParser opTable . baseEnkiId
+
+baseEnkiId :: [String] -> Parser Id
+baseEnkiId excluded =
     Comp <$> untilFail (choice (map (try . withWs) [var, bool, int, str excluded, paren]))
 
 untilFail :: Parser a -> Parser [a]
@@ -270,19 +292,49 @@ untilFail parser = do
 paren :: Parser Id
 paren = between (string "(" >> wsSkip) (wsSkip >> string ")") $ enkiId []
 
+opTable :: Stream s m Char => OperatorTable s st m Id
+opTable =
+    [
+        [binary "^" AssocLeft],
+        [binary "*" AssocLeft, binary "/" AssocLeft],
+        [binary "+" AssocLeft, binary "-" AssocLeft],
+        [binary ".." AssocLeft],
+        [binary "=" AssocNone, binary ">=" AssocNone,
+         binary "<=" AssocNone, binary "<" AssocNone,
+         binary ">" AssocNone]
+    ]
+
+flatten (Comp [id]) = id
+flatten id = id
+
+binary :: Stream s m Char => String -> Assoc -> Operator s st m Id
+binary name assoc = Infix parse assoc
+    where
+        parse = do
+            op <- try $ opStr name
+            pure $ \a b -> Comp [flatten a, op, flatten b]
+
 str :: [String] -> Parser Id
 str list = do
-    s <- symbols <|> concatOp
+    s <- symbols -- <|> concatOp
     if s `elem` list then
         parserFail "Found item from excluded list"
     else
         pure $ S s
 
     where
-        symbols = many1 $ oneOf cs
-        -- >>= \m -> notFollowedBy (oneOf ":") >> pure m
-        cs = ['a'..'z'] ++ ['+', '-', '=', '*', '/', '^', '>', '<', ':']
-        concatOp = string ".."
+        symbols = nonEmpty ['a'..'z'] cs
+        cs = ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'1']
+
+nonEmpty :: String -> String -> Parser String
+nonEmpty start ending = do
+    s <- oneOf start
+    ss <- many $ oneOf ending
+
+    pure $ s:ss
+
+opStr :: String -> Parser Id
+opStr str = S <$> symbol (string str)
 
 exclude :: Stream s m Char => [String] -> ParsecT s st m String -> ParsecT s st m String
 exclude strs parser = do

@@ -1,27 +1,27 @@
-pair may be:
-    pair X and Y has: X : int, Y : int.
+pair may be
+    pair X and Y has X : int, Y : int.
 
-list may be:
+list may be
     empty.
-    cons Head Tail has:
+    cons Head Tail has
         Head : int,
         Tail : list.
 
-construct Head Full is:
+construct Head Full is
     Full = (cons Head Tail),
     Tail.
 
-sum List is N where:
-    when List = (cons H T) then: sum T is (N - H).
-    otherwise then: N = 0.
+sum List is N where
+    when List = (cons H T) then sum T is (N - H).
+    otherwise then N = 0.
 
-inc List is NewList where:
-    when List = (cons H T) then:
+inc List is NewList where
+    when List = (cons H T) then
         inc T is (construct (H + 1) NewList).
-    otherwise then: NewList = empty.
+    otherwise then NewList = empty.
 
-zip A and B is Zipped where:
-    when A = (cons HA TA), B = (cons HB TB) then:
+zip A and B is Zipped where
+    when A = (cons HA TA), B = (cons HB TB) then
         zip TA and TB is (construct (pair HA and HB) Zipped).
-    otherwise then: Zipped = empty.
+    otherwise then Zipped = empty.
 
