@@ -1,0 +1,21 @@
+list may be
+    empty.
+    cons Head Tail has
+        Head : int,
+        Tail : list.
+
+length of List is
+    when List = cons H T then 1 + length of T.
+    otherwise then 0.
+
+odd X if X = 2*K + 1.
+even X if X = 2*K.
+
+collatz X is
+    when odd X then 3*X + 1.
+    otherwise then X = 2*N, N.
+
+collatz sequence of X is
+    when X = 1 then cons X empty.
+    otherwise then cons X (collatz sequence of (collatz X)).
+

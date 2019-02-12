@@ -239,10 +239,11 @@ expr :: Parser Expr
 expr = Expr <$> enkiId []
 
 constraint :: Parser Constraint
-constraint = Constraints <$> ((sepBy1 (when <|> otherwiseBranch) lineSep) <|>
-                              (map Constraint <$> (sepBy1 (enkiId ["then"]) sep)))
+constraint = Constraints <$> ((try (sepBy1 (try when <|> try otherwiseBranch) lineSep)) <|>
+                              (map Constraint <$> (sepBy1 idParsers sep)))
     where
-        sep = wsSkip >> string "," >> wsSkip >> optional newlines >> wsSkip
+        idParsers = try (enkiId ["then"]) <|> try (baseEnkiId ["then"])
+        sep = symbol $ string ","
 
 when :: Parser Constraint
 when = do
