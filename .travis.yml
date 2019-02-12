@@ -13,8 +13,10 @@ before_install:
     - ./setup
 
 script:
-    - make test
+    # Need to install first, because the later tests for the compiler need the parser
     - cd Parser
     - stack --no-terminal --install-ghc test --only-dependencies
     - stack --no-terminal test
+    - cd ..
+    - make test
 

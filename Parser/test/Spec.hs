@@ -59,10 +59,10 @@ main = hspec $ do
 
     describe "str" $ do
         it "parses a single string" $ do
-            let (Right v) = parse str "" "hello"
+            let (Right v) = parse (str []) "" "hello"
             v `shouldBe` S "hello"
         it "does not parse strings ending in a ':'" $
-            isLeft (parse str "" "is:") `shouldBe` True
+            isLeft (parse (str ["is:"]) "" "is:") `shouldBe` True
 
     describe "int" $ do
         it "parses integers" $ do
@@ -74,20 +74,83 @@ main = hspec $ do
 
     describe "enkiId" $ do
         it "parses a single expression" $ do
-            let (Right v) = parse enkiId "" "test"
+            let (Right v) = parse (enkiId []) "" "test"
             v `shouldBe` Comp [S "test"]
         it "parses multiple expressions" $ do
-            let (Right v) = parse enkiId "" "t y false B"
+            let (Right v) = parse (enkiId []) "" "t y false B"
             v `shouldBe` Comp [S "t", S "y", B False, V "B"]
         it "parses nested expressions" $ do
-            let (Right v) = parse enkiId "" "(1 + 2) + 4"
+            let (Right v) = parse (enkiId []) "" "(1 + 2) + 4"
             v `shouldBe` Comp [Comp [I 1, S "+",I 2], S "+", I 4]
         it "does not parse strings ending in a ':'" $ do
-            let (Right v) = parse enkiId "" "is:"
+            let (Right v) = parse (enkiId ["is:"]) "" "is:"
             v `shouldBe` Comp []
-        it "parses up to an identifier ending in a color" $ do
-            let (Right v) = parse enkiId "" "factorial X is:"
+        it "parses up to an identifier ending in a colon" $ do
+            let (Right v) = parse (enkiId ["is:"]) "" "factorial X is:"
             v `shouldBe` Comp [S "factorial", V "X"]
+
+    describe "enkiType" $ do
+        it "parses int" $ do
+            let (Right v) = parse enkiType "" "int"
+            v `shouldBe` EnkiInt
+        it "parses string" $ do
+            let (Right v) = parse enkiType "" "string"
+            v `shouldBe` EnkiString
+        it "parses bool" $ do
+            let (Right v) = parse enkiType "" "bool"
+            v `shouldBe` EnkiBool
+        it "parses any" $ do
+            let (Right v) = parse enkiType "" "Test"
+            v `shouldBe` Any "Test"
+        it "parses function types" $ do
+            let (Right v) = parse enkiType "" "T1 -> T2"
+            v `shouldBe` FuncType (Any "T1") (Any "T2")
+        it "parses function types with multiple paremeters" $ do
+            let (Right v) = parse enkiType "" "T1 -> T2 -> bool"
+            v `shouldBe` FuncType (Any "T1") (FuncType (Any "T2") EnkiBool)
+        it "parses types in parentheses" $ do
+            let (Right v) = parse enkiType "" "(bool -> bool)"
+            v `shouldBe` FuncType EnkiBool EnkiBool
+        it "parses rule types" $ do
+            let (Right v) = parse enkiType "" "string ~ T2"
+            v `shouldBe` RuleType EnkiString (Any "T2")
+        it "parses data types" $ do
+            let (Right v) = parse enkiType "" "int * list"
+            v `shouldBe` DataType EnkiInt (TypeName (Comp [S "list"]))
+        it "parses parenthesized types at the front of a data type" $ do
+            let (Right v) = parse enkiType "" "(int * int) * bool"
+            v `shouldBe` DataType (DataType EnkiInt EnkiInt) EnkiBool
+
+    describe "field" $ do
+        it "parses a field" $ do
+            let (Right v) = parse field "" "X : int"
+            v `shouldBe` Field (Comp [V "X"]) EnkiInt
+        it "parses a field with a more complex type" $ do
+            let (Right v) = parse field "" "Y : int ~ int"
+            v `shouldBe` Field (Comp [V "Y"]) (RuleType EnkiInt EnkiInt)
+
+    describe "constructor" $ do
+        it "parses a single constructor" $ do
+            let (Right v) = parse constructor "" "pair X and Y has: X : int, Y : int."
+            v `shouldBe` Constructor (Comp [S "pair", V "X", S "and", V "Y"])
+                            [Field (Comp [V "X"]) EnkiInt, Field (Comp [V "Y"]) EnkiInt]
+        it "parses a constructor with fields of complicated types" $ do
+            let (Right v) = parse constructor "" "stored value X for a function F has: X : T, F : T -> T."
+            v `shouldBe` Constructor (Comp [S "stored",S "value",V "X",S "for",S "a",S "function",V "F"])
+                            [Field (Comp [V "X"]) (Any "T"),Field (Comp [V "F"]) (FuncType (Any "T") (Any "T"))]
+
+    describe "dataDef" $ do
+        it "parses the declaration of a new datatype" $ do
+            let (Right v) = parse dataDef "" "pair may be: pair of X and Y has: X : int, Y : int."
+            v `shouldBe` Data (Comp [S "pair"])
+                            [Constructor (Comp [S "pair",S "of",V "X",S "and",V "Y"])
+                                [Field (Comp [V "X"]) EnkiInt,Field (Comp [V "Y"]) EnkiInt]]
+        it "parses types with multiple constructors" $ do
+            let (Right v) = parse dataDef "" "list may be: empty. cons Head Tail has: Head : int, Tail : list."
+            v `shouldBe` Data (Comp [S "list"])
+                            [Constructor (Comp [S "empty"]) [],
+                             Constructor (Comp [S "cons",V "Head",V "Tail"])
+                                [Field (Comp [V "Head"]) EnkiInt,Field (Comp [V "Tail"]) (TypeName (Comp [S "list"]))]]
 
     describe "runParser" $ do
         testCompile "examples/basic.enki"
@@ -99,4 +162,5 @@ main = hspec $ do
         testCompile "examples/basic_rule.enki"
         testCompile "examples/complicated_rule.enki"
         testCompile "examples/collatz.enki"
+        testCompile "examples/list.enki"
 
