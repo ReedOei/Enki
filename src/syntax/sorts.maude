@@ -13,6 +13,7 @@ mod ENKI-SYNTAX-SORTS is
     op data : EnkiType EnkiType -> EnkiType .
     --- Represents a type constructor (Name, followed by type parameters)
     op type : Id -> EnkiType .
+    op void : -> EnkiType .
 
     vars T T1 T2 : EnkiType .
     op returnType : EnkiType -> EnkiType .

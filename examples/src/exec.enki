@@ -1,0 +1,5 @@
+display 4.
+
+inc X is X + 1.
+display (inc 10).
+

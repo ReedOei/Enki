@@ -6,6 +6,7 @@ mod ENKI-CODEGEN is
 
     protecting CONVERSION .
     protecting LIST{Line} .
+    protecting LIST{TypedExec} .
     protecting MAP{String, String} .
 
     var Id Id1 Id2 : Id .
@@ -62,7 +63,9 @@ mod ENKI-CODEGEN is
         if Params := mapVars(varstrs(FuncId), StrVarMap) (if ResName == "" then nil else ResName fi) .
 
     op genFuncCall : Id String -> String .
-    eq genFuncCall(FuncId, ResName) = genFuncCallParams(FuncId, idMap(varstrs(FuncId)), ResName) .
+    ceq genFuncCall(FuncId, ResName) = funcName(FuncId)
+        if varstrs(FuncId) == nil .
+    eq genFuncCall(FuncId, ResName) = genFuncCallParams(FuncId, idMap(varstrs(FuncId)), ResName) [owise] .
 
     var NewLines Lines : List{Line} .
     vars I1 I2 FinalI : Int .
@@ -187,7 +190,31 @@ mod ENKI-CODEGEN is
     op genHeader : -> String .
     eq genHeader = "#!/usr/bin/env swipl\n\n:- use_module(library(clpfd))." .
 
+    sort Res .
+    op res : List{TypedConstraint} List{TypedDef} -> Res .
+
+    var Exec : TypedConstraint .
+    var Execs : List{TypedConstraint} .
+    var TDef : TypedDef .
+    var RestDefs : List{TypedDef} .
+
+    var TConstraint : TypedConstraint .
+
+    op gatherExecs : List{TypedConstraint} List{TypedDef} List{TypedDef} -> Res .
+    eq gatherExecs(Execs, TDefs, nil) = res(Execs, TDefs) .
+    eq gatherExecs(Execs, TDefs, exec(typedExec(TConstraint)) RestDefs) = gatherExecs(Execs TConstraint, TDefs, RestDefs) .
+    eq gatherExecs(Execs, TDefs, TDef RestDefs) = gatherExecs(Execs, TDefs TDef, RestDefs) .
+
+    op styleChecksOff : -> String .
+    eq styleChecksOff = ":- style_check(-singleton).\n:- style_check(-no_effect).\n:- style_check(-var_branches).\n:- style_check(-discontiguous).\n:- style_check(-charset)." .
+
+    op genMain : List{TypedConstraint} -> String .
+    eq genMain(nil)    = "" .
+    ceq genMain(Execs) = ":- initialization(main, main).\n\n" + S + "\n\n"
+        if S := genDefs(def(typed(comp(s("main") v("Args")), string, typedConstraints(Execs)))) .
+
     op genFile : List{TypedDef} -> String .
-    eq genFile(TDefs) = genHeader + "\n\n" + genDefs(TDefs) .
+    ceq genFile(TDefs) = genHeader + "\n\n" + styleChecksOff + "\n\n" + genMain(Execs) + genDefs(RestDefs)
+        if res(Execs, RestDefs) := gatherExecs(nil, nil, TDefs) .
 endm
 

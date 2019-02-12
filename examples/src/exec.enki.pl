@@ -8,10 +8,16 @@
 :- style_check(-discontiguous).
 :- style_check(-charset).
 
-divides(A,B) :-
-    Temp2 #= N * A,
-    B = Temp2.
+:- initialization(main, main).
 
-even(X) :-
-    divides(2,X).
+main(Args) :-
+    writeln(4),
+    inc(10,Temp6),
+    writeln(Temp6).
+
+
+
+inc(X,Temp0) :-
+    Temp0 #= X + 1.
+
 

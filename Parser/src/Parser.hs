@@ -47,6 +47,7 @@ data Constructor = Constructor Id [Field]
 data Def = Func Id Constraint Expr
          | Rule Id Constraint
          | Data Id [Constructor]
+         | Exec Constraint
     deriving (Eq, Show)
 
 class PrettyPrint a where
@@ -91,6 +92,7 @@ instance PrettyPrint Def where
     prettyPrint (Func id c e) = "def(f(" ++ prettyPrint id ++ "," ++ prettyPrint c ++ "," ++ prettyPrint e ++ "))"
     prettyPrint (Rule id c)   = "def(r(" ++ prettyPrint id ++ "," ++ prettyPrint c ++ "))"
     prettyPrint (Data id constrs) = "def(d(" ++ prettyPrint id ++ "," ++ maudeList (map prettyPrint constrs) ++ "))"
+    prettyPrint (Exec c)   = "exec(ex(" ++ prettyPrint c ++ "))"
 
 parseFile :: String -> Maybe String -> IO ()
 parseFile fname output = do
@@ -107,7 +109,14 @@ parseDef :: String -> Either ParseError [Def]
 parseDef = parse enkiDef ""
 
 enkiDef :: Parser [Def]
-enkiDef = many (try func <|> try rule <|> try dataDef)
+enkiDef = many (try func <|> try rule <|> try dataDef <|> try exec)
+
+exec :: Parser Def
+exec = do
+    c <- constraint
+    symbol $ char '.'
+
+    pure $ Exec c
 
 lineSep :: Parser ()
 lineSep = do
@@ -281,7 +290,7 @@ enkiId = buildExpressionParser opTable . baseEnkiId
 
 baseEnkiId :: [String] -> Parser Id
 baseEnkiId excluded =
-    Comp <$> untilFail (choice (map (try . withWs) [var, bool, int, str excluded, paren]))
+    Comp <$> untilFail (choice (map (try . withWs) [var, bool, int, str excluded, paren, quoteId]))
 
 untilFail :: Parser a -> Parser [a]
 untilFail parser = do
@@ -291,6 +300,11 @@ untilFail parser = do
         Just v -> do
             rs <- untilFail parser
             pure $ v:rs
+
+quoteId :: Parser Id
+quoteId = do
+    s <- between (symbol (string "\"")) (symbol (string "\"")) $ many $ noneOf "\""
+    pure $ S $ "\"" ++ s ++ "\""
 
 paren :: Parser Id
 paren = between (string "(" >> wsSkip) (wsSkip >> string ")") $ enkiId []

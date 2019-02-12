@@ -1,0 +1,3 @@
+exec(ex(cs(c(comp(s("display") i(4))))))
+def(f(comp(s("inc") v("X")),cs(nil),e(comp(v("X") s("+") i(1)))))
+exec(ex(cs(c(comp(s("display") comp(s("inc") i(10)))))))

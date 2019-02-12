@@ -2,6 +2,12 @@
 
 :- use_module(library(clpfd)).
 
+:- style_check(-singleton).
+:- style_check(-no_effect).
+:- style_check(-var_branches).
+:- style_check(-discontiguous).
+:- style_check(-charset).
+
 construct(Head,Full,Tail) :-
     Full = cons(Head,Tail).
 

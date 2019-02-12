@@ -2,6 +2,12 @@
 
 :- use_module(library(clpfd)).
 
+:- style_check(-singleton).
+:- style_check(-no_effect).
+:- style_check(-var_branches).
+:- style_check(-discontiguous).
+:- style_check(-charset).
+
 square_root(X,Root) :-
     Temp1 #= Root ^ 2,
     Temp1 = X.

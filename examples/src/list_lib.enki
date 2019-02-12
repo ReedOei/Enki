@@ -1,0 +1,18 @@
+list may be
+    empty.
+    cons Head Tail has
+        Head : int,
+        Tail : list.
+
+length of List is
+    when List = cons H T then 1 + length of T.
+    otherwise then 0.
+
+construct Head Full is
+    Full = (cons Head Tail),
+    Tail.
+
+sum List is N where
+    when List = cons H T then sum T is (N - H).
+    otherwise then N = 0.
+

@@ -39,6 +39,10 @@ view TypedDef from TRIV to ENKI-TYPECHECK-SORTS-SYNTAX is
     sort Elt to TypedDef .
 endv
 
+view TypedExec from TRIV to ENKI-TYPECHECK-SORTS-SYNTAX is
+    sort Elt to TypedExec .
+endv
+
 mod ENKI-TYPECHECK-SORTS is
     protecting ENKI-TYPECHECK-SORTS-SYNTAX .
     protecting SET{TypedId} .
