@@ -29,6 +29,12 @@ mod ENKI-CODEGEN is
     eq prologArith("*") = "*" .
     eq prologArith("^") = "^" .
 
+    op prologComp : String -> String .
+    eq prologComp(">") = "#>" .
+    eq prologComp("<") = "#<" .
+    eq prologComp(">=") = "#>=" .
+    eq prologComp("<=") = "#=<" .
+
     var VarMap : Map{String, Id} .
     var Ids : List{Id} .
     var FuncId : Id .
@@ -93,6 +99,9 @@ mod ENKI-CODEGEN is
     ceq genPrologOp(T, S, NewIdStr, Res1, Res2) =
         NewIdStr + " " + eqSign(T) + " " + Res1 + " " + prologArith(S) + " " + Res2
         if isArith(S) .
+    ceq genPrologOp(T, S, NewIdStr, Res1, Res2) =
+        Res1 + " " + prologComp(S) + " " + Res2
+        if isIntComp(S) .
 
     var Type : EnkiType .
 
@@ -121,7 +130,7 @@ mod ENKI-CODEGEN is
     --- Handle arithmetic operations
     ceq generate(tid(comp(Id1 s(S) Ids), T), Counter) =
         genVal(append(Lines1, Lines2 NewLine), NewIdStr, Counter2 + 1)
-        if (isArith(S) or isStrOp(S) or (S == "=")) /\
+        if (isArith(S) or isStrOp(S) or (S == "=") or isIntComp(S)) /\
            genVal(Lines1, Res1, Counter1) := generate(tid(Id1, T), Counter + 1) /\
            genVal(Lines2, Res2, Counter2) := generate(tid(comp(Ids), T), Counter1 + 1) /\
            NewIdStr                       := "Temp" + string(Counter, 10) /\

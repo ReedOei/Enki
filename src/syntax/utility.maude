@@ -95,6 +95,13 @@ mod ENKI-SYNTAX-UTILITY is
     eq isArith("^") = true .
     eq isArith(S)   = false [owise] .
 
+    op isIntComp : String -> Bool .
+    eq isIntComp(">")  = true .
+    eq isIntComp("<")  = true .
+    eq isIntComp(">=") = true .
+    eq isIntComp("<=") = true .
+    eq isIntComp(S)    = false [owise] .
+
     op isStrOp : String -> Bool .
     eq isStrOp("..") = true .
     eq isStrOp(S)    = false [owise] .
