@@ -107,3 +107,5 @@ run_test "constructorTypes(s(\"pair\"), constructor($pair_const, field(s(\"X\"),
 cons_const="comp(s(\"cons\") v(\"Head\") v(\"Tail\"))"
 list_def="def(d(s(\"list\"), constructor(comp(s(\"empty\")), nil) constructor($cons_const, field(s(\"Head\"), int) field(s(\"Tail\"), type(s(\"list\"))))))"
 
+run_test "inferDefs(empty, exec(ex(cs(c(comp(s(\"display\") s(\"\\\"hello\\\"\")))))))" "TypedDef : exec(typedExec(typedConstraint(tid(fcall(comp(s(\"writeln\") v(\"Str\")), string, \"Str\" |-> s(\"\\\"hello\\\"\")), string))))"
+

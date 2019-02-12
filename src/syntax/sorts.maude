@@ -45,7 +45,9 @@ mod ENKI-SYNTAX-SORTS is
     sort EnkiRule .
     op r : Id Constraint -> EnkiRule .
 
-    --- data constructors
+    sort EnkiExec .
+    op ex : Constraint -> EnkiExec .
+
     --- structural subtyping
     --- "collection-like" e.g., between some delimeters
     sort EnkiData .
@@ -56,6 +58,7 @@ mod ENKI-SYNTAX-SORTS is
     op def : EnkiFunc -> EnkiDef .
     op def : EnkiRule -> EnkiDef .
     op def : EnkiData -> EnkiDef .
+    op exec : EnkiExec -> EnkiDef .
 endm
 
 view Id from TRIV to ENKI-SYNTAX-SORTS is

@@ -3,15 +3,17 @@ mod ENKI-TYPECHECK-SORTS-SYNTAX is
     protecting LIST{EnkiType} .
     protecting MAP{String, Id} .
 
-    sorts TypedFunc TypedId TypedExpr TypedConstraint TypedDef TypedRule .
+    sorts TypedFunc TypedId TypedExpr TypedConstraint TypedDef TypedRule TypedExec .
 
     op tid : Id EnkiType -> TypedId .
     op typedExpr : TypedId -> TypedExpr .
     op typed : Id EnkiType TypedConstraint TypedExpr -> TypedFunc .
     op typed : Id EnkiType TypedConstraint -> TypedRule .
+    op typedExec : TypedConstraint -> TypedExec .
 
     op def : TypedFunc -> TypedDef .
     op def : TypedRule -> TypedDef .
+    op exec : TypedExec -> TypedDef .
 
     op typedConstraint : TypedId -> TypedConstraint .
     op typedWhen : TypedConstraint TypedConstraint -> TypedConstraint .
