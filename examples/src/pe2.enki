@@ -1,0 +1,26 @@
+list may be
+    empty.
+    cons Head Tail has
+        Head : int,
+        Tail : list.
+
+sum List is
+    when List = cons H T then H + sum T.
+    otherwise then 0.
+
+fib seq A B Limit is
+    when A > Limit then empty.
+    otherwise then cons A (fib seq B (A + B) Limit).
+
+fib seq up to N is
+    fib seq 0 1 N.
+
+A divides B if B = A*N.
+
+even in List is
+    when List = cons H T, 2 divides H then cons H (even in T).
+    when List = cons H T then even in T.
+    otherwise then empty.
+
+display (sum (even in (fib seq up to 4000000))).
+
