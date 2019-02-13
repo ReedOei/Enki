@@ -112,7 +112,6 @@ mod ENKI-TYPECHECK is
            isStrOp(S) .
     ceq inferId(TIDS, Id) = unifyType(unifyMap(TIDS, Types, varstrs(FuncId), VarMap), Id, T)
         if tid(FuncId, FuncType) := findFuncType(TIDS, Id) /\
-           Ids                   := varlist(Id)            /\
            T                     := returnType(FuncType)   /\
            Types                 := funcTypeList(FuncType) /\
            VarMap                := funcUnify(FuncId, Id) .
