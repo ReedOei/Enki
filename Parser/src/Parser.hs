@@ -113,8 +113,10 @@ enkiDef = many (try func <|> try rule <|> try dataDef <|> try exec)
 
 exec :: Parser Def
 exec = do
+    lineSep
     c <- constraint
     symbol $ char '.'
+    lineSep
 
     pure $ Exec c
 

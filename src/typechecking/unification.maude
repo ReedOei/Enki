@@ -23,10 +23,15 @@ mod ENKI-UNIFICATION is
     eq join(func(TA1, TB1), func(TA2, TB2)) = func(join(TA1, TA2), join(TB1, TB2)) .
     eq join(data(TA1, TB1), data(TA2, TB2)) = data(join(TA1, TA2), join(TB1, TB2)) .
 
+    op runUnifyAll : Set{TypedId} EnkiType EnkiType -> Set{TypedId} .
+    eq runUnifyAll(empty, T1, T2)               = empty .
+    eq runUnifyAll((tid(Id, T1), TIDS), T1, T2) = (tid(Id, T2), runUnifyAll(TIDS, T1, T2)) .
+    eq runUnifyAll(TIDS, T1, T2)                = TIDS [owise] .
+
+    --- We don't want to run unify all always
     op unifyAll : Set{TypedId} EnkiType EnkiType -> Set{TypedId} .
-    eq unifyAll(empty, T1, T2)               = empty .
-    eq unifyAll((tid(Id, T1), TIDS), T1, T2) = (tid(Id, T2), unifyAll(TIDS, T1, T2)) .
-    eq unifyAll(TIDS, T1, T2)                = TIDS [owise] .
+    eq unifyAll(TIDS, any(S), T2) = runUnifyAll(TIDS, any(S), T2) .
+    eq unifyAll(TIDS, T1, T2) = TIDS [owise] .
 
     op unify : Set{TypedId} Id Id -> Set{TypedId} .
     ceq unify(TIDS, Id1, Id2) = unifyAll(unifyAll(TIDS, T1, T), T2, T)

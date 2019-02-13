@@ -30,3 +30,5 @@ sum List is N where
     when List = cons H T then sum T is (N - H).
     otherwise then N = 0.
 
+display (range 1 to 10).
+
