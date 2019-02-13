@@ -12,8 +12,8 @@ construct Head Full is
     Full = (cons Head Tail),
     Tail.
 
-append A B is
-    when A = cons H T then cons H (append T B).
+concat A B is
+    when A = cons H T then cons H (concat T B).
     otherwise then B.
 
 reverseAcc A Acc is
@@ -30,5 +30,12 @@ sum List is N where
     when List = cons H T then sum T is (N - H).
     otherwise then N = 0.
 
-display (range 1 to 10).
+formatHelper List is
+    when List = cons H empty then H .. "]".
+    when List = cons H T then H .. "," .. formatHelper T.
+    otherwise then "]".
+
+format list List is "[" .. formatHelper List.
+
+display (format list (range 1 to 1000)).
 

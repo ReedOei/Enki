@@ -33,14 +33,17 @@ mod ENKI-UNIFICATION is
     eq unifyAll(TIDS, any(S), T2) = runUnifyAll(TIDS, any(S), T2) .
     eq unifyAll(TIDS, T1, T2) = TIDS [owise] .
 
+    var NewTIDS : Set{TypedId} .
     op unify : Set{TypedId} Id Id -> Set{TypedId} .
-    ceq unify(TIDS, Id1, Id2) = unifyAll(unifyAll(TIDS, T1, T), T2, T)
+    ceq unify(TIDS, Id1, Id2) = unifyAll(unifyAll(NewTIDS, T1, T), T2, T)
         if (tid(Id1, T1), tid(Id2, T2), RestTIDS) := TIDS /\
-           T                                      := join(T1, T2) .
-    eq unify(TIDS, Id1, Id2) = (tid(Id1, typeof(TIDS, Id2)), TIDS) .
+           T                                      := join(T1, T2) /\
+           NewTIDS := (tid(Id1, T), tid(Id2, T), RestTIDS) .
+    eq unify(TIDS, Id1, Id2) = (tid(Id1, typeof(TIDS, Id2)), TIDS) [owise] .
 
     op unifyType : Set{TypedId} Id EnkiType -> Set{TypedId} .
-    eq unifyType((tid(Id, T1), TIDS), Id, T2) = unifyAll((tid(Id, T1), TIDS), T1, join(T1, T2)) .
+    ceq unifyType((tid(Id, T1), TIDS), Id, T2) = unifyAll((tid(Id, T), TIDS), T1, T)
+        if T := join(T1, T2) .
     eq unifyType(TIDS, Id, T2)                = (tid(Id, T2), TIDS) [owise] .
 
     op unifyList : Set{TypedId} List{EnkiType} List{Id} -> Set{TypedId} .

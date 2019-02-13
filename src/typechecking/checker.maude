@@ -104,7 +104,7 @@ mod ENKI-TYPECHECK is
     eq inferId(TIDS, comp(s("display") Id)) = inferId(unify(unifyType(TIDS, Id, string), comp(s("display") Id), Id), Id) .
     ceq inferId(TIDS, Id) = unify(inferId(inferId(unify(unify(TIDS, Id1, Id2), Id, Id1), Id1), Id2), Id1, Id2)
         if comp(Id1 s("=") Id2) := Id .
-    ceq inferId(TIDS, Id) = inferId(inferId(unify(unify(unifyType(TIDS, Id1, int), Id1, Id2), Id, Id1), Id1), Id2)
+    ceq inferId(TIDS, Id) = inferId(inferId(unify(unify(unifyType(TIDS, Id1, int), Id2, Id1), Id, Id1), Id1), Id2)
         if comp(Id1 s(S) Id2) := Id /\
            (isArith(S) or isIntComp(S)) .
     ceq inferId(TIDS, Id) = inferId(inferId(unify(unify(unifyType(TIDS, Id1, string), Id1, Id2), Id, Id1), Id1), Id2)
