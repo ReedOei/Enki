@@ -18,6 +18,8 @@ mod ENKI-SYNTAX-SORTS is
     vars T T1 T2 : EnkiType .
     op returnType : EnkiType -> EnkiType .
     eq returnType(func(T1, T2)) = returnType(T2) .
+    eq returnType(rule(T1, T2)) = returnType(T2) .
+    eq returnType(data(T1, T2)) = returnType(T2) .
     eq returnType(T1)           = T1 [owise] .
 
     op isFunc : EnkiType -> Bool .

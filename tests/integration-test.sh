@@ -20,4 +20,5 @@ try_compile "fib.enki"
 try_compile "collatz_func.enki"
 try_compile "collatz_list.enki"
 try_compile "exec.enki"
+try_compile "range.enki"
 

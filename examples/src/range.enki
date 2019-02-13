@@ -1,0 +1,10 @@
+list may be
+    empty.
+    cons Head Tail has
+        Head : int,
+        Tail : list.
+
+range Low to High is
+    when Low > High then empty.
+    otherwise then cons Low (range (Low + 1) to High).
+

@@ -12,6 +12,20 @@ construct Head Full is
     Full = (cons Head Tail),
     Tail.
 
+append A B is
+    when A = cons H T then cons H (append T B).
+    otherwise then B.
+
+reverseAcc A Acc is
+    when A = cons H T then reverseAcc T (cons H Acc).
+    otherwise then Acc.
+
+reverse list A is reverseAcc A empty.
+
+range Low to High is
+    when Low > High then empty.
+    otherwise then cons Low (range (Low + 1) to High).
+
 sum List is N where
     when List = cons H T then sum T is (N - H).
     otherwise then N = 0.
