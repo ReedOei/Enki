@@ -1,0 +1,49 @@
+mod FUNC{X :: TRIV, Y :: TRIV} is
+    sort Func{X, Y} .
+    op _(_) : Func{X, Y} X$Elt -> Y$Elt [prec 17] .
+endm
+
+mod LIST-MAP{X :: TRIV, Y :: TRIV} is
+    protecting FUNC{X, Y} .
+
+    protecting LIST{X} .
+    protecting LIST{Y} .
+
+    var X : X$Elt .
+    var Xs : List{X} .
+    var Y : Y$Elt .
+    var Ys : List{Y} .
+    var F : Func{X, Y} .
+
+    op map : Func{X, Y} List{X} -> List{Y} .
+    eq map(F, nil) = nil .
+    eq map(F, X Xs) = F(X) map(F, Xs).
+endm
+
+mod SET-MAP{X :: TRIV, Y :: TRIV} is
+    protecting FUNC{X, Y} .
+
+    protecting SET{X} .
+    protecting SET{Y} .
+
+    var X : X$Elt .
+    var Xs : Set{X} .
+    var Y : Y$Elt .
+    var Ys : Set{Y} .
+    var F : Func{X, Y} .
+
+    op setmap : Func{X, Y} Set{X} -> Set{Y} .
+    eq setmap(F, empty) = empty .
+    eq setmap(F, (X, Xs)) = (F(X), setmap(F, Xs)).
+endm
+
+mod TESTING is
+    protecting LIST-MAP{Int, Int} .
+    protecting SET-MAP{Int, Int} .
+
+    var X : Int .
+
+    op inc : -> Func{Int, Int} .
+    eq inc(X) = X + 1 .
+endm
+
