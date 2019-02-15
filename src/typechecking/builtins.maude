@@ -1,0 +1,28 @@
+mod ENKI-TYPECHECK-BUILTINS-SORTS is
+    protecting ENKI-SYNTAX-SORTS .
+
+    sort Builtin .
+
+    op builtin : Id Id -> Builtin .
+endm
+
+view Builtin from TRIV to ENKI-TYPECHECK-BUILTINS-SORTS is
+    sort Elt to Builtin .
+endv
+
+mod ENKI-TYPECHECK-BUILTINS is
+    protecting ENKI-SYNTAX-UTILITY .
+    protecting ENKI-UNIFICATION .
+    protecting ENKI-TYPECHECK-ENV .
+
+    protecting ENKI-TYPECHECK-BUILTINS-SORTS .
+
+    protecting SET{Builtin} .
+
+    op builtinsIds : -> Set{TypedId} .
+    eq builtinsIds = tid(fid(comp(s("display") v("Str"))), string) .
+
+    op builtinsNames : -> Set{Builtin} .
+    eq builtinsNames = builtin(comp(s("display") v("Str")), comp(s("writeln") v("Str"))) .
+endm
+

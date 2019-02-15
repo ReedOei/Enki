@@ -4,6 +4,7 @@ mod ENKI-TYPECHECK is
     protecting ENKI-TYPECHECK-SORTS .
     protecting ENKI-UNIFICATION .
     protecting ENKI-TYPECHECK-ENV .
+    protecting ENKI-TYPECHECK-BUILTINS .
 
     protecting LIST{EnkiFunc} .
     protecting LIST{EnkiDef} .
@@ -101,7 +102,6 @@ mod ENKI-TYPECHECK is
     --- TODO: handle builtins better
     var FuncType : EnkiType .
     op inferId : Set{TypedId} Id -> Set{TypedId} .
-    eq inferId(TIDS, comp(s("display") Id)) = inferId(unify(unifyType(TIDS, Id, string), comp(s("display") Id), Id), Id) .
     ceq inferId(TIDS, Id) = unify(inferId(inferId(unify(unify(TIDS, Id1, Id2), Id, Id1), Id1), Id2), Id1, Id2)
         if comp(Id1 s("=") Id2) := Id .
     ceq inferId(TIDS, Id) = inferId(inferId(unify(unify(unifyType(TIDS, Id1, int), Id2, Id1), Id, Id1), Id1), Id2)
@@ -110,6 +110,11 @@ mod ENKI-TYPECHECK is
     ceq inferId(TIDS, Id) = inferId(inferId(unify(unify(unifyType(TIDS, Id1, string), Id1, Id2), Id, Id1), Id1), Id2)
         if comp(Id1 s(S) Id2) := Id /\
            isStrOp(S) .
+    ceq inferId(TIDS, Id) = unifyType(unifyMap(TIDS, Types, varstrs(FuncId), VarMap), Id, T)
+        if tid(FuncId, FuncType) := findFuncType(builtinsIds, Id) /\
+           T                     := returnType(FuncType)   /\
+           Types                 := funcTypeList(FuncType) /\
+           VarMap                := funcUnify(FuncId, Id) .
     ceq inferId(TIDS, Id) = unifyType(unifyMap(TIDS, Types, varstrs(FuncId), VarMap), Id, T)
         if tid(FuncId, FuncType) := findFuncType(TIDS, Id) /\
            T                     := returnType(FuncType)   /\
@@ -142,6 +147,8 @@ mod ENKI-TYPECHECK is
         if DummyT := firstUnused(types(TIDS), 0) /\
            tid(ResolvedId, DummyT) := resolve(TIDS, tid(Id, DummyT)) .
 
+    var BuiltInSet : Set{Builtin} .
+
     op resolve : Set{TypedId} TypedId -> TypedId .
     eq resolve(TIDS,  tid(v(S), T))     = tid(v(S), T) .
     eq resolve(TIDS,  tid(b(B), T))     = tid(b(B), T) .
@@ -150,8 +157,13 @@ mod ENKI-TYPECHECK is
     ceq resolve(TIDS, tid(t(Id, T), T)) = tid(t(Id1, T), T)
         if tid(Id1, T1) := resolve(TIDS, tid(Id, T)) .
     eq resolve(TIDS,  tid(comp(nil), T)) = tid(comp(nil), T) .
+    --- Check if this is some builtin, and look it up, if so
+    ceq resolve(TIDS, tid(Id, T1)) = tid(fcall(ResolvedId, T, resolveMap(TIDS, VarMap)), T1)
+        if (tid(fid(FuncId), T), RestTIDS) := builtinsIds /\
+           VarMap                          := funcUnify(FuncId, Id) /\
+           funcNameMatches(FuncId, Id) /\
+           (builtin(FuncId, ResolvedId), BuiltInSet)  := builtinsNames .
     --- Lookup the function call, if applicable
-    eq resolve(TIDS, tid(comp(s("display") Id), T)) = tid(fcall(comp(s("writeln") v("Str")), string, resolveMap(TIDS, "Str" |-> Id)), T) .
     ceq resolve(TIDS, tid(comp(Ids), T1)) = tid(fcall(FuncId, T, resolveMap(TIDS, VarMap)), T1)
         if (tid(fid(FuncId), T), RestTIDS) := TIDS /\
            VarMap                          := funcUnify(FuncId, comp(Ids)) /\
