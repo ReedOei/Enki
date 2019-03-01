@@ -9,6 +9,7 @@ import Data.List
 import Data.Maybe
 
 import System.Directory
+import System.Environment
 import System.FilePath.Posix
 
 import Text.Parsec
@@ -53,7 +54,8 @@ data Def = Func Id Constraint Expr
          | Rule Id Constraint
          | Data Id [Constructor]
          | Exec Constraint
-         | Module [Def]
+         | Module String [Def]
+         | NoImport String
     deriving (Eq, Show)
 
 class PrettyPrint a where
@@ -99,7 +101,7 @@ instance PrettyPrint Def where
     prettyPrint (Rule id c)   = "def(r(" ++ prettyPrint id ++ "," ++ prettyPrint c ++ "))"
     prettyPrint (Data id constrs) = "def(d(" ++ prettyPrint id ++ "," ++ maudeList (map prettyPrint constrs) ++ "))"
     prettyPrint (Exec c)   = "exec(ex(" ++ prettyPrint c ++ "))"
-    prettyPrint (Module defs) = "import(m(" ++ maudeList (map prettyPrint defs) ++ "))"
+    prettyPrint (Module _ defs) = "import(m(" ++ maudeList (map prettyPrint defs) ++ "))"
 
 parseFile :: String -> Maybe String -> IO ()
 parseFile fname output = do
@@ -113,30 +115,62 @@ parseFile fname output = do
 
 parseFileAst :: String -> IO [Def]
 parseFileAst fname = do
+    enkiPath <- getEnv "ENKI_PATH"
+
+    -- Load the standard library
+    stdLib <- withCurrentDirectory enkiPath (parseDef =<< readFile "base.enki")
+
     let dir = takeDirectory fname
     let base = takeFileName fname
 
     res <- withCurrentDirectory dir (parseDef =<< readFile base)
 
-    case res of
-        Left err -> error $ show err
-        Right parsed -> pure parsed
+    case (stdLib, res) of
+        (Left err, _) -> error $ show err
+        (_, Left err) -> error $ show err
+        (Right stdLibParsed, Right parsed) -> pure $ fixImports $ [Module "base" stdLibParsed] ++ parsed
+
+fixImports :: [Def] -> [Def]
+fixImports defs = filter (noIgnore (concatMap ignore defs)) defs
+    where
+        noIgnore _ (NoImport _) = False -- Remove all of these
+        noIgnore ignoredNames (Module name _) = name `notElem` ignoredNames
+        noIgnore _ _ = True
+
+        ignore (NoImport name) = [name]
+        ignore _ = []
 
 parseDef :: MonadIO m => String -> m (Either ParseError [Def])
 parseDef = runParserT enkiDef () ""
 
 enkiDef :: (MonadIO m, Stream s m Char) => ParsecT s st m [Def]
-enkiDef = many (try enkiImport <|> try func <|> try rule <|> try dataDef <|> try exec)
+enkiDef = many (try enkiImport <|>
+                try noImport <|>
+                try func <|>
+                try rule <|>
+                try dataDef <|>
+                try exec)
+
+noImport :: (MonadIO m, Stream s m Char) => ParsecT s st m Def
+noImport = do
+    symbol $ string "do"
+    symbol $ string "not"
+    symbol $ string "use"
+    moduleName <- symbol $ many $ noneOf " .\n\r\t"
+    symbol $ string "."
+    optional newlines
+
+    pure $ NoImport moduleName
 
 enkiImport :: (MonadIO m, Stream s m Char) => ParsecT s st m Def
 enkiImport = do
     symbol $ string "use"
     -- TODO: Allow defining multiple modules per file
-    moduleName <- symbol $ many $ noneOf " \n\r\t"
+    moduleName <- symbol $ many $ noneOf " .\n\r\t"
     file <- optionMaybe $ do
         symbol $ string "from"
-        symbol $ many $ noneOf " \n\r\t"
-
+        symbol $ many $ noneOf " .\n\r\t"
+    symbol $ string "."
     optional newlines
 
     let filename =
@@ -145,10 +179,8 @@ enkiImport = do
                 Just name -> if ".enki" `isSuffixOf` name then name else name ++ ".enki"
 
     -- TODO: Make this search multiple paths
-    res <- liftIO $ parseDef =<< readFile filename
-    case res of
-        Left err -> error $ "An error occurred while trying to import module '" ++ moduleName ++ "' from '" ++ filename ++ "'"
-        Right defs -> pure $ Module defs
+    defs <- liftIO $ parseFileAst filename
+    pure $ Module moduleName defs
 
 exec :: Parser Def
 exec = do
@@ -289,8 +321,8 @@ expr :: Parser Expr
 expr = Expr <$> enkiId []
 
 constraint :: Parser Constraint
-constraint = Constraints <$> ((try (sepBy1 (try when <|> try otherwiseBranch) lineSep)) <|>
-                              (map Constraint <$> (sepBy1 idParsers sep)))
+constraint = Constraints <$> (try (sepBy1 (try when <|> try otherwiseBranch) lineSep) <|>
+                             (map Constraint <$> (sepBy1 idParsers sep)))
     where
         idParsers = try (enkiId ["then"]) <|> try (baseEnkiId ["then"])
         sep = symbol $ string ","
@@ -366,7 +398,7 @@ flatten (Comp [id]) = id
 flatten id = id
 
 binary :: Stream s m Char => String -> Assoc -> Operator s st m Id
-binary name assoc = Infix parse assoc
+binary name = Infix parse
     where
         parse = do
             op <- try $ opStr name

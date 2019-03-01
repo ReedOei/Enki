@@ -262,8 +262,11 @@ mod ENKI-TYPECHECK is
     eq constructorTypes(Id, Constructor Constructors) = constructorType(Id, Constructor), constructorTypes(Id, Constructors) .
 
     var Expr : Expr .
+    var MoreDefs : List{EnkiDef} .
+
     op inferDefs : Set{TypedId} List{EnkiDef} -> List{TypedDef} .
     eq inferDefs(TIDS, nil) = nil .
+    ceq inferDefs(TIDS, import(m(MoreDefs))) Defs) = inferDefs(TIDS, append(MoreDefs, Defs)) .
     ceq inferDefs(TIDS, exec(ex(Constraint)) Defs) = exec(typedExec(TConstraint)) inferDefs(TIDS, Defs)
         if NewTIDS     := inferConstraint(freshtypes(TIDS, constraintIds(Constraint)), Constraint) /\
            TConstraint := resolveConstraints(NewTIDS, attachConstraintTypes(NewTIDS, Constraint)).

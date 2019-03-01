@@ -1,3 +1,5 @@
+do not use base.
+
 collatz X is N where
     when X = 2*K + 1 then N = 3*X + 1.
     otherwise then display X, X = 2*N.

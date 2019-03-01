@@ -1,3 +1,5 @@
+do not use base.
+
 square root X is Root^2 = X, Root.
 
 distance from X1 Y1 to X2 Y2 is square root ((X1 - X2)^2 + (Y1 - Y2)^2).
