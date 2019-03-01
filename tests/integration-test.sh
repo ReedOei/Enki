@@ -22,6 +22,4 @@ try_compile "collatz_list.enki"
 try_compile "exec.enki"
 try_compile "range.enki"
 try_compile "list_lib.enki"
-try_compile "pe1.enki"
-try_compile "pe2.enki"
 
