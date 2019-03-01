@@ -10,25 +10,52 @@ root(Root) :-
     atom_concat(_, 'bin/enki', File),
     file_directory_name(File, Root).
 
+maude_output(false).
+
+process_args(['--show-maude']) :-
+    asserta(maude_output(true)).
+process_args([]).
+
 main(Argv) :-
     root(Root),
     parent_path(Root, ProjRoot),
     directory_file_path(ProjRoot, 'enki.maude', EnkiMain),
-    Argv = [File|_] -> forall(member(File, Argv), process_file(EnkiMain, File));
 
-    writeln('Usage: enki FILE'),
-    writeln('FILE - The file to compile. Should be either a .enki file or a .enkiast file').
+    (
+        Argv = [run, File|Rest] -> process_args(Rest), run_file(EnkiMain, File);
+        Argv = [compile, File|Rest] -> process_args(Rest), process_file(EnkiMain, File);
+        Argv = [File|Rest] -> process_args(Rest), process_file(EnkiMain, File);
+
+        writeln('Usage: enki FILE'),
+        writeln('FILE - The file to compile. Should be either a .enki file or a .enkiast file')
+    ).
+
+run_file(EnkiMain, File) :-
+    process_file(EnkiMain, File, Output),
+
+    file_name_extension(BaseName, 'enki', File),
+    file_name_extension(BaseName, 'pl', OutputFile),
+    setup_call_cleanup(open(OutputFile, write, Stream),
+        writeln(Stream, Output),
+        close(Stream)),
+
+    directory_file_path(DirectoryPath, FileName, OutputFile),
+    process(path(swipl), [FileName], [path(DirectoryPath)]).
 
 process_file(EnkiMain, File) :-
-    file_name_extension(_, 'enki', File) -> parse_and_compile(EnkiMain, File);
-    file_name_extension(_, 'enkiast', File) -> compile(EnkiMain, File);
+    process_file(EnkiMain, File, Output),
+    writeln(Output).
+
+process_file(EnkiMain, File, Output) :-
+    file_name_extension(_, 'enki', File) -> parse_and_compile(EnkiMain, File, Output);
+    file_name_extension(_, 'enkiast', File) -> compile(EnkiMain, File, Output);
     format('Unknown extension on file: ~w~n', [File]).
 
-parse_and_compile(EnkiMain, File) :-
+parse_and_compile(EnkiMain, File, Output) :-
     file_name_extension(Base, _, File),
     file_name_extension(Base, 'enkiast', OutputFile),
     parse_file(File, OutputFile),
-    compile(EnkiMain, OutputFile).
+    compile(EnkiMain, OutputFile, Output).
 
 parse_file(File, OutputFile) :-
     process(path('Parser'), [File, OutputFile]).
@@ -36,7 +63,7 @@ parse_file(File, OutputFile) :-
 maude_run(EnkiMain, Str, Result) :-
     atomic_list_concat(['reduce in ENKI : ', Str, ' .'], '', CompileStr),
     process(path(maude), ['-no-banner', '-no-wrap', '-no-advise', EnkiMain], [input(CompileStr), output(Output)]),
-    writeln(user_error, Output),
+    (maude_output(true) -> writeln(user_error, Output); true),
     atomic_list_concat(Lines, '\n', Output),
     member(Line, Lines),
     atom_concat('result ', WithType, Line),
@@ -63,10 +90,9 @@ compile_result(Result, CompileResult) :-
     replace_all(Quotes, '\\r', '\r', CR),
     replace_all(CR, '\\t', '\t', CompileResult).
 
-compile(EnkiMain, File) :-
+compile(EnkiMain, File, CompileResult) :-
     read_file(File, Str),
     compile_string(Str, CompileStr),
     maude_run(EnkiMain, CompileStr, Result),
-    compile_result(Result, CompileResult),
-    writeln(CompileResult).
+    compile_result(Result, CompileResult).
 
