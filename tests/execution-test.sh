@@ -18,4 +18,5 @@ try_exec() {
 try_exec "pe1.enki"
 try_exec "pe2.enki"
 try_exec "pe3.enki"
+try_exec "pe5.enki"
 

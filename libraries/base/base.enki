@@ -22,9 +22,11 @@ construct Head Full is
     Full = (cons Head Tail),
     Tail.
 
-concat A with B is
-    when A = cons H T then cons H (concat T with B).
+concat A B is
+    when A = cons H T then cons H (concat T B).
     otherwise then B.
+
+concat A with B is concat A B.
 
 flatten List is
     when List = cons H T then concat H with (flatten T).
@@ -59,6 +61,7 @@ range Low to High is
     otherwise then cons Low (range (Low + 1) to High).
 
 range from Low to High is range Low to High.
+integers from Low to High is range Low to High.
 
 inc List is
     when List = (cons H T) then

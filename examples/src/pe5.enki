@@ -1,0 +1,14 @@
+gcd of A and B is
+    when B = 0 then A.
+    otherwise then
+        A = B*X + M, M >= 0, M < B,
+        gcd of B and M.
+
+lcm of A and B is A * B / gcd of A and B.
+
+lcm of List is
+    when List = cons H T then lcm of H and lcm of T.
+    otherwise then 1.
+
+display lcm of integers from 1 to 20.
+

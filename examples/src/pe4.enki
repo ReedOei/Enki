@@ -1,8 +1,8 @@
 N digit numbers is range (10^(N - 1)) to (10^N - 1).
 
-multiply each pair in List is
+product of pairs in List is
     when List = cons (pair A and B) T then
-        cons (A * B) (multiply each pair in T).
+        cons (A * B) (product of pairs in T).
     otherwise then empty.
 
 palindrome numbers in List is
@@ -10,5 +10,9 @@ palindrome numbers in List is
     when List = cons H T then palindrome numbers in T.
     otherwise then empty.
 
-display (maximum of (palindrome numbers in (multiply each pair in (pairs of (2 digit numbers) and (2 digit numbers))))).
+answer with N digits is
+    Nums = N digit numbers,
+    maximum of palindrome numbers in product of pairs in pairs of Nums and Nums.
+
+display answer with 3 digits.
 
