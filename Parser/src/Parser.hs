@@ -3,8 +3,13 @@
 
 module Parser where
 
+import Control.Monad.IO.Class
+
 import Data.List
 import Data.Maybe
+
+import System.Directory
+import System.FilePath.Posix
 
 import Text.Parsec
 import Text.Parsec.Expr
@@ -48,6 +53,7 @@ data Def = Func Id Constraint Expr
          | Rule Id Constraint
          | Data Id [Constructor]
          | Exec Constraint
+         | Module [Def]
     deriving (Eq, Show)
 
 class PrettyPrint a where
@@ -93,23 +99,56 @@ instance PrettyPrint Def where
     prettyPrint (Rule id c)   = "def(r(" ++ prettyPrint id ++ "," ++ prettyPrint c ++ "))"
     prettyPrint (Data id constrs) = "def(d(" ++ prettyPrint id ++ "," ++ maudeList (map prettyPrint constrs) ++ "))"
     prettyPrint (Exec c)   = "exec(ex(" ++ prettyPrint c ++ "))"
+    prettyPrint (Module defs) = "import(m(" ++ maudeList (map prettyPrint defs) ++ "))"
 
 parseFile :: String -> Maybe String -> IO ()
 parseFile fname output = do
-    contents <- readFile fname
-    case parseDef contents of
+    parsed <- parseFileAst fname
+
+    let outputStr = intercalate "\n" $ map prettyPrint parsed
+
+    case output of
+        Nothing -> putStrLn outputStr
+        Just file -> writeFile file outputStr
+
+parseFileAst :: String -> IO [Def]
+parseFileAst fname = do
+    let dir = takeDirectory fname
+    let base = takeFileName fname
+
+    res <- withCurrentDirectory dir (parseDef =<< readFile base)
+
+    case res of
         Left err -> error $ show err
-        Right parsed ->
-            let outputStr = intercalate "\n" $ map prettyPrint parsed
-            in case output of
-                Nothing -> putStrLn outputStr
-                Just file -> writeFile file outputStr
+        Right parsed -> pure parsed
 
-parseDef :: String -> Either ParseError [Def]
-parseDef = parse enkiDef ""
+parseDef :: MonadIO m => String -> m (Either ParseError [Def])
+parseDef = runParserT enkiDef () ""
 
-enkiDef :: Parser [Def]
-enkiDef = many (try func <|> try rule <|> try dataDef <|> try exec)
+enkiDef :: (MonadIO m, Stream s m Char) => ParsecT s st m [Def]
+enkiDef = many (try enkiImport <|> try func <|> try rule <|> try dataDef <|> try exec)
+
+enkiImport :: (MonadIO m, Stream s m Char) => ParsecT s st m Def
+enkiImport = do
+    symbol $ string "use"
+    -- TODO: Allow defining multiple modules per file
+    moduleName <- symbol $ many $ noneOf " \n\r\t"
+    file <- optionMaybe $ do
+        symbol $ string "from"
+        symbol $ many $ noneOf " \n\r\t"
+
+    optional newlines
+
+    let filename =
+            case file of
+                Nothing -> moduleName ++ ".enki"
+                Just name -> if ".enki" `isSuffixOf` name then name else name ++ ".enki"
+
+    -- TODO: Make this search multiple paths
+    res <- liftIO $ parseDef =<< readFile filename
+    case res of
+        Left err -> error $ "An error occurred while trying to import module '" ++ moduleName ++ "' from '" ++ filename ++ "'"
+        Right defs -> pure $ Module defs
 
 exec :: Parser Def
 exec = do

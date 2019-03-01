@@ -28,6 +28,8 @@ dependencies:
 - containers
 - mtl
 - lens
+- directory
+- filepath
 - optparse-applicative
 
 library:

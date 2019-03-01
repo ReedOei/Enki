@@ -19,6 +19,8 @@ mod ENKI-TYPECHECK-SORTS-SYNTAX is
     op typedWhen : TypedConstraint TypedConstraint -> TypedConstraint .
 
     op fcall : Id List{EnkiType} Map{String, Id} -> Id .
+    --- Represents calling a dynamic function (usually for a higher order function)
+    op dynfcall : Id List{EnkiType} Map{String, Id} -> Id .
     --- Represents using a data constructor
     op dcall : Id List{EnkiType} Map{String, Id} -> Id .
 endm

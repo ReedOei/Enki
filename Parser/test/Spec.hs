@@ -161,3 +161,5 @@ main = hspec $ do
         testCompile "examples/collatz.enki"
         testCompile "examples/list.enki"
 
+        testCompile "examples/importer.enki"
+

@@ -3,7 +3,7 @@ mod FUNC{X :: TRIV, Y :: TRIV} is
     op _(_) : Func{X, Y} X$Elt -> Y$Elt [prec 17] .
 endm
 
-mod LIST-MAP{X :: TRIV, Y :: TRIV} is
+mod LIST-FUNC{X :: TRIV, Y :: TRIV} is
     protecting FUNC{X, Y} .
 
     protecting LIST{X} .
@@ -20,7 +20,7 @@ mod LIST-MAP{X :: TRIV, Y :: TRIV} is
     eq map(F, X Xs) = F(X) map(F, Xs).
 endm
 
-mod SET-MAP{X :: TRIV, Y :: TRIV} is
+mod SET-FUNC{X :: TRIV, Y :: TRIV} is
     protecting FUNC{X, Y} .
 
     protecting SET{X} .
@@ -38,8 +38,8 @@ mod SET-MAP{X :: TRIV, Y :: TRIV} is
 endm
 
 mod TESTING is
-    protecting LIST-MAP{Int, Int} .
-    protecting SET-MAP{Int, Int} .
+    protecting LIST-FUNC{Int, Int} .
+    protecting SET-FUNC{Int, Int} .
 
     var X : Int .
 

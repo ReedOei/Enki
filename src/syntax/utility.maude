@@ -8,6 +8,12 @@ mod ENKI-SYNTAX-UTILITY is
     protecting LIST{Constructor} .
     protecting LIST{Field} .
 
+    --- Represents an imported module
+    sort EnkiMod .
+    op m : List{EnkiDef} -> EnkiMod .
+
+    op import : EnkiMod -> EnkiDef .
+
     var S : String .
     var I : Int .
     var B : Bool .
