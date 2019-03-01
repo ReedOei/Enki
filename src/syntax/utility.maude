@@ -7,6 +7,7 @@ mod ENKI-SYNTAX-UTILITY is
     protecting LIST{EnkiType} .
     protecting LIST{Constructor} .
     protecting LIST{Field} .
+    protecting LIST{EnkiDef} .
 
     --- Represents an imported module
     sort EnkiMod .

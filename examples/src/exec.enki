@@ -1,3 +1,5 @@
+do not use base.
+
 display 4.
 
 inc X is X + 1.
