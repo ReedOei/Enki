@@ -414,7 +414,7 @@ str list = do
 
     where
         symbols = nonEmpty ['a'..'z'] cs
-        cs = ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'1']
+        cs = ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9']
 
 nonEmpty :: String -> String -> Parser String
 nonEmpty start ending = do

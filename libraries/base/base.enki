@@ -44,6 +44,8 @@ sum List is
 
 List sums to N where N = sum List.
 
+sum of List is sum List.
+
 multiples of A in List is
     when List = cons H T, A divides H then cons H (multiples of A in T).
     when List = cons H T then multiples of A in T.
@@ -121,4 +123,32 @@ cartesian product of A and B is
     otherwise then empty.
 
 pairs of A and B is cartesian product of A and B.
+
+take N from List is
+    when N > 0, List = cons H T then cons H (take (N - 1) from T).
+    otherwise then empty.
+
+drop N from List is
+    when N > 0, List = cons H T then drop (N - 1) from T.
+    otherwise then List.
+
+product List is
+    when List = cons H T then H * product T.
+    otherwise then 1.
+
+product of List is product List.
+
+element N of List is
+    when N <= 0, List = cons H T then H.
+    otherwise then
+        N > 0, List = cons H T,
+        element (N - 1) of T.
+
+chunks of size L in List is
+    when List = empty then empty.
+    otherwise then cons (take L from List) (chunks of size L in drop L from List).
+
+chunks of length L in List is chunks of size L in List.
+
+prepend Head to Tail is cons Head Tail.
 
