@@ -1,33 +1,3 @@
-do not use base.
-
-list may be
-    empty.
-    cons Head Tail has
-        Head : int,
-        Tail : list.
-
-sum List is
-    when List = cons H T then H + sum T.
-    otherwise then 0.
-
-A divides B if B = A*N.
-
-multiples of A in List is
-    when List = cons H T, A divides H then cons H (multiples of A in T).
-    when List = cons H T then multiples of A in T.
-    otherwise then empty.
-
-range Low to High is
-    when Low > High then empty.
-    otherwise then cons Low (range (Low + 1) to High).
-
-formatHelper List is
-    when List = cons H empty then H .. "]".
-    when List = cons H T then H .. "," .. formatHelper T.
-    otherwise then "]".
-
-format list List is "[" .. formatHelper List.
-
 answer less than N is
     ThreeMult = multiples of 3 in (range 1 to N),
     FiveMult = multiples of 5 in (range 1 to N),

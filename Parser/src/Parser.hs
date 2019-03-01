@@ -84,7 +84,7 @@ instance PrettyPrint Type where
     prettyPrint EnkiInt          = "int"
     prettyPrint EnkiBool         = "bool"
     prettyPrint EnkiString       = "string"
-    prettyPrint (Any s)          = "any(" ++ s ++ ")"
+    prettyPrint (Any s)          = "any(\"" ++ s ++ "\")"
     prettyPrint (FuncType t1 t2) = "func(" ++ prettyPrint t1 ++ "," ++ prettyPrint t2 ++ ")"
     prettyPrint (RuleType t1 t2) = "rule(" ++ prettyPrint t1 ++ "," ++ prettyPrint t2 ++ ")"
     prettyPrint (DataType t1 t2) = "data(" ++ prettyPrint t1 ++ "," ++ prettyPrint t2 ++ ")"

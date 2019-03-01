@@ -1,0 +1,68 @@
+odd X if X = 2*K + 1.
+even X if X = 2*K.
+
+square root X is (Root^2) = X, Root.
+
+A divides B if B = A*N.
+
+list may be
+    empty.
+    cons Head Tail has
+        Head : T,
+        Tail : list.
+
+pair may be
+    pair X and Y has X : A, Y : B.
+
+length of List is
+    when List = cons H T then 1 + length of T.
+    otherwise then 0.
+
+construct Head Full is
+    Full = (cons Head Tail),
+    Tail.
+
+concat A B is
+    when A = cons H T then cons H (concat T B).
+    otherwise then B.
+
+reverseAcc A Acc is
+    when A = cons H T then reverseAcc T (cons H Acc).
+    otherwise then Acc.
+
+reverse list A is reverseAcc A empty.
+
+sum List is
+    when List = cons H T then H + sum T.
+    otherwise then 0.
+
+List sums to N where N = sum List.
+
+multiples of A in List is
+    when List = cons H T, A divides H then cons H (multiples of A in T).
+    when List = cons H T then multiples of A in T.
+    otherwise then empty.
+
+formatHelper List is
+    when List = cons H empty then H .. "]".
+    when List = cons H T then H .. "," .. formatHelper T.
+    otherwise then "]".
+
+format list List is "[" .. formatHelper List.
+
+range Low to High is
+    when Low > High then empty.
+    otherwise then cons Low (range (Low + 1) to High).
+
+range from Low to High is range Low to High.
+
+inc List is
+    when List = (cons H T) then
+        cons (H + 1) (inc T).
+    otherwise then empty.
+
+zip A and B is
+    when A = cons HA TA, B = cons HB TB then
+        cons (pair HA and HB) (zip TA and TB).
+    otherwise then empty.
+
