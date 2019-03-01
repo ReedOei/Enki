@@ -3,6 +3,8 @@
 try_compile() {
     fname="$1"
 
+    echo "Running $fname"
+
     ./bin/enki "examples/src/$fname" > "examples/src/$fname.pl"
     if diff -Bb "examples/src/$fname.pl" "examples/src/$fname.pl.out" > /dev/null; then
         test_pass "$fname"

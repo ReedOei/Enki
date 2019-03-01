@@ -8,11 +8,11 @@ A divides B if B = A*N.
 list may be
     empty.
     cons Head Tail has
-        Head : T,
+        Head : int,
         Tail : list.
 
 pair may be
-    pair X and Y has X : A, Y : B.
+    pair X and Y has X : int, Y : int.
 
 length of List is
     when List = cons H T then 1 + length of T.
@@ -22,9 +22,13 @@ construct Head Full is
     Full = (cons Head Tail),
     Tail.
 
-concat A B is
-    when A = cons H T then cons H (concat T B).
+concat A with B is
+    when A = cons H T then cons H (concat T with B).
     otherwise then B.
+
+flatten List is
+    when List = cons H T then concat H with (flatten T).
+    otherwise then empty.
 
 reverseAcc A Acc is
     when A = cons H T then reverseAcc T (cons H Acc).
@@ -65,4 +69,53 @@ zip A and B is
     when A = cons HA TA, B = cons HB TB then
         cons (pair HA and HB) (zip TA and TB).
     otherwise then empty.
+
+max of A and B is
+    when A > B then A.
+    otherwise then B.
+
+min of A and B is
+    when A > B then A.
+    otherwise then B.
+
+maximum of List is
+    when List = cons H empty then H.
+    when List = cons H T then max of H and maximum of T.
+    otherwise then 0.
+
+minimum of List is
+    when List = cons H empty then H.
+    when List = cons H T then min of H and minimum of T.
+    otherwise then 0.
+
+find factor of N starting with X is
+    when X divides N then X.
+    otherwise then find factor of N starting with (X + 1).
+
+factors of N is
+    when N = 1 then empty.
+    otherwise then
+        Factor = find factor of N starting with 2,
+        cons Factor factors of (N / Factor).
+
+digits of N is
+    when N < 10 then cons N empty.
+    otherwise then
+        N = 10*Rest + Digit,
+        Digit >= 0, Digit < 10,
+        cons Digit digits of Rest.
+
+palindrome List if reverse list List = List.
+palindrome number N if palindrome digits of N.
+
+pair X with each List is
+    when List = cons H T then cons (pair X and H) (pair X with each T).
+    otherwise then empty.
+
+cartesian product of A and B is
+    when A = cons H T then
+        concat (pair H with each B) with cartesian product of T and B.
+    otherwise then empty.
+
+pairs of A and B is cartesian product of A and B.
 

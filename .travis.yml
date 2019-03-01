@@ -2,6 +2,9 @@ cache:
     directories:
         - $HOME/.stack
 
+env:
+    - ENKI_PATH=$TRAVIS_BUILD_DIR/libraries/base
+
 before_install:
     - sudo apt-add-repository -y ppa:swi-prolog/stable
     - sudo apt update

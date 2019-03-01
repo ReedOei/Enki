@@ -27,6 +27,7 @@ mod ENKI-CODEGEN is
     eq prologArith("+") = "+" .
     eq prologArith("-") = "-" .
     eq prologArith("/") = "div" .
+    eq prologArith("mod") = "mod" .
     eq prologArith("*") = "*" .
     eq prologArith("^") = "^" .
 

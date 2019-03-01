@@ -3,6 +3,8 @@
 try_exec() {
     fname="$1"
 
+    echo "Running $fname"
+
     ./bin/enki "examples/src/$fname" > "examples/src/$fname.pl"
     swipl "examples/src/$fname.pl" > "temp"
     if diff -Bb "temp" "examples/src/$fname.out" > /dev/null; then
@@ -15,4 +17,5 @@ try_exec() {
 
 try_exec "pe1.enki"
 try_exec "pe2.enki"
+try_exec "pe3.enki"
 

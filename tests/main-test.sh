@@ -109,3 +109,5 @@ list_def="def(d(s(\"list\"), constructor(comp(s(\"empty\")), nil) constructor($c
 
 run_test "inferDefs(empty, exec(ex(cs(c(comp(s(\"display\") s(\"\\\"hello\\\"\")))))))" "TypedDef : exec(typedExec(typedConstraint(tid(fcall(comp(s(\"writeln\") v(\"Str\")), string, \"Str\" |-> s(\"\\\"hello\\\"\")), string))))"
 
+run_test "inferFunc(empty, f(comp(s(\"test\") v(\"X\")), cs(nil), e(comp(v(\"X\")))))" "TypedFunc: typed(comp(s(\"test\") v(\"X\")), func(any(\"T0\"), any(\"T0\")), typedConstraints(nil), typedExpr(tid(comp(v(\"X\")), any(\"T0\"))))"
+

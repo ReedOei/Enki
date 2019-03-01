@@ -1,0 +1,14 @@
+N digit numbers is range (10^(N - 1)) to (10^N - 1).
+
+multiply each pair in List is
+    when List = cons (pair A and B) T then
+        cons (A * B) (multiply each pair in T).
+    otherwise then empty.
+
+palindrome numbers in List is
+    when List = cons H T, palindrome number H then cons H (palindrome numbers in T).
+    when List = cons H T then palindrome numbers in T.
+    otherwise then empty.
+
+display (maximum of (palindrome numbers in (multiply each pair in (pairs of (2 digit numbers) and (2 digit numbers))))).
+

@@ -1,0 +1,69 @@
+mod ENKI-TYPECHECK-FUNC-UNIFY is
+    protecting ENKI-SYNTAX-UTILITY .
+    protecting ENKI-TYPECHECK-SORTS .
+
+    protecting SET{Id} .
+
+    vars Id1 Id2 Id : Id .
+    vars Ids1 Ids2 : List{Id} .
+    vars I I1 I2 : Int .
+
+    vars T T1 T2 : EnkiType .
+
+    var S S1 S2 : String .
+
+    var TIDS : Set{TypedId} .
+
+    op funcNameMatches : Id Id -> Bool .
+    eq funcNameMatches(comp(Id1), Id2) = funcNameMatches(Id1, Id2) .
+    eq funcNameMatches(Id1, comp(Id2)) = funcNameMatches(Id1, Id2) .
+    eq funcNameMatches(comp(nil), comp(nil)) = true .
+    eq funcNameMatches(comp(nil), Id) = false .
+    eq funcNameMatches(Id, comp(nil)) = false .
+    eq funcNameMatches(v(S), Id) = true .
+    eq funcNameMatches(s(S1), s(S2)) = S1 == S2 .
+    eq funcNameMatches(i(I1), i(I2)) = I1 == I2 .
+    eq funcNameMatches(comp(Id1 Ids1), comp(Id2 Ids2)) = funcNameMatches(Id1, Id2) and funcNameMatches(comp(Ids1), comp(Ids2)) .
+    eq funcNameMatches(Id1, Id2) = false [owise] .
+
+    op matchingFuntions : Set{TypedId} Id -> Set{TypedId} .
+    eq matchingFuntions(empty, Id) = empty .
+    eq matchingFuntions((tid(fid(Id1), T), TIDS), Id2) =
+        (if funcNameMatches(Id1, Id2) then tid(Id1, T) else empty fi), matchingFuntions(TIDS, Id2) .
+    eq matchingFuntions((tid(Id1, T), TIDS), Id2) = matchingFuntions(TIDS, Id2) [owise] .
+
+    var BestMatch : TypedId .
+    op bestMatchIn : TypedId Set{TypedId} Id -> TypedId .
+    eq bestMatchIn(BestMatch, empty, Id) = BestMatch .
+    eq bestMatchIn(tid(Id1, T1), (tid(Id2, T2), TIDS), Id) =
+        if idLength(Id1) >= idLength(Id2) then
+            bestMatchIn(tid(Id1, T1), TIDS, Id)
+        else
+            bestMatchIn(tid(Id2, T2), TIDS, Id)
+        fi .
+
+    var Match : TypedId .
+    var Matches : Set{TypedId} .
+    op bestFunctionMatch : Set{TypedId} Id -> TypedId .
+    ceq bestFunctionMatch(TIDS, Id) = bestMatchIn(Match, Matches, Id)
+        if (Match, Matches) := matchingFuntions(TIDS, Id) .
+
+    --- Take the function id (first) and the id to unify it with (second)
+    --- Returns a map from the variables in the function id to idenitifiers in the second id
+    --- NOTE: Be sure to call funcNameMatches too, to make sure this function won't get stuck!
+    op funcUnify : Id Id -> Map{String, Id} .
+    eq funcUnify(comp(Id1), Id2) = funcUnify(Id1, Id2) .
+    eq funcUnify(Id1, comp(Id2)) = funcUnify(Id1, Id2) .
+    eq funcUnify(comp(nil), comp(nil)) = empty .
+    eq funcUnify(comp(nil), Id) = empty .
+    eq funcUnify(Id, comp(nil)) = empty .
+    eq funcUnify(v(S), Id) = S |-> Id .
+    eq funcUnify(s(S), s(S)) = empty .
+    eq funcUnify(i(I), i(I)) = empty .
+    eq funcUnify(comp(Id1 Ids1), comp(Id2 Ids2)) = funcUnify(Id1, Id2), funcUnify(comp(Ids1), comp(Ids2)) .
+
+    --- Return the typed id of the function matching the Id passed in, if any matches
+    op findFuncType : Set{TypedId} Id -> TypedId .
+    eq findFuncType(TIDS, Id) = bestFunctionMatch(TIDS, Id) .
+endm
+

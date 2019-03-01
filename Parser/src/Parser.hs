@@ -386,7 +386,7 @@ opTable :: Stream s m Char => OperatorTable s st m Id
 opTable =
     [
         [binary "^" AssocLeft],
-        [binary "*" AssocLeft, binary "/" AssocLeft],
+        [binary "*" AssocLeft, binary "/" AssocLeft, binary "mod" AssocLeft],
         [binary "+" AssocLeft, binary "-" AssocLeft],
         [binary ".." AssocLeft],
         [binary "=" AssocNone, binary ">=" AssocNone,

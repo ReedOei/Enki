@@ -3,6 +3,8 @@
 try_run() {
     fname="$1"
 
+    echo "Running $fname"
+
     ./bin/enki "examples/ast/$fname" > temp
     if diff -Bb temp "examples/ast/$fname.pl" > /dev/null; then
         test_pass "$fname"

@@ -34,6 +34,14 @@ mod ENKI-SYNTAX-UTILITY is
     op comp : List{Id} -> Id .
     op cs : List{Constraint} -> Constraint .
 
+    op idLength : Id -> Int .
+    eq idLength(v(S))      = 1 .
+    eq idLength(b(B))      = 1 .
+    eq idLength(i(I))      = 1 .
+    eq idLength(s(S))      = 1 .
+    eq idLength(t(Id, T))  = idLength(Id) .
+    eq idLength(comp(Ids)) = size(Ids) .
+
     op idList : Id -> List{Id} .
     eq idList(v(S))         = v(S) .
     eq idList(b(B))         = b(B) .
@@ -100,6 +108,7 @@ mod ENKI-SYNTAX-UTILITY is
     eq isArith("/") = true .
     eq isArith("*") = true .
     eq isArith("^") = true .
+    eq isArith("mod") = true .
     eq isArith(S)   = false [owise] .
 
     op isIntComp : String -> Bool .

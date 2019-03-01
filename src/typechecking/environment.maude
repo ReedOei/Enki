@@ -1,5 +1,6 @@
 mod ENKI-TYPECHECK-ENV is
     protecting ENKI-SYNTAX-SORTS .
+    protecting ENKI-SYNTAX-UTILITY .
     protecting ENKI-TYPECHECK-SORTS .
 
     protecting SET{EnkiType} .
@@ -31,11 +32,11 @@ mod ENKI-TYPECHECK-ENV is
 
     op freshtypes : Set{TypedId} List{Id} -> Set{TypedId} .
     eq freshtypes(TIDS, nil)                    = TIDS .
-    eq freshtypes((tid(Id, T), TIDS), (Id Ids)) = freshtypes((tid(Id, T), TIDS), Ids) .
-    eq freshtypes(TIDS, (v(S) Ids))             = freshtypes(freshtype(TIDS, v(S)), Ids) .
-    eq freshtypes(TIDS, (i(I) Ids))             = freshtypes((tid(i(I), int), TIDS), Ids) .
-    eq freshtypes(TIDS, (b(B) Ids))             = freshtypes((tid(b(B), bool), TIDS), Ids) .
-    eq freshtypes(TIDS, (s(S) Ids))             = freshtypes((tid(s(S), string), TIDS), Ids) .
+    eq freshtypes((tid(Id, T), TIDS), Id Ids) = freshtypes((tid(Id, T), TIDS), Ids) .
+    eq freshtypes(TIDS, v(S) Ids)             = freshtypes(freshtype(TIDS, v(S)), Ids) .
+    eq freshtypes(TIDS, i(I) Ids)             = freshtypes((tid(i(I), int), TIDS), Ids) .
+    eq freshtypes(TIDS, b(B) Ids)             = freshtypes((tid(b(B), bool), TIDS), Ids) .
+    eq freshtypes(TIDS, s(S) Ids)             = freshtypes((tid(s(S), string), TIDS), Ids) .
 
     op typeSet : List{TypedId} -> Set{TypedId} .
     eq typeSet(nil)          = empty .
@@ -43,6 +44,7 @@ mod ENKI-TYPECHECK-ENV is
 
     op typeof : Set{TypedId} Id -> EnkiType .
     eq typeof((tid(Id, T), TIDS), Id) = T .
+    eq typeof((tid(Id, T), TIDS), comp(Id)) = T .
     eq typeof(TIDS, Id)               = firstUnused(types(TIDS), 0) [owise] .
 endm
 
