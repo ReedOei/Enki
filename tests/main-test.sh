@@ -84,21 +84,21 @@ half_body="v(\"N\")"
 half_type="func(int, int)"
 half_f="$(make_func "$half_fid" "c($half_const)" "$half_body")"
 
-run_test "inferFunc(empty, $half_f)" "TypedFunc: typed($half_fid, $half_type, typedConstraint(tid($half_const, int)), typedExpr(tid($half_body, int)))"
+run_test "inferFunc(empty, $half_f)" "TypedFunc: typed($half_fid, $half_type, typedConstraints(typed(tid($half_const, int))), typedExpr(tid($half_body, int)))"
 
 even_rid="comp(s(\"even\") v(\"X\"))"
 even_body="comp(v(\"X\") s(\"=\") comp(i(2) s(\"*\") v(\"X\")))"
 even_type="int"
 even_r="$(make_rule "$even_rid" "c($even_body)")"
 
-run_test "inferRule(empty, $even_r)" "TypedRule: typed($even_rid, $even_type, typedConstraint(tid($even_body, int)))"
+run_test "inferRule(empty, $even_r)" "TypedRule: typed($even_rid, $even_type, typedConstraints(typed(tid($even_body, int))))"
 
 divides_rid="comp(v(\"A\") s(\"divides\") v(\"B\"))"
 divides_body="comp(v(\"A\") s(\"=\") comp(v(\"N\") s(\"*\") v(\"B\")))"
 divides_type="rule(int, int)"
 divides_r="$(make_rule "$divides_rid" "c($divides_body)")"
 
-run_test "inferRule(empty, $divides_r)" "TypedRule: typed($divides_rid, $divides_type, typedConstraint(tid($divides_body, int)))"
+run_test "inferRule(empty, $divides_r)" "TypedRule: typed($divides_rid, $divides_type, typedConstraints(typed(tid($divides_body, int))))"
 
 pair_const="comp(s(\"pair\") v(\"X\") v(\"Y\"))"
 
@@ -107,7 +107,7 @@ run_test "constructorTypes(s(\"pair\"), constructor($pair_const, field(s(\"X\"),
 cons_const="comp(s(\"cons\") v(\"Head\") v(\"Tail\"))"
 list_def="def(d(s(\"list\"), constructor(comp(s(\"empty\")), nil) constructor($cons_const, field(s(\"Head\"), int) field(s(\"Tail\"), type(s(\"list\"))))))"
 
-run_test "inferDefs(empty, exec(ex(cs(c(comp(s(\"display\") s(\"\\\"hello\\\"\")))))))" "TypedDef : exec(typedExec(typedConstraint(tid(fcall(comp(s(\"writeln\") v(\"Str\")), string, \"Str\" |-> s(\"\\\"hello\\\"\")), string))))"
+run_test "inferDefs(empty, exec(ex(cs(c(comp(s(\"display\") s(\"\\\"hello\\\"\")))))))" "TypedDef : exec(typedExec(typedConstraints(typed(tid(fcall(comp(s(\"writeln\") v(\"Str\")), string, \"Str\" |-> s(\"\\\"hello\\\"\")), string)))))"
 
 run_test "inferFunc(empty, f(comp(s(\"test\") v(\"X\")), cs(nil), e(comp(v(\"X\")))))" "TypedFunc: typed(comp(s(\"test\") v(\"X\")), func(any(\"T0\"), any(\"T0\")), typedConstraints(nil), typedExpr(tid(comp(v(\"X\")), any(\"T0\"))))"
 

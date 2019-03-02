@@ -49,13 +49,14 @@ mod ENKI-TYPECHECK is
     ceq attachVars(TIDS, (Id Ids)) = tid(Id, T) attachVars((tid(Id, T), TIDS), Ids)
         if T := typeof(TIDS, Id) .
 
-    op attachConstraintTypes : Set{TypedId} Constraint -> List{TypedConstraint} .
-    eq attachConstraintTypes(TIDS, c(Id)) = typedConstraint(attachType(TIDS, Id)) .
-    eq attachConstraintTypes(TIDS, cs(nil)) = typedConstraints(nil) .
+    op attachConstraintTypes : Set{TypedId} Constraint -> TypedConstraint .
+    eq attachConstraintTypes(TIDS, c(Id)) = typed(attachType(TIDS, Id)) .
     ceq attachConstraintTypes(TIDS, when(C1, C2)) = typedWhen(TConstraint1, TConstraint2)
-        if TConstraint1 := flatten(typedConstraints(attachConstraintTypes(TIDS, C1))) /\
-           TConstraint2 := flatten(typedConstraints(attachConstraintTypes(TIDS, C2))) .
-    eq attachConstraintTypes(TIDS, cs(C Cs)) = attachConstraintTypes(TIDS, C) attachConstraintTypes(TIDS, cs(Cs)) .
+        if TConstraint1 := attachConstraintTypes(TIDS, C1) /\
+           TConstraint2 := attachConstraintTypes(TIDS, C2) .
+    eq attachConstraintTypes(TIDS, cs(nil))   = typedConstraints(nil) .
+    ceq attachConstraintTypes(TIDS, cs(C Cs)) = typedConstraints(attachConstraintTypes(TIDS, C) TConstraint)
+        if TConstraint := attachConstraintTypes(TIDS, cs(Cs)) .
 
     op functype : NeList{TypedId} -> EnkiType .
     eq functype(tid(Id, T))   = T .
@@ -153,36 +154,30 @@ mod ENKI-TYPECHECK is
         if DummyT := firstUnused(types(TIDS), 0) /\
            tid(Id1, DummyT) := resolve(TIDS, tid(Id, DummyT)) /\
            tid(Id2, DummyT) := resolve(TIDS, tid(comp(Ids), DummyT)) .
+    eq resolve(TIDS, tid(Id, T)) = resolveError(Id) .
 
     var TConstraint : TypedConstraint .
     var TConstraints : List{TypedConstraint} .
     vars TCs1 TCs2 : List{TypedConstraint} .
 
-    op combine : TypedConstraint TypedConstraint -> TypedConstraint .
-    eq combine(typedConstraints(nil), TConstraint) = TConstraint .
-    eq combine(TConstraint, typedConstraints(nil)) = TConstraint .
-    eq combine(typedConstraints(TCs1), typedConstraints(TCs2)) = typedConstraints(append(TCs1, TCs2)) .
-    eq combine(TConstraint1, TConstraint2) = typedConstraints(TConstraint1 TConstraint2) [owise] .
-
-    op flatten : TypedConstraint -> TypedConstraint .
-    eq flatten(typedConstraint(TID)) = typedConstraint(TID) .
-    eq flatten(typedConstraints(nil)) = typedConstraints(nil) .
-    eq flatten(typedWhen(TConstraint1, TConstraint2)) = typedWhen(flatten(TConstraint1), flatten(TConstraint2)) .
-    eq flatten(typedConstraints(TConstraint)) = flatten(TConstraint) .
-    eq flatten(typedConstraints(TConstraint TConstraints)) =
-        combine(flatten(TConstraint), flatten(typedConstraints(TConstraints))) .
+    var ResolvedTID : TypedId .
 
     vars TConstraint1 TConstraint2 : TypedConstraint .
-    op resolveConstraints : Set{TypedId} List{TypedConstraint} -> TypedConstraint .
-    eq resolveConstraints(TIDS, nil) = typedConstraints(nil) .
-    eq resolveConstraints(TIDS, typedConstraints(nil)) = typedConstraints(nil) .
-    eq resolveConstraints(TIDS, typedConstraints(TConstraint TConstraints)) =
-        resolveConstraints(TIDS, TConstraint TConstraints) .
-    eq resolveConstraints(TIDS, nil) = typedConstraint(nil) .
-    eq resolveConstraints(TIDS, typedWhen(TConstraint1, TConstraint2) TConstraints) =
-        flatten(typedConstraints(typedWhen(resolveConstraints(TIDS, TConstraint1), resolveConstraints(TIDS, TConstraint2)) resolveConstraints(TIDS, TConstraints))).
-    eq resolveConstraints(TIDS, typedConstraint(TID) TConstraints) =
-        flatten(typedConstraints(typedConstraint(resolve(TIDS, TID)) resolveConstraints(TIDS, TConstraints))) .
+    var Resolved : TypedConstraint .
+    var ResolvedConstraints : List{TypedConstraint} .
+
+    op resolve : Set{TypedId} TypedConstraint -> TypedConstraint .
+    eq resolve(TIDS, typedConstraints(nil)) = typedConstraints(nil) .
+    ceq resolve(TIDS, typedConstraints(TConstraint TConstraints)) =
+        typedConstraints(Resolved ResolvedConstraints)
+        if Resolved := resolve(TIDS, TConstraint) /\
+           typedConstraints(ResolvedConstraints) := resolve(TIDS, TConstraints) .
+    eq resolve(TIDS, typedWhen(TConstraint1, TConstraint2)) =
+        typedWhen(resolve(TIDS, TConstraint1), resolve(TIDS, TConstraint2)) .
+    ceq resolve(TIDS, typed(TID)) = constraintResolveError(Id)
+        if resolveError(Id) := resolve(TIDS, TID) .
+    ceq resolve(TIDS, typed(TID)) = typed(ResolvedTID)
+        if ResolvedTID := resolve(TIDS, TID) .
 
     var Constraint : Constraint .
     var FinalTIDS : Set{TypedId} .
@@ -193,7 +188,7 @@ mod ENKI-TYPECHECK is
            FuncType    := makeFuncType(NewTIDS, Id1, Id2) /\
            FinalTIDS   := unifyType(NewTIDS, fid(Id1), FuncType) /\
            TExpr       := typedExpr(resolve(FinalTIDS, attachType(NewTIDS, Id2))) /\
-           TConstraint := resolveConstraints(FinalTIDS, attachConstraintTypes(NewTIDS, Constraint)) .
+           TConstraint := resolve(FinalTIDS, attachConstraintTypes(NewTIDS, Constraint)) .
 
     var RuleId : Id .
     var RuleType : EnkiType .
@@ -203,7 +198,7 @@ mod ENKI-TYPECHECK is
            NewTIDS     := inferConstraint(freshtypes(TIDS, Ids), Constraint) /\
            RuleType    := makeRuleType(NewTIDS, RuleId) /\
            FinalTIDS   := unifyType(NewTIDS, fid(RuleId), RuleType) /\
-           TConstraint := resolveConstraints(FinalTIDS, attachConstraintTypes(FinalTIDS, Constraint)) .
+           TConstraint := resolve(FinalTIDS, attachConstraintTypes(FinalTIDS, Constraint)) .
 
     var Defs : List{EnkiDef} .
     var Func : EnkiFunc .
@@ -248,7 +243,7 @@ mod ENKI-TYPECHECK is
     eq inferDefs(TIDS, import(m(MoreDefs)) Defs) = inferDefs(TIDS, append(MoreDefs, Defs)) .
     ceq inferDefs(TIDS, exec(ex(Constraint)) Defs) = exec(typedExec(TConstraint)) inferDefs(TIDS, Defs)
         if NewTIDS     := inferConstraint(freshtypes(TIDS, constraintIds(Constraint)), Constraint) /\
-           TConstraint := resolveConstraints(NewTIDS, attachConstraintTypes(NewTIDS, Constraint)).
+           TConstraint := resolve(NewTIDS, attachConstraintTypes(NewTIDS, Constraint)).
     ceq inferDefs(TIDS, def(Func) Defs) = def(TFunc) inferDefs((tid(fid(Id), T), TIDS), Defs)
         if f(FuncId, C, Expr)               := Func /\
            TFunc                            := inferFunc(dummyFuncType(TIDS, FuncId), Func) /\

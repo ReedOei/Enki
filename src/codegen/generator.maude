@@ -144,7 +144,7 @@ mod ENKI-CODEGEN is
     var Cs : List{TypedConstraint} .
     var ThenLines : List{Line} .
     op generateConstraint : TypedConstraint Int -> GenVal .
-    eq generateConstraint(typedConstraint(TID), Counter)    = generate(TID, Counter) .
+    eq generateConstraint(typed(TID), Counter)    = generate(TID, Counter) .
     ceq generateConstraint(typedWhen(TConstraint1, TConstraint2), Counter) =
         genVal(synline("(") NewLines orline(")"), Res2, Counter2)
         if genVal(Lines1, Res1, Counter1) := generateConstraint(TConstraint1, Counter) /\
