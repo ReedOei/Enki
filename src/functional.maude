@@ -5,6 +5,7 @@ endm
 
 mod LIST-FUNC{X :: TRIV, Y :: TRIV} is
     protecting FUNC{X, Y} .
+    protecting FUNC{X, Bool} .
 
     protecting LIST{X} .
     protecting LIST{Y} .
@@ -14,14 +15,20 @@ mod LIST-FUNC{X :: TRIV, Y :: TRIV} is
     var Y : Y$Elt .
     var Ys : List{Y} .
     var F : Func{X, Y} .
+    var Pred : Func{X, Bool} .
 
     op map : Func{X, Y} List{X} -> List{Y} .
     eq map(F, nil) = nil .
     eq map(F, X Xs) = F(X) map(F, Xs).
+
+    op filter : Func{X, Bool} List{X} -> List{X} .
+    eq filter(Pred, nil) = nil .
+    eq filter(Pred, X Xs) = if Pred(X) then X filter(Pred, Xs) else filter(Pred, Xs) fi .
 endm
 
 mod SET-FUNC{X :: TRIV, Y :: TRIV} is
     protecting FUNC{X, Y} .
+    protecting FUNC{X, Bool} .
 
     protecting SET{X} .
     protecting SET{Y} .
@@ -31,10 +38,15 @@ mod SET-FUNC{X :: TRIV, Y :: TRIV} is
     var Y : Y$Elt .
     var Ys : Set{Y} .
     var F : Func{X, Y} .
+    var Pred : Func{X, Bool} .
 
     op setmap : Func{X, Y} Set{X} -> Set{Y} .
     eq setmap(F, empty) = empty .
     eq setmap(F, (X, Xs)) = (F(X), setmap(F, Xs)).
+
+    op setfilter : Func{X, Bool} Set{X} -> Set{X} .
+    eq setfilter(Pred, empty) = empty .
+    eq setfilter(Pred, (X, Xs)) = if Pred(X) then (X, setfilter(Pred, Xs)) else setfilter(Pred, Xs) fi .
 endm
 
 mod TESTING is

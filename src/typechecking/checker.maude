@@ -6,6 +6,7 @@ mod ENKI-TYPECHECK is
     protecting ENKI-TYPECHECK-ENV .
     protecting ENKI-TYPECHECK-BUILTINS .
     protecting ENKI-TYPECHECK-FUNC-UNIFY .
+    protecting ENKI-TYPECHECK-ERRORS .
 
     protecting LIST{EnkiFunc} .
     protecting LIST{EnkiDef} .
@@ -182,23 +183,23 @@ mod ENKI-TYPECHECK is
     var Constraint : Constraint .
     var FinalTIDS : Set{TypedId} .
     op inferFunc : Set{TypedId} EnkiFunc -> TypedFunc .
-    ceq inferFunc(TIDS, f(Id1, Constraint, e(Id2))) = typed(Id1, FuncType, TConstraint, TExpr)
+    ceq inferFunc(TIDS, f(Id1, Constraint, e(Id2))) = handleFuncError(Id1, FuncType, TConstraint, TExpr)
         if Ids         := append(idList(Id1), append(idList(Id2), constraintIds(Constraint))) /\
            NewTIDS     := inferId(inferConstraint(freshtypes(TIDS, Ids), Constraint), Id2) /\
            FuncType    := makeFuncType(NewTIDS, Id1, Id2) /\
            FinalTIDS   := unifyType(NewTIDS, fid(Id1), FuncType) /\
-           TExpr       := typedExpr(resolve(FinalTIDS, attachType(NewTIDS, Id2))) /\
-           TConstraint := resolve(FinalTIDS, attachConstraintTypes(NewTIDS, Constraint)) .
+           TExpr       := typedExpr(check(resolve(FinalTIDS, attachType(NewTIDS, Id2)))) /\
+           TConstraint := check(resolve(FinalTIDS, attachConstraintTypes(NewTIDS, Constraint))) .
 
     var RuleId : Id .
     var RuleType : EnkiType .
     op inferRule : Set{TypedId} EnkiRule -> TypedRule .
-    ceq inferRule(TIDS, r(RuleId, Constraint)) = typed(RuleId, RuleType, TConstraint)
+    ceq inferRule(TIDS, r(RuleId, Constraint)) = handleRuleError(RuleId, RuleType, TConstraint)
         if Ids  := append(idList(RuleId), constraintIds(Constraint)) /\
            NewTIDS     := inferConstraint(freshtypes(TIDS, Ids), Constraint) /\
            RuleType    := makeRuleType(NewTIDS, RuleId) /\
            FinalTIDS   := unifyType(NewTIDS, fid(RuleId), RuleType) /\
-           TConstraint := resolve(FinalTIDS, attachConstraintTypes(FinalTIDS, Constraint)) .
+           TConstraint := check(resolve(FinalTIDS, attachConstraintTypes(FinalTIDS, Constraint))) .
 
     var Defs : List{EnkiDef} .
     var Func : EnkiFunc .
@@ -238,20 +239,27 @@ mod ENKI-TYPECHECK is
     var Expr : Expr .
     var MoreDefs : List{EnkiDef} .
 
+    op handleInferError : Set{TypedId} TypedDef List{EnkiDef} -> List{TypedDef} .
+    eq handleInferError(TIDS, exec(typedExec(TConstraint)), Defs) = exec(typedExec(TConstraint)) inferDefs(TIDS, Defs) .
+    ceq handleInferError(TIDS, def(TFunc), Defs) = def(TFunc) inferDefs((tid(fid(Id), T), TIDS), Defs)
+        if typed(Id, T, TConstraint, TExpr) := TFunc .
+    ceq handleInferError(TIDS, def(TRule), Defs) = def(TRule) inferDefs((tid(fid(Id), T), TIDS), Defs)
+        if typed(Id, T, TConstraint) := TRule .
+    eq handleInferError(TIDS, def(resolveFuncError(FuncId, Id)), Defs) = def(resolveFuncError(FuncId, Id)) .
+    eq handleInferError(TIDS, def(resolveRuleError(RuleId, Id)), Defs) = def(resolveRuleError(RuleId, Id)) .
+
     op inferDefs : Set{TypedId} List{EnkiDef} -> List{TypedDef} .
     eq inferDefs(TIDS, nil) = nil .
     eq inferDefs(TIDS, import(m(MoreDefs)) Defs) = inferDefs(TIDS, append(MoreDefs, Defs)) .
-    ceq inferDefs(TIDS, exec(ex(Constraint)) Defs) = exec(typedExec(TConstraint)) inferDefs(TIDS, Defs)
+    ceq inferDefs(TIDS, exec(ex(Constraint)) Defs) = handleInferError(TIDS, exec(typedExec(TConstraint)), Defs)
         if NewTIDS     := inferConstraint(freshtypes(TIDS, constraintIds(Constraint)), Constraint) /\
-           TConstraint := resolve(NewTIDS, attachConstraintTypes(NewTIDS, Constraint)).
-    ceq inferDefs(TIDS, def(Func) Defs) = def(TFunc) inferDefs((tid(fid(Id), T), TIDS), Defs)
+           TConstraint := check(resolve(NewTIDS, attachConstraintTypes(NewTIDS, Constraint))) .
+    ceq inferDefs(TIDS, def(Func) Defs) = handleInferError(TIDS, def(TFunc), Defs)
         if f(FuncId, C, Expr)               := Func /\
-           TFunc                            := inferFunc(dummyFuncType(TIDS, FuncId), Func) /\
-           typed(Id, T, TConstraint, TExpr) := TFunc .
-    ceq inferDefs(TIDS, def(Rule) Defs) = def(TRule) inferDefs((tid(fid(Id), T), TIDS), Defs)
+           TFunc                            := inferFunc(dummyFuncType(TIDS, FuncId), Func) .
+    ceq inferDefs(TIDS, def(Rule) Defs) = handleInferError(TIDS, def(TRule), Defs)
         if r(RuleId, C)              := Rule /\
-           TRule                     := inferRule(dummyRuleType(TIDS, RuleId), Rule) /\
-           typed(Id, T, TConstraint) := TRule .
+           TRule                     := inferRule(dummyRuleType(TIDS, RuleId), Rule) .
     ceq inferDefs(TIDS, def(d(Id, Constructors)) Defs) = inferDefs((NewTIDS, TIDS), Defs)
         if NewTIDS := constructorTypes(Id, Constructors) .
 endm

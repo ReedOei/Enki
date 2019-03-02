@@ -122,6 +122,9 @@ mod ENKI-SYNTAX-UTILITY is
     eq isStrOp("..") = true .
     eq isStrOp(S)    = false [owise] .
 
+    op isOp : String -> Bool .
+    eq isOp(S) = S == "=" or isIntComp(S) or isStrOp(S) or isArith(S) .
+
     op typeList : EnkiType -> List{EnkiType} .
     eq typeList(func(T1, T2)) = T1 typeList(T2) .
     eq typeList(rule(T1, T2)) = T1 typeList(T2) .

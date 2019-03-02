@@ -111,3 +111,5 @@ run_test "inferDefs(empty, exec(ex(cs(c(comp(s(\"display\") s(\"\\\"hello\\\"\")
 
 run_test "inferFunc(empty, f(comp(s(\"test\") v(\"X\")), cs(nil), e(comp(v(\"X\")))))" "TypedFunc: typed(comp(s(\"test\") v(\"X\")), func(any(\"T0\"), any(\"T0\")), typedConstraints(nil), typedExpr(tid(comp(v(\"X\")), any(\"T0\"))))"
 
+run_test "inferFunc(empty, f(comp(s(\"test\") v(\"X\")), cs(nil), e(comp(s(\"blah\") v(\"X\")))))" "TypedFunc: resolveFuncError(comp(s(\"test\") v(\"X\")), comp(s(\"blah\") v(\"X\")))"
+
