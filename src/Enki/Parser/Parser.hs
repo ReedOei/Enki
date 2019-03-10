@@ -1,7 +1,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module Parser where
+module Enki.Parser.Parser where
 
 import Control.Monad.IO.Class
 
@@ -15,7 +15,7 @@ import System.FilePath.Posix
 import Text.Parsec
 import Text.Parsec.Expr
 
-import Util
+import Enki.Parser.Util
 
 type Parser a = forall s st m. Stream s m Char => ParsecT s st m a
 
@@ -128,7 +128,7 @@ parseFileAst fname = do
     case (stdLib, res) of
         (Left err, _) -> error $ show err
         (_, Left err) -> error $ show err
-        (Right stdLibParsed, Right parsed) -> pure $ fixImports $ [Module "base" stdLibParsed] ++ parsed
+        (Right stdLibParsed, Right parsed) -> pure $ fixImports $ Module "base" stdLibParsed : parsed
 
 fixImports :: [Def] -> [Def]
 fixImports defs = filter (noIgnore (concatMap ignore defs)) defs

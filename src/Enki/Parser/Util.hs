@@ -1,4 +1,4 @@
-module Util where
+module Enki.Parser.Util where
 
 import Data.Char
 

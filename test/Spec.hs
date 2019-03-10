@@ -6,7 +6,7 @@ import Data.String.Utils
 import Test.Hspec
 import Text.Parsec
 
-import Parser
+import Enki.Parser.Parser
 
 testCompile fname = it fname $ do
     let outputFile = fname ++ "ast"

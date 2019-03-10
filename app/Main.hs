@@ -2,7 +2,7 @@ module Main where
 
 import System.Environment
 
-import Parser
+import Enki.Parser.Parser
 
 main :: IO ()
 main = do
