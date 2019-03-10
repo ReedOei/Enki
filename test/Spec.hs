@@ -150,16 +150,16 @@ main = hspec $ do
                                 [Field (Comp [V "Head"]) EnkiInt,Field (Comp [V "Tail"]) (TypeName (Comp [S "list"]))]]
 
     describe "runParser" $ do
-        testCompile "examples/basic.enki"
-        testCompile "examples/recursive.enki"
-        testCompile "examples/func_call.enki"
-        testCompile "examples/many_func.enki"
-        testCompile "examples/strings.enki"
+        testCompile "examples/parser/basic.enki"
+        testCompile "examples/parser/recursive.enki"
+        testCompile "examples/parser/func_call.enki"
+        testCompile "examples/parser/many_func.enki"
+        testCompile "examples/parser/strings.enki"
 
-        testCompile "examples/basic_rule.enki"
-        testCompile "examples/complicated_rule.enki"
-        testCompile "examples/collatz.enki"
-        testCompile "examples/list.enki"
+        testCompile "examples/parser/basic_rule.enki"
+        testCompile "examples/parser/complicated_rule.enki"
+        testCompile "examples/parser/collatz.enki"
+        testCompile "examples/parser/list.enki"
 
-        testCompile "examples/importer.enki"
+        testCompile "examples/parser/importer.enki"
 

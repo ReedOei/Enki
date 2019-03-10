@@ -21,6 +21,13 @@ description:         Please see the README on GitHub at <https://github.com/Reed
 
 dependencies:
 - base >= 4.7 && < 5
+- parsec
+- directory
+- filepath
+- mtl
+- MissingH
+- hspec
+- QuickCheck
 
 library:
   source-dirs: src
