@@ -1,12 +1,17 @@
 module Enki.Compiler.Types where
 
+import Data.Map (Map)
+import qualified Data.Map as Map
+
 import Enki.Types
+import Enki.Parser.AST
 
 data TypedId = StringVal String
              | IntVal Integer
              | BoolVal Bool
-             | VarVal Type String
-             | CompVal Type [TypedId]
+             | VarVal String
+             | FuncCall TypedDef (Map String TypedId)
+             | BinOp String Type TypedId TypedId
     deriving (Eq, Show)
 
 newtype TypedExpr = TypedExpr { exprId :: TypedId }
@@ -17,15 +22,9 @@ data TypedConstraint = TypedConstraint TypedId
                      | TypedWhen TypedConstraint TypedConstraint
     deriving (Eq, Show)
 
-data TypedField = TypedField Id Type
-    deriving (Eq, Show)
-
-data TypedConstructor = TypedConstructor TypedId [TypedField]
-    deriving (Eq, Show)
-
 data TypedDef = TypedFunc Id Type TypedConstraint TypedExpr
               | TypedRule Id Type TypedConstraint
-              | TypedData Id Type [TypedConstructor]
+              | TypedData Id Type [Constructor]
               | TypedExec TypedConstraint
               | TypedModule String [TypedDef]
     deriving (Eq, Show)

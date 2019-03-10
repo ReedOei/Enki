@@ -3,7 +3,7 @@ module Enki.Parser.AST where
 import Enki.Types
 import Enki.Parser.Util
 
-data Expr = Expr Id
+newtype Expr = Expr { getId :: Id }
     deriving (Eq, Show)
 
 data Constraint = Constraint Id

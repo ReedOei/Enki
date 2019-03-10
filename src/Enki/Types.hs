@@ -11,6 +11,7 @@ data Type = EnkiInt
           | EnkiBool
           | EnkiString
           | Any String
+          | Void
           | FuncType Type Type
           | RuleType Type Type
           | DataType Type Type

@@ -1,6 +1,13 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
+
+import Control.Lens
 import Control.Monad.IO.Class
+import Control.Monad.Trans
+import Control.Monad.Trans.State.Lazy
 
 import Data.Either
+import Data.Map (Map)
+import qualified Data.Map as Map
 import Data.String.Utils
 
 import Test.Hspec
@@ -23,15 +30,61 @@ testCompile fname = it fname $ do
 
     output `shouldBe` expectedOutput
 
+inferDef :: String -> IO (TypedDef, Environment)
+inferDef str = do
+    res <- parseDef str
+    let (Right [parsed]) = res
+    runStateT (infer parsed) newEnv
+
+inferDefs :: String -> IO (TypedDef, Environment)
+inferDefs str = do
+    res <- parseDef str
+    let (Right parsed) = res
+    (res,env) <- runStateT (infer parsed) newEnv
+    pure (last res, env)
+
 main :: IO ()
 main = hspec $ do
     describe "unifyIds" $ do
         it "grabs arguments from function calls" $ do
             let res = unifyIds (Comp [S "add", I 1, S "to", I 2]) (Comp [S "add", V "X", S "to", V "Y"])
-            res `shouldBe` Just [("X",I 1),("Y",Comp [I 2])]
+            res `shouldBe` Just (Map.fromList [("X",I 1),("Y",Comp [I 2])])
         it "does not match if any part fails" $ do
             let res = unifyIds (Comp [S "add", I 1, S "to", I 2]) (Comp [S "add", V "X", S "nope", V "Y"])
             res `shouldBe` Nothing
+
+    describe "infer (TypedId)" $ do
+        it "infers the type of basic ids (int)" $ do
+            let res = fst $ runState (infer (I 1)) newEnv
+            res `shouldBe` IntVal 1
+        it "infers the type of basic ids (string)" $ do
+            let res = fst $ runState (infer (S "testing")) newEnv
+            res `shouldBe` StringVal "testing"
+        it "infers the type of basic ids (bool)" $ do
+            let res = fst $ runState (infer (B False)) newEnv
+            res `shouldBe` BoolVal False
+        it "infers the type of basic ids (var)" $ do
+            let (res, env) = runState (infer (V "X")) newEnv
+            res `shouldBe` VarVal "X"
+            Map.lookup "X" (env^.typeEnv) `shouldBe` Just (Any "T0")
+
+    describe "infer (TypedDef)" $ do
+        it "infers the type of functions (simple)" $ do
+            (res,_) <- inferDef "add X to Y is Y."
+            res `shouldBe` TypedFunc (Comp [S "add",V "X",S "to",V "Y"]) (FuncType (Any "T0") (FuncType (Any "T1") (Any "T1"))) (TypedConstraints []) (TypedExpr {exprId = VarVal "Y"})
+        it "infers the type of functions (with constraints)" $ do
+            (res,_) <- inferDef "add X to Y is X = Y, Y."
+            res `shouldBe` TypedFunc (Comp [S "add",V "X",S "to",V "Y"]) (FuncType (Any "T2") (FuncType (Any "T2") (Any "T2"))) (TypedConstraints [TypedConstraint (BinOp "=" Void (VarVal "X") (VarVal "Y"))]) (TypedExpr {exprId = VarVal "Y"})
+        it "infers the type of functions (int operators)" $ do
+            (res,_) <- inferDef "add X to Y is X = Y, Y."
+            res `shouldBe` TypedFunc (Comp [S "add",V "X",S "to",V "Y"]) (FuncType (Any "T2") (FuncType (Any "T2") (Any "T2"))) (TypedConstraints [TypedConstraint (BinOp "=" Void (VarVal "X") (VarVal "Y"))]) (TypedExpr {exprId = VarVal "Y"})
+        it "infers the type of functions (string operators)" $ do
+            (res,_) <- inferDef "concat X with Y is X .. Y."
+            res `shouldBe` TypedFunc (Comp [S "concat",V "X",S "with",V "Y"]) (FuncType EnkiString (FuncType EnkiString EnkiString)) (TypedConstraints []) (TypedExpr {exprId = BinOp ".." EnkiString (VarVal "X") (VarVal "Y")})
+
+        it "infers the type of functions (simple function callS)" $ do
+            (res, _) <- inferDefs "inc X is X + 1.\ninc X twice is inc (inc X)."
+            res `shouldBe` TypedFunc (Comp [S "inc",V "X",S "twice"]) (FuncType EnkiInt EnkiInt) (TypedConstraints []) (TypedExpr {exprId = FuncCall (TypedFunc (Comp [S "inc",V "X"]) (FuncType EnkiInt EnkiInt) (TypedConstraints []) (TypedExpr {exprId = BinOp "+" EnkiInt (VarVal "X") (IntVal 1)})) (Map.fromList [("X",FuncCall (TypedFunc (Comp [S "inc",V "X"]) (FuncType EnkiInt EnkiInt) (TypedConstraints []) (TypedExpr {exprId = BinOp "+" EnkiInt (VarVal "X") (IntVal 1)})) (Map.fromList [("X",VarVal "X")]))])})
 
     describe "func" $ do
         it "parses function declarations" $ do
