@@ -21,13 +21,16 @@ description:         Please see the README on GitHub at <https://github.com/Reed
 
 dependencies:
 - base >= 4.7 && < 5
+- containers
 - parsec
 - directory
 - filepath
 - mtl
+- transformers
 - MissingH
 - hspec
 - QuickCheck
+- lens
 
 library:
   source-dirs: src

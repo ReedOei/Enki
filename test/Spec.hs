@@ -6,7 +6,12 @@ import Data.String.Utils
 import Test.Hspec
 import Text.Parsec
 
+import Enki.Types
+import Enki.Parser.AST
 import Enki.Parser.Parser
+
+import Enki.Compiler.Types
+import Enki.Compiler.TypeChecker
 
 testCompile fname = it fname $ do
     let outputFile = fname ++ "ast"
@@ -20,18 +25,13 @@ testCompile fname = it fname $ do
 
 main :: IO ()
 main = hspec $ do
-    describe "prettyPrint" $ do
-        it "prints booleans (true)" $ prettyPrint (B True) `shouldBe` "b(true)"
-        it "prints booleans (false)" $ prettyPrint (B False) `shouldBe` "b(false)"
-        it "prints integers" $ prettyPrint (I 109) `shouldBe` "i(109)"
-        it "prints strings" $ prettyPrint (S "+") `shouldBe` "s(\"+\")"
-        it "prints variables" $ prettyPrint (V "X") `shouldBe` "v(\"X\")"
-        it "prints expressions" $ do
-            let e = Expr $ Comp [I 1, S "+",I 2]
-            prettyPrint e `shouldBe` "e(comp(i(1) s(\"+\") i(2)))"
-        it "prints functions" $ do
-            let f = Func (Comp [S "test",V "X",S "and",V "Y"]) (Constraints []) (Expr (Comp [I 1,S "+",I 2]))
-            prettyPrint f `shouldBe` "def(f(comp(s(\"test\") v(\"X\") s(\"and\") v(\"Y\")),cs(nil),e(comp(i(1) s(\"+\") i(2)))))"
+    describe "unifyIds" $ do
+        it "grabs arguments from function calls" $ do
+            let res = unifyIds (Comp [S "add", I 1, S "to", I 2]) (Comp [S "add", V "X", S "to", V "Y"])
+            res `shouldBe` Just [("X",I 1),("Y",Comp [I 2])]
+        it "does not match if any part fails" $ do
+            let res = unifyIds (Comp [S "add", I 1, S "to", I 2]) (Comp [S "add", V "X", S "nope", V "Y"])
+            res `shouldBe` Nothing
 
     describe "func" $ do
         it "parses function declarations" $ do

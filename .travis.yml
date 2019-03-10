@@ -3,6 +3,9 @@ sudo: false
 # Do not choose a language; we provide our own build tools.
 language: generic
 
+env:
+    - ENKI_PATH=$TRAVIS_BUILD_DIR/libraries/base
+
 # Caching so the next build will be fast too.
 cache:
   directories:
