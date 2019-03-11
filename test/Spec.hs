@@ -201,4 +201,5 @@ main = hspec $ do
 
     describe "compile" $ do
         tryCompile "examples/src/basic.enki"
+        tryCompile "examples/src/func_call.enki"
 
