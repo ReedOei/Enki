@@ -200,6 +200,6 @@ main = hspec $ do
                                 [Field (Comp [V "Head"]) EnkiInt,Field (Comp [V "Tail"]) (TypeName (Comp [S "list"]))]]
 
     describe "compile" $ do
-        tryCompile "examples/src/basic.enki"
-        tryCompile "examples/src/func_call.enki"
+        tryCompile "examples/basic.enki"
+        tryCompile "examples/func_call.enki"
 

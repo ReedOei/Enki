@@ -1,2 +1,0 @@
-def(f(comp(s("test") v("X")), cs(c(comp(s("display") comp(v("X") s("..") v("X"))))), e(v("X"))))
-

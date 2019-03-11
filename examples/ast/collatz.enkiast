@@ -1,1 +1,0 @@
-def(r(comp(s("collatz") v("X") s("is") v("N")), cs(when(c(comp(v("X") s("=") comp(i(2) s("*") v("N")))), cs(nil)) when(c(comp(v("X") s("=") comp(comp(i(2) s("*") v("K")) s("+") i(1)))), c(comp(v("N") s("=") comp(comp(i(3) s("*") v("X")) s("+") i(1))))))))
