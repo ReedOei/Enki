@@ -17,18 +17,15 @@ import Enki.Types
 import Enki.Parser.AST
 import Enki.Parser.Parser
 
+import Enki.Compiler
 import Enki.Compiler.Types
 import Enki.Compiler.TypeChecker
 
-testCompile fname = it fname $ do
-    let outputFile = fname ++ "ast"
+tryCompile fname = it fname $ do
+    actual <- strip <$> compile fname
+    expected <- strip <$> readFile (fname ++ ".pl")
 
-    liftIO $ parseFile fname $ Just outputFile
-
-    output <- strip <$> readFile outputFile
-    expectedOutput <- strip <$> readFile (outputFile ++ ".out")
-
-    output `shouldBe` expectedOutput
+    actual `shouldBe` expected
 
 inferDef :: String -> IO (TypedDef, Environment)
 inferDef str = do
@@ -202,17 +199,6 @@ main = hspec $ do
                              Constructor (Comp [S "cons",V "Head",V "Tail"])
                                 [Field (Comp [V "Head"]) EnkiInt,Field (Comp [V "Tail"]) (TypeName (Comp [S "list"]))]]
 
-    describe "runParser" $ do
-        testCompile "examples/parser/basic.enki"
-        testCompile "examples/parser/recursive.enki"
-        testCompile "examples/parser/func_call.enki"
-        testCompile "examples/parser/many_func.enki"
-        testCompile "examples/parser/strings.enki"
-
-        testCompile "examples/parser/basic_rule.enki"
-        testCompile "examples/parser/complicated_rule.enki"
-        testCompile "examples/parser/collatz.enki"
-        testCompile "examples/parser/list.enki"
-
-        testCompile "examples/parser/importer.enki"
+    describe "compile" $ do
+        tryCompile "examples/src/basic.enki"
 

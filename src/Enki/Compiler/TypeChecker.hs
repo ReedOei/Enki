@@ -81,14 +81,7 @@ unifyIds id (V varName)      = Just $ Map.fromList [(varName, id)]
 unifyIds (Comp []) (Comp []) = Just Map.empty
 unifyIds id1 (Comp [id2]) = unifyIds id1 id2
 unifyIds (Comp (id1:ids1)) (Comp (id2:ids2)) = Map.union <$> unifyIds id1 id2 <*> unifyIds (Comp ids1) (Comp ids2)
-
-vars :: Id -> [String]
-vars (S _) = []
-vars (I _) = []
-vars (B _) = []
-vars (V str) = [str]
-vars (Comp []) = []
-vars (Comp (id:ids)) = vars id ++ vars (Comp ids)
+unifyIds _ _ = Nothing
 
 types :: Type -> [Type]
 types (FuncType t1 t2) = t1 : types t2
@@ -122,17 +115,11 @@ join x y
     | x == y = Just x
     | otherwise = Nothing
 
-defId :: TypedDef -> Id
-defId (TypedFunc funcId _ _ _) = funcId
-defId (TypedRule ruleId _ _)   = ruleId
-defId (TypedData dataId _ _)   = dataId
-defId _                        = Comp []
-
 unifyFunc :: Id -> TypedDef -> Maybe (Map String (Type, Id), TypedDef)
 unifyFunc id def = (,def) . pairWithParamType def <$> unifyIds id (defId def)
 
 unifyTypes :: Monad m => Type -> [Type] -> StateT Environment m ()
-unifyTypes target types = mapM_ (`updateAllType` target) types
+unifyTypes target = mapM_ (`updateAllType` target)
 
 joinTypes :: Monad m => Type -> Type -> StateT Environment m Bool
 joinTypes t1 t2 =
@@ -173,7 +160,7 @@ unifyAll pairs = do
 findCall :: Monad m => Id -> StateT Environment m (Maybe (Map String (Type, Id), TypedDef))
 findCall id = do
     funcs <- (^.funcEnv) <$> get
-    pure $ listToMaybe $ catMaybes $ map (unifyFunc id) funcs
+    pure $ listToMaybe $ mapMaybe (unifyFunc id) funcs
 
 class Typeable a where
     typeOf :: Monad m => a -> StateT Environment m Type
@@ -189,9 +176,9 @@ instance Typeable TypedDef where
     typeOf (TypedModule _ _)   = pure Void
 
 instance Typeable TypedId where
-    typeOf (StringVal _)    = pure $ EnkiString
-    typeOf (IntVal _)       = pure $ EnkiInt
-    typeOf (BoolVal _)      = pure $ EnkiBool
+    typeOf (StringVal _)    = pure EnkiString
+    typeOf (IntVal _)       = pure EnkiInt
+    typeOf (BoolVal _)      = pure EnkiBool
     typeOf (VarVal name)    = lookupType name
     typeOf (FuncCall def _) = returnType <$> typeOf def
     typeOf (BinOp _ t _ _)  = pure t
@@ -258,7 +245,7 @@ instance Inferable Constraint TypedConstraint where
 instance Inferable Def TypedDef where
     infer (Func id constr expr) = do
         -- Add types for each parameter of the function
-        mapM infer $ map V $ vars id
+        mapM_ (infer . V) $ vars id
 
         tConstr <- infer constr
         tExpr <- infer expr
@@ -268,7 +255,7 @@ instance Inferable Def TypedDef where
         defineNew $ TypedFunc id funcType tConstr tExpr
 
     infer (Rule id constr) = do
-        mapM infer $ map V $ vars id
+        mapM_ (infer . V) $ vars id
 
         tConstr <- infer constr
 
@@ -281,5 +268,5 @@ instance Inferable Def TypedDef where
     infer (Module name defs) = TypedModule name <$> mapM infer defs
 
 instance Inferable a b => Inferable [a] [b] where
-    infer as = mapM infer as
+    infer = mapM infer
 

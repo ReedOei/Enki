@@ -21,16 +21,6 @@ import Enki.Parser.Util
 
 type Parser a = forall s st m. Stream s m Char => ParsecT s st m a
 
-parseFile :: String -> Maybe String -> IO ()
-parseFile fname output = do
-    parsed <- parseFileAst fname
-
-    let outputStr = intercalate "\n" $ map prettyPrint parsed
-
-    case output of
-        Nothing -> putStrLn outputStr
-        Just file -> writeFile file outputStr
-
 parseFileAst :: String -> IO [Def]
 parseFileAst fname = do
     enkiPath <- getEnv "ENKI_PATH"

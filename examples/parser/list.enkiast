@@ -1,2 +1,0 @@
-def(d(comp(s("list")),constructor(comp(s("empty")),nil) constructor(comp(s("cons") v("Head") v("Tail")),field(comp(v("Head")),int) field(comp(v("Tail")),type(comp(s("list")))))))
-def(r(comp(s("head") v("List") s("is") v("H")),cs(when(cs(c(comp(v("List") s("=") comp(s("cons") v("H") v("T"))))),cs(nil)) when(cs(c(comp(v("H") s("=") i(0)))),cs(nil)))))

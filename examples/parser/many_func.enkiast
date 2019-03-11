@@ -1,5 +1,0 @@
-def(f(comp(s("square") s("of") v("X")),cs(nil),e(comp(v("X") s("^") i(2)))))
-def(f(comp(s("factorial") s("of") v("X")),cs(nil),e(comp(v("X") s("*") comp(s("factorial") s("of") comp(v("X") s("-") i(1)))))))
-def(f(comp(s("square") s("root") v("X")),cs(c(comp(comp(v("Root") s("^") i(2)) s("=") v("X")))),e(comp(v("Root")))))
-def(f(comp(s("id") v("X")),cs(nil),e(comp(v("X")))))
-def(f(comp(s("distance") comp(v("X1") s("and") v("Y1")) s("to") comp(v("X2") s("and") v("Y2"))),cs(c(comp(v("XDiff") s("=") comp(comp(v("X1") s("-") v("X2")) s("^") i(2)))) c(comp(v("YDiff") s("=") comp(comp(v("Y1") s("-") v("Y2")) s("^") i(2))))),e(comp(v("XDiff") s("+") v("YDiff")))))

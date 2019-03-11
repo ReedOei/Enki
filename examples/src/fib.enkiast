@@ -1,1 +1,0 @@
-def(r(comp(s("fib") v("N") s("is") v("F")),cs(when(cs(c(comp(v("N") s(">") i(1)))),cs(c(comp(s("fib") comp(v("N") s("-") i(1)) s("is") v("F1"))) c(comp(s("fib") comp(v("N") s("-") i(2)) s("is") v("F2"))) c(comp(v("F") s("=") comp(v("F1") s("+") v("F2")))))) when(cs(c(comp(v("F") s("=") v("N")))),cs(nil)))))

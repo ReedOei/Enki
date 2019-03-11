@@ -4,14 +4,13 @@ import Control.Monad.Trans.State.Lazy
 
 import System.Environment
 
-import Enki.Parser.Parser
+import Enki.Compiler
 
 main :: IO ()
 main = do
     args <- getArgs
 
     case args of
-        [fname] -> parseFile fname Nothing
-        [fname, output] -> parseFile fname $ Just output
+        [fname] -> putStrLn =<< compile fname
         _ -> putStrLn $ "Usage: Parser FILE [OUTPUT_FILE]"
 
