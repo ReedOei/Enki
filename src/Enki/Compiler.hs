@@ -4,6 +4,8 @@ module Enki.Compiler where
 
 import Control.Monad.Trans.State.Lazy
 
+import Data.List
+
 import Enki.Parser.Parser
 import Enki.Compiler.Types
 import Enki.Compiler.TypeChecker
@@ -21,5 +23,5 @@ compile fname = do
     let (inferred,_) = runState (mapM infer defs) newEnv
     let (generated, _) = runState (mapM codeGen inferred) newCodeGenEnv
 
-    pure $ prettyPrint $ PrologFile generated
+    pure $ intercalate "\n" $ prettyPrint $ PrologFile $ concat generated
 

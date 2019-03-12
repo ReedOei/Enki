@@ -35,20 +35,22 @@ data PrologExpr = PrologInt Integer
                 | PrologAtom String
                 | PrologVar String
                 | PrologOpExpr String PrologExpr PrologExpr
+                | PrologFunctor String [PrologExpr]
     deriving (Eq, Show)
 
 data PrologConstraint = PredCall String [PrologExpr]
                       | PrologOp String PrologExpr PrologExpr
                       | Condition [PrologConstraint] [PrologConstraint]
-                      | Disjunction PrologConstraint PrologConstraint
+                      | Disjunction [PrologConstraint] [PrologConstraint]
+                      | Conjunction [PrologConstraint] [PrologConstraint]
     deriving (Eq, Show)
 
-data Computation = Computation [PrologConstraint] String
+data Computation = Computation [PrologConstraint] PrologExpr
                  | ConstraintComp [PrologConstraint]
     deriving (Eq, Show)
 
 class CodeGen a b | a -> b where
-    codeGen :: Monad m => a -> StateT CodeGenEnv m b
+    codeGen :: Monad m => a -> StateT CodeGenEnv m [b]
 
 nonVarStrs :: Id -> [String]
 nonVarStrs (S str) = [str]
@@ -68,24 +70,28 @@ newVar = do
 resetCounter :: Monad m => StateT CodeGenEnv m ()
 resetCounter = modify $ over freshCounter (const 0)
 
-destructComp :: Computation -> ([PrologConstraint], [String])
+destructComp :: Computation -> ([PrologConstraint], [PrologExpr])
 destructComp (Computation cs res) = (cs, [res])
 destructComp (ConstraintComp cs) = (cs, [])
 
-concatComps :: [Computation] -> ([PrologConstraint], [String])
+concatComps :: [Computation] -> ([PrologConstraint], [PrologExpr])
 concatComps = over _2 concat . over _1 concat . unzip . map destructComp
 
-genFuncCall :: Monad m => String -> TypedDef -> Map String (StateT CodeGenEnv m Computation) -> StateT CodeGenEnv m [PrologConstraint]
-genFuncCall resName def paramVals = do
-    comps <- mapM doLookup $ vars $ defId def
-    let name = idToName $ defId def
+genFuncCall :: Monad m => TypedDef -> Map String Computation -> StateT CodeGenEnv m ([PrologConstraint], PrologExpr)
+genFuncCall def paramVals = do
+    let comps = map doLookup $ vars $ defId def
+    let name  = idToName $ defId def
 
     let (constraints, params) = concatComps comps
 
-    pure $ constraints ++ [PredCall name $ map PrologVar $ params ++ [resName]]
+    case def of
+        TypedConstructor _ _ -> pure (constraints, (PrologFunctor name params))
+        _ -> do
+            resName <- newVar
+            pure (constraints ++ [PredCall name $ params ++ [PrologVar resName]], PrologVar resName)
 
     where
-        doLookup paramName = do
+        doLookup paramName =
             case Map.lookup paramName paramVals of
                 Nothing -> error $ "Could not find value for parameter '" ++ paramName ++ "'. Have: " ++ show (Map.keys paramVals)
                 Just val -> val
@@ -103,51 +109,57 @@ prologOp "^" = "^"
 prologOp str = error $ "Unknown operator: '" ++ str ++ "'"
 
 instance CodeGen TypedId Computation where
-    codeGen (StringVal v) = pure $ Computation [] v
-    codeGen (IntVal i) = pure $ Computation [] (show i)
-    codeGen (BoolVal b) = pure $ Computation [] (map toLower $ show b)
-    codeGen (VarVal v) = pure $ Computation [] v
+    codeGen (StringVal v)         = pure [Computation [] $ PrologAtom v]
+    codeGen (IntVal i)            = pure [Computation [] $ PrologInt i]
+    codeGen (BoolVal b)           = pure [Computation [] $ PrologAtom $ map toLower $ show b]
+    codeGen (VarVal v)            = pure [Computation [] $ PrologVar v]
     codeGen (FuncCall def varMap) = do
-        res <- newVar
+        params <- mapM (fmap head . codeGen) varMap
 
-        let params = Map.map codeGen varMap
+        (constrs, res) <- genFuncCall def params
 
-        constrs <- genFuncCall res def params
-
-        pure $ Computation constrs res
+        pure [Computation constrs res]
 
     codeGen (BinOp op opType a b) = do
         aComp <- codeGen a
         bComp <- codeGen b
 
-        let (Computation aConstrs aRes) = aComp
-        let (Computation bConstrs bRes) = bComp
+        let [Computation aConstrs aRes] = aComp
+        let [Computation bConstrs bRes] = bComp
 
         if op == "=" then
-            pure $ ConstraintComp $ aConstrs ++ bConstrs ++ [PrologOp "=" (PrologVar aRes) (PrologVar bRes)]
+            pure [ConstraintComp $ aConstrs ++ bConstrs ++ [PrologOp "=" aRes bRes]]
         else do
             res <- newVar
 
-            let opExpr = PrologOpExpr (prologOp op) (PrologVar aRes) (PrologVar bRes)
+            let opExpr = PrologOpExpr (prologOp op) aRes bRes
 
-            pure $ Computation (aConstrs ++ bConstrs ++ [PrologOp (eqSign opType) (PrologVar res) opExpr]) res
+            pure [Computation (aConstrs ++ bConstrs ++ [PrologOp (eqSign opType) (PrologVar res) opExpr]) $ PrologVar res]
 
 instance CodeGen TypedExpr Computation where
     codeGen (TypedExpr tid) = codeGen tid
 
 instance CodeGen TypedConstraint Computation where
     codeGen (TypedConstraint tid) = codeGen tid
+    codeGen (TypedConstraints (w@(TypedWhen _ _):cs)) = do
+        branchGen <- codeGen w
+        restGen <- codeGen $ TypedConstraints cs
+
+        let (branch, _) = concatComps branchGen
+        let (rest, _) = concatComps restGen
+        pure [ConstraintComp [Disjunction branch rest]]
     codeGen (TypedConstraints cs) = do
-        res <- mapM codeGen cs
+        res <- mapM (fmap head . codeGen) cs
 
-        pure $ ConstraintComp $ fst $ concatComps res
+        pure [ConstraintComp $ fst $ concatComps res]
 
+    codeGen (TypedWhen cond (TypedConstraints [])) = codeGen cond
     codeGen (TypedWhen cond body) = do
         condComp <- codeGen cond
         bodyComp <- codeGen body
 
         case (condComp,bodyComp) of
-            (ConstraintComp condCs, ConstraintComp bodyCs) -> pure $ ConstraintComp [Condition condCs bodyCs]
+            ([ConstraintComp condCs], [ConstraintComp bodyCs]) -> pure [ConstraintComp [Condition condCs bodyCs]]
 
 instance CodeGen TypedDef PrologDef where
     codeGen (TypedFunc funcId funcType constr expr) = do
@@ -156,36 +168,60 @@ instance CodeGen TypedDef PrologDef where
         eComp <- codeGen expr
 
         case (constrComp, eComp) of
-            (ConstraintComp cs, Computation es res) ->
-                pure $ Predicate (idToName funcId) (vars funcId ++ [res]) $ cs ++ es
+            ([ConstraintComp cs], [Computation es res]) ->
+                pure [Predicate (idToName funcId) (vars funcId ++ [prettyExpr res]) $ cs ++ es]
     codeGen (TypedRule ruleId ruleType constr) = do
         resetCounter
         constrComp <- codeGen constr
 
         case constrComp of
-            ConstraintComp cs ->
-                pure $ Predicate (idToName ruleId) (vars ruleId) cs
+            [ConstraintComp cs] ->
+                pure [Predicate (idToName ruleId) (vars ruleId) cs]
+    codeGen (TypedData _ _) = pure []
 
 class PrettyPrint a where
-    prettyPrint :: a -> String
+    prettyPrint :: a -> [String]
+
+prettyExpr :: PrettyPrint a => a -> String
+prettyExpr = head . prettyPrint
 
 instance PrettyPrint PrologExpr where
-    prettyPrint (PrologInt i) = show i
-    prettyPrint (PrologAtom str) = str
-    prettyPrint (PrologVar str) = str
-    prettyPrint (PrologOpExpr op e1 e2) = "(" ++ prettyPrint e1 ++ " " ++ op ++ " " ++ prettyPrint e2 ++ ")"
+    prettyPrint (PrologInt i)               = [show i]
+    prettyPrint (PrologAtom str)            = [str]
+    prettyPrint (PrologVar str)             = [str]
+    prettyPrint (PrologOpExpr op e1 e2)     = ["(" ++ prettyExpr e1 ++ " " ++ op ++ " " ++ prettyExpr e2 ++ ")"]
+    prettyPrint (PrologFunctor name params) = [name ++ "(" ++ intercalate "," (map prettyExpr params) ++ ")"]
+
+placeLast _ []   = []
+placeLast str xs = init xs ++ [last xs ++ str]
+
+placeSep _ []   = []
+placeSep str xs = map (placeLast str) (init xs) ++ [last xs]
+
+conjunction = placeSep ","
+
+indent = map ("    "++)
+
+mapConj = indent . concat . conjunction . map prettyPrint
+-- indentConj = indent . conjunction . concatMap prettyPrint
 
 instance PrettyPrint PrologConstraint where
-    prettyPrint (PredCall name exprs) = name ++ "(" ++ intercalate "," (map prettyPrint exprs) ++ ")"
-    prettyPrint (PrologOp op e1 e2) = prettyPrint e1 ++ " " ++ op ++ " " ++ prettyPrint e2
+    prettyPrint (PredCall name exprs) = [name ++ "(" ++ intercalate "," (map prettyExpr exprs) ++ ")"]
+    prettyPrint (PrologOp op e1 e2)   = [prettyExpr e1 ++ " " ++ op ++ " " ++ prettyExpr e2]
     prettyPrint (Condition cond body) =
-        intercalate ",\n" (map prettyPrint cond) ++ " -> " ++ intercalate ",\n" (map prettyPrint body)
-    prettyPrint (Disjunction a b) = "(" ++ prettyPrint a ++ ");\n(" ++ prettyPrint b ++ ")"
+        ["("] ++ mapConj cond ++ ["    ->"] ++ mapConj body ++ [")"]
+    prettyPrint (Disjunction a [])    = concatMap prettyPrint a
+    prettyPrint (Disjunction a b)     =
+        ["("] ++ mapConj a ++ ["    ;"] ++ mapConj b ++ [")"]
 
 instance PrettyPrint PrologDef where
-    prettyPrint (Predicate name params []) = name ++ "(" ++ intercalate "," params ++ ")."
+    prettyPrint (Predicate name params []) = [name ++ "(" ++ intercalate "," params ++ ")."]
     prettyPrint (Predicate name params constrs) =
-        name ++ "(" ++ intercalate "," params ++ ") :-\n" ++ intercalate ",\n" (map (("    " ++).prettyPrint) constrs) ++ "."
+        [name ++ "(" ++ intercalate "," params ++ ")" ++ " :-"] ++
+        placeLast "." (mapConj constrs)
+
+instance PrettyPrint PrologFile where
+    prettyPrint (PrologFile defs) = [header ++ "\n\n"] ++ concat (placeSep "\n" (map prettyPrint defs))
 
 header = "#!/usr/bin/env swipl\n\n" ++
          ":- use_module(library(clpfd)).\n\n" ++
@@ -194,7 +230,4 @@ header = "#!/usr/bin/env swipl\n\n" ++
          ":- style_check(-var_branches).\n" ++
          ":- style_check(-discontiguous).\n" ++
          ":- style_check(-charset)."
-
-instance PrettyPrint PrologFile where
-    prettyPrint (PrologFile defs) = header ++ "\n\n" ++ intercalate "\n\n" (map prettyPrint defs)
 

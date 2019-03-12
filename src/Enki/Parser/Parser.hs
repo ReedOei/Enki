@@ -314,15 +314,17 @@ binary name = Infix parse
 
 str :: [String] -> Parser Id
 str list = do
-    s <- symbols -- <|> concatOp
+    s <- letters <|> symbols -- <|> concatOp
     if s `elem` list then
         parserFail "Found item from excluded list"
     else
         pure $ S s
 
     where
-        symbols = nonEmpty ['a'..'z'] cs
+        letters = nonEmpty ['a'..'z'] cs
         cs = ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9']
+
+        symbols = many1 $ oneOf "!@#$%^&*[]{}|\\><:;"
 
 nonEmpty :: String -> String -> Parser String
 nonEmpty start ending = do

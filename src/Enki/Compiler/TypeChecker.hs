@@ -284,7 +284,7 @@ opType "^" = pure $ Just (EnkiInt, EnkiInt, EnkiInt)
 opType "=" = do
     t <- freshType
     pure $ Just (t,t,Void)
-opType ".." = pure $ Just (EnkiString, EnkiString,EnkiString)
+opType ".." = pure $ Just (EnkiString, EnkiString, EnkiString)
 opType _ = pure Nothing
 
 inferOp :: Monad m => Id -> StateT Environment m TypedId
@@ -294,12 +294,24 @@ inferOp id@(Comp [id1, S op, id2]) = do
         Nothing -> error $ "Could not resolve function call: " ++ show id
         Just (t1, t2, ret) -> do
             tid1 <- infer id1
-            unify t1 tid1
+            succeed1 <- unify t1 tid1
 
             tid2 <- infer id2
-            unify t2 tid2
+            succeed2 <- unify t2 tid2
 
-            pure $ BinOp op ret tid1 tid2
+            newT1 <- typeOf tid1
+            newT2 <- typeOf tid2
+
+            succeed3 <- joinTypes newT1 newT2
+
+            if not succeed1 then
+                error $ "Could not unify: " ++ show (t1, tid1)
+            else if not succeed2 then
+                error $ "Could not unify: " ++ show (t2, tid2)
+            else if not succeed3 then
+                error $ "Could not unify: " ++ show (newT1, newT2)
+            else
+                pure $ BinOp op ret tid1 tid2
 inferOp id = error $ "Not an operator expression: " ++ show id
 
 instance Inferable Id TypedId where
