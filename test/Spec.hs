@@ -65,6 +65,12 @@ main = hspec $ do
             res `shouldBe` VarVal "X"
             Map.lookup "X" (env^.typeEnv) `shouldBe` Just (Any "T0")
 
+    describe "freshDefType" $ do
+        it "replaces all type variables with fresh types in functions" $ do
+            let cons = TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (Any "A") (DataType (Any "B") (TypeName [Named "pair",Any "A",Any "B"])))
+            let res = evalState (freshDefType cons) newEnv
+            res `shouldBe` TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (Any "T0") (DataType (Any "T1") (TypeName [Named "pair",Any "T0",Any "T1"])))
+
     describe "infer (TypedDef)" $ do
         it "infers the type of functions (simple)" $ do
             (res,_) <- inferDef "add X to Y is Y."
@@ -82,6 +88,14 @@ main = hspec $ do
         it "infers the type of functions (simple function callS)" $ do
             (res, _) <- inferDefs "inc X is X + 1.\ninc X twice is inc (inc X)."
             res `shouldBe` TypedFunc (Comp [S "inc",V "X",S "twice"]) (FuncType EnkiInt EnkiInt) (TypedConstraints []) (TypedExpr {exprId = FuncCall (TypedFunc (Comp [S "inc",V "X"]) (FuncType EnkiInt EnkiInt) (TypedConstraints []) (TypedExpr {exprId = BinOp "+" EnkiInt (VarVal "X") (IntVal 1)})) (Map.fromList [("X",FuncCall (TypedFunc (Comp [S "inc",V "X"]) (FuncType EnkiInt EnkiInt) (TypedConstraints []) (TypedExpr {exprId = BinOp "+" EnkiInt (VarVal "X") (IntVal 1)})) (Map.fromList [("X",VarVal "X")]))])})
+
+        it "infers the type of functions (using data constructors)" $ do
+            res <- runInfer "box may be containing X has X : int. put X in a box is containing X."
+            res `shouldBe` [TypedData (Comp [S "box"]) [TypedConstructor (Comp [S "containing",V "X"]) (DataType EnkiInt (TypeName [Named "box"]))],TypedFunc (Comp [S "put",V "X",S "in",S "a",S "box"]) (FuncType EnkiInt (TypeName [Named "box"])) (TypedConstraints []) (TypedExpr {exprId = FuncCall (TypedConstructor (Comp [S "containing",V "X"]) (DataType EnkiInt (TypeName [Named "box"]))) (Map.fromList [("X",VarVal "X")])})]
+
+        it "infers the type of functions (using nested data constructors and type variables)" $ do
+            res <- runInfer "pair A B may be pair of X and Y has X : A, Y : B. f X Y is pair of (pair of X and Y) and 2."
+            res `shouldBe` [TypedData (Comp [S "pair",V "A",V "B"]) [TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (Any "A") (DataType (Any "B") (TypeName [Named "pair",Any "A",Any "B"])))],TypedFunc (Comp [S "f",V "X",V "Y"]) (FuncType (Any "T6") (FuncType (Any "T7") (TypeName [Named "pair",TypeName [Named "pair",Any "T6",Any "T7"],EnkiInt]))) (TypedConstraints []) (TypedExpr {exprId = FuncCall (TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (TypeName [Named "pair",Any "T6",Any "T7"]) (DataType EnkiInt (TypeName [Named "pair",TypeName [Named "pair",Any "T6",Any "T7"],EnkiInt])))) (Map.fromList [("X",FuncCall (TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (Any "T6") (DataType (Any "T7") (TypeName [Named "pair",Any "T6",Any "T7"])))) (Map.fromList [("X",VarVal "X"),("Y",VarVal "Y")])),("Y",IntVal 2)])})]
 
     describe "func" $ do
         it "parses function declarations" $ do
@@ -163,7 +177,7 @@ main = hspec $ do
             v `shouldBe` RuleType EnkiString (Any "T2")
         it "parses data types" $ do
             let (Right v) = parse enkiType "" "int * list"
-            v `shouldBe` DataType EnkiInt (TypeName (Comp [S "list"]))
+            v `shouldBe` DataType EnkiInt (TypeName [Named "list"])
         it "parses parenthesized types at the front of a data type" $ do
             let (Right v) = parse enkiType "" "(int * int) * bool"
             v `shouldBe` DataType (DataType EnkiInt EnkiInt) EnkiBool
@@ -197,7 +211,7 @@ main = hspec $ do
             v `shouldBe` Data (Comp [S "list"])
                             [Constructor (Comp [S "empty"]) [],
                              Constructor (Comp [S "cons",V "Head",V "Tail"])
-                                [Field (Comp [V "Head"]) EnkiInt,Field (Comp [V "Tail"]) (TypeName (Comp [S "list"]))]]
+                                [Field (Comp [V "Head"]) EnkiInt,Field (Comp [V "Tail"]) (TypeName [Named "list"])]]
 
     describe "compile" $ do
         tryCompile "examples/basic.enki"

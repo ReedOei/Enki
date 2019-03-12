@@ -15,6 +15,13 @@ data Type = EnkiInt
           | FuncType Type Type
           | RuleType Type Type
           | DataType Type Type
-          | TypeName Id
+          | Named String
+          | TypeName [Type]
     deriving (Eq, Show)
+
+makeTypeName :: Id -> [Type]
+makeTypeName (S str) = [Named str]
+makeTypeName (V name) = [Any name]
+makeTypeName (Comp []) = []
+makeTypeName (Comp (id:ids)) = makeTypeName id ++ makeTypeName (Comp ids)
 

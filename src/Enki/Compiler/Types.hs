@@ -24,7 +24,8 @@ data TypedConstraint = TypedConstraint TypedId
 
 data TypedDef = TypedFunc Id Type TypedConstraint TypedExpr
               | TypedRule Id Type TypedConstraint
-              | TypedData Id Type [Constructor]
+              | TypedConstructor Id Type
+              | TypedData Id [TypedDef]
               | TypedExec TypedConstraint
               | TypedModule String [TypedDef]
     deriving (Eq, Show)
@@ -38,8 +39,8 @@ vars (Comp []) = []
 vars (Comp (id:ids)) = vars id ++ vars (Comp ids)
 
 defId :: TypedDef -> Id
-defId (TypedFunc funcId _ _ _) = funcId
-defId (TypedRule ruleId _ _)   = ruleId
-defId (TypedData dataId _ _)   = dataId
-defId _                        = Comp []
+defId (TypedFunc funcId _ _ _)      = funcId
+defId (TypedRule ruleId _ _)        = ruleId
+defId (TypedConstructor constrId _) = constrId
+defId _                             = Comp []
 

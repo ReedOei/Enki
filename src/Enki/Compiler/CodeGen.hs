@@ -166,12 +166,6 @@ instance CodeGen TypedDef PrologDef where
             ConstraintComp cs ->
                 pure $ Predicate (idToName ruleId) (vars ruleId) cs
 
--- data TypedDef = TypedFunc Id Type TypedConstraint TypedExpr
---               | TypedRule Id Type TypedConstraint
---               | TypedData Id Type [Constructor]
---               | TypedExec TypedConstraint
---               | TypedModule String [TypedDef]
-
 class PrettyPrint a where
     prettyPrint :: a -> String
 

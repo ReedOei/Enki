@@ -12,5 +12,5 @@ main = do
 
     case args of
         [fname] -> putStrLn =<< compile fname
-        _ -> putStrLn $ "Usage: Parser FILE [OUTPUT_FILE]"
+        _ -> putStrLn "Usage: Enki FILE"
 

@@ -167,7 +167,7 @@ constructor = try constructorWithFields <|> try unitConstructor
 
 unitConstructor :: Parser Constructor
 unitConstructor = do
-    id <- enkiId []
+    id <- enkiId ["is","if","where"] -- Don't accidentally parse functions or rules
     symbol $ char '.'
 
     pure $ Constructor id []
@@ -212,7 +212,7 @@ dataTypeName = do
     id <- symbol $ baseEnkiId []
     pure $ case id of
         Comp [V s] -> Any s
-        _ -> TypeName id
+        _ -> TypeName $ makeTypeName id
 
 parenType :: Parser Type
 parenType = between (symbol (string "(")) (symbol (string ")")) enkiType
