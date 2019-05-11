@@ -10,16 +10,16 @@
 
 fib_is(N,F) :-
     (
-    N #> 1 -> 
-    Temp5 #= N - 1,
-    fib_is(Temp5,F1),
-    Temp14 #= N - 2,
-    fib_is(Temp14,F2),
-    Temp23 #= F1 + F2,
-    F = Temp23
-    );
-    (
-    F = N
+        (
+            Temp0 = (N #> 1)
+            ->
+            Temp1 #= (N - 1),
+            fib_is(Temp1,F1,Temp2),
+            Temp3 #= (N - 2),
+            fib_is(Temp3,F2,Temp4),
+            Temp5 #= (F1 + F2),
+            F = Temp5
+        )
+        ;
+        F = N
     ).
-
-

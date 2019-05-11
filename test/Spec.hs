@@ -77,10 +77,10 @@ main = hspec $ do
             res `shouldBe` TypedFunc (Comp [S "add",V "X",S "to",V "Y"]) (FuncType (Any "T0") (FuncType (Any "T1") (Any "T1"))) (TypedConstraints []) (TypedExpr {exprId = VarVal "Y"})
         it "infers the type of functions (with constraints)" $ do
             (res,_) <- inferDef "add X to Y is X = Y, Y."
-            res `shouldBe` TypedFunc (Comp [S "add",V "X",S "to",V "Y"]) (FuncType (Any "T2") (FuncType (Any "T2") (Any "T2"))) (TypedConstraints [TypedConstraint (BinOp "=" Void (VarVal "X") (VarVal "Y"))]) (TypedExpr {exprId = VarVal "Y"})
+            res `shouldBe` TypedFunc (Comp [S "add",V "X",S "to",V "Y"]) (FuncType (Any "T3") (FuncType (Any "T3") (Any "T3"))) (TypedConstraints [TypedConstraint (BinOp "=" Void (VarVal "X") (VarVal "Y"))]) (TypedExpr {exprId = VarVal "Y"})
         it "infers the type of functions (int operators)" $ do
             (res,_) <- inferDef "add X to Y is X = Y, Y."
-            res `shouldBe` TypedFunc (Comp [S "add",V "X",S "to",V "Y"]) (FuncType (Any "T2") (FuncType (Any "T2") (Any "T2"))) (TypedConstraints [TypedConstraint (BinOp "=" Void (VarVal "X") (VarVal "Y"))]) (TypedExpr {exprId = VarVal "Y"})
+            res `shouldBe` TypedFunc (Comp [S "add",V "X",S "to",V "Y"]) (FuncType (Any "T3") (FuncType (Any "T3") (Any "T3"))) (TypedConstraints [TypedConstraint (BinOp "=" Void (VarVal "X") (VarVal "Y"))]) (TypedExpr {exprId = VarVal "Y"})
         it "infers the type of functions (string operators)" $ do
             (res,_) <- inferDef "concat X with Y is X .. Y."
             res `shouldBe` TypedFunc (Comp [S "concat",V "X",S "with",V "Y"]) (FuncType EnkiString (FuncType EnkiString EnkiString)) (TypedConstraints []) (TypedExpr {exprId = BinOp ".." EnkiString (VarVal "X") (VarVal "Y")})
@@ -95,7 +95,7 @@ main = hspec $ do
 
         it "infers the type of functions (using nested data constructors and type variables)" $ do
             res <- runInfer "pair A B may be pair of X and Y has X : A, Y : B. f X Y is pair of (pair of X and Y) and 2."
-            res `shouldBe` [TypedData (Comp [S "pair",V "A",V "B"]) [TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (Any "A") (DataType (Any "B") (TypeName [Named "pair",Any "A",Any "B"])))],TypedFunc (Comp [S "f",V "X",V "Y"]) (FuncType (Any "T6") (FuncType (Any "T7") (TypeName [Named "pair",TypeName [Named "pair",Any "T6",Any "T7"],EnkiInt]))) (TypedConstraints []) (TypedExpr {exprId = FuncCall (TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (TypeName [Named "pair",Any "T6",Any "T7"]) (DataType EnkiInt (TypeName [Named "pair",TypeName [Named "pair",Any "T6",Any "T7"],EnkiInt])))) (Map.fromList [("X",FuncCall (TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (Any "T6") (DataType (Any "T7") (TypeName [Named "pair",Any "T6",Any "T7"])))) (Map.fromList [("X",VarVal "X"),("Y",VarVal "Y")])),("Y",IntVal 2)])})]
+            res `shouldBe` [TypedData (Comp [S "pair",V "A",V "B"]) [TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (Any "A") (DataType (Any "B") (TypeName [Named "pair",Any "A",Any "B"])))],TypedFunc (Comp [S "f",V "X",V "Y"]) (FuncType (Any "T9") (FuncType (Any "T10") (TypeName [Named "pair",TypeName [Named "pair",Any "T9",Any "T10"],EnkiInt]))) (TypedConstraints []) (TypedExpr {exprId = FuncCall (TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (TypeName [Named "pair",Any "T9",Any "T10"]) (DataType EnkiInt (TypeName [Named "pair",TypeName [Named "pair",Any "T9",Any "T10"],EnkiInt])))) (Map.fromList [("X",FuncCall (TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (Any "T9") (DataType (Any "T10") (TypeName [Named "pair",Any "T9",Any "T10"])))) (Map.fromList [("X",VarVal "X"),("Y",VarVal "Y")])),("Y",IntVal 2)])})]
 
     describe "func" $ do
         it "parses function declarations" $ do
@@ -216,4 +216,6 @@ main = hspec $ do
     describe "compile" $ do
         tryCompile "examples/basic.enki"
         tryCompile "examples/func_call.enki"
+        tryCompile "examples/collatz.enki"
+        tryCompile "examples/collatz_func.enki"
 

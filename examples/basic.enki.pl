@@ -8,7 +8,6 @@
 :- style_check(-discontiguous).
 :- style_check(-charset).
 
-
 add_to(X,Y,Temp0) :-
     Temp0 #= (X + Y).
 

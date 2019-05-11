@@ -86,9 +86,13 @@ genFuncCall def paramVals = do
 
     case def of
         TypedConstructor _ _ -> pure (constraints, (PrologFunctor name params))
-        _ -> do
+
+        TypedFunc _ _ _ _ -> do
             resName <- newVar
             pure (constraints ++ [PredCall name $ params ++ [PrologVar resName]], PrologVar resName)
+
+        -- The result of this is not really used, but we return it anyway for consistency's sake
+        TypedRule _ _ _ -> pure (constraints ++ [PredCall name params], last params)
 
     where
         doLookup paramName =
@@ -101,12 +105,16 @@ eqSign EnkiInt = "#="
 eqSign _       = "="
 
 prologOp :: String -> String
-prologOp "+" = "+"
-prologOp "-" = "-"
-prologOp "*" = "*"
-prologOp "/" = "div"
-prologOp "^" = "^"
-prologOp str = error $ "Unknown operator: '" ++ str ++ "'"
+prologOp "+"  = "+"
+prologOp "-"  = "-"
+prologOp "*"  = "*"
+prologOp "/"  = "div"
+prologOp "^"  = "^"
+prologOp ">"  = "#>"
+prologOp ">=" = "#>="
+prologOp "<"  = "#<"
+prologOp "<=" = "#=<"
+prologOp str  = error $ "Unknown operator: '" ++ str ++ "'"
 
 instance CodeGen TypedId Computation where
     codeGen (StringVal v)         = pure [Computation [] $ PrologAtom v]
@@ -210,7 +218,7 @@ instance PrettyPrint PrologConstraint where
     prettyPrint (PrologOp op e1 e2)   = [prettyExpr e1 ++ " " ++ op ++ " " ++ prettyExpr e2]
     prettyPrint (Condition cond body) =
         ["("] ++ mapConj cond ++ ["    ->"] ++ mapConj body ++ [")"]
-    prettyPrint (Disjunction a [])    = concatMap prettyPrint a
+    prettyPrint (Disjunction a [])    = mapConj a
     prettyPrint (Disjunction a b)     =
         ["("] ++ mapConj a ++ ["    ;"] ++ mapConj b ++ [")"]
 
@@ -221,7 +229,7 @@ instance PrettyPrint PrologDef where
         placeLast "." (mapConj constrs)
 
 instance PrettyPrint PrologFile where
-    prettyPrint (PrologFile defs) = [header ++ "\n\n"] ++ concat (placeSep "\n" (map prettyPrint defs))
+    prettyPrint (PrologFile defs) = [header ++ "\n"] ++ concat (placeSep "\n" (map prettyPrint defs))
 
 header = "#!/usr/bin/env swipl\n\n" ++
          ":- use_module(library(clpfd)).\n\n" ++

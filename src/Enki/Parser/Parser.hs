@@ -297,9 +297,9 @@ opTable =
         [binary "*" AssocLeft, binary "/" AssocLeft, binary "mod" AssocLeft],
         [binary "+" AssocLeft, binary "-" AssocLeft],
         [binary ".." AssocLeft],
-        [binary "=" AssocNone, binary ">=" AssocNone,
-         binary "<=" AssocNone, binary "<" AssocNone,
-         binary ">" AssocNone]
+        [binary ">=" AssocNone, binary "<=" AssocNone,
+         binary "<" AssocNone, binary ">" AssocNone],
+        [binary "=" AssocNone]
     ]
 
 flatten (Comp [id]) = id
@@ -324,7 +324,7 @@ str list = do
         letters = nonEmpty ['a'..'z'] cs
         cs = ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9']
 
-        symbols = many1 $ oneOf "!@#$%^&*[]{}|\\><:;"
+        symbols = many1 $ oneOf "!@#$%^&*[]{}|\\:;"
 
 nonEmpty :: String -> String -> Parser String
 nonEmpty start ending = do

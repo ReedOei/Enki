@@ -8,7 +8,6 @@
 :- style_check(-discontiguous).
 :- style_check(-charset).
 
-
 square_root(X,Root) :-
     Temp0 #= (Root ^ 2),
     Temp0 = X.

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8f6d6f5f33ee2392280e2efff22a8c7e84d7132210e8456608a015ccca171883
+-- hash: 3d314ef6850b768b123b612f72263cd8308bda6f0b2e70bd9612b6e57ef2160b
 
 name:           Enki
 version:        0.1.0.0
@@ -54,7 +54,7 @@ library
     , transformers
   default-language: Haskell2010
 
-executable Enki
+executable enki
   main-is: Main.hs
   other-modules:
       Paths_Enki

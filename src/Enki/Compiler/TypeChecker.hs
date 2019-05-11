@@ -6,7 +6,7 @@
 
 module Enki.Compiler.TypeChecker where
 
-import Control.Lens hiding (get,set)
+import Control.Lens hiding (get)
 import Control.Monad ((<=<), zipWithM_)
 import Control.Monad.Trans.State.Lazy
 
@@ -23,20 +23,22 @@ import System.IO.Unsafe
 data Environment = Environment
     { _typeEnv :: Map String Type
     , _typeVars :: Map String Type
+    , _curDef :: Maybe Def
     , _funcEnv :: [TypedDef]
     , _freshCounter :: Integer }
     deriving (Eq, Show)
 makeLenses ''Environment
 
 newEnv :: Environment
-newEnv = Environment Map.empty Map.empty [] 0
+newEnv = Environment Map.empty Map.empty Nothing [] 0
 
 defineNew :: Monad m => TypedDef -> StateT Environment m TypedDef
 defineNew def = do
     modify $ over funcEnv (def:)
     -- Clear out the typing environment, because we have just finished defining this function
-    modify $ over typeEnv (const Map.empty)
-    modify $ over typeVars (const Map.empty)
+    modify $ set typeEnv Map.empty
+    modify $ set typeVars Map.empty
+    modify $ set curDef Nothing
     pure def
 
 freshType :: Monad m => StateT Environment m Type
@@ -112,13 +114,16 @@ makeRuleType vars = do
 
     pure $ foldr1 RuleType types
 
+-- The first parameter is the id we wish to match (e.g., the function call expression),
+-- the second is the function we are checking if it matches
 unifyIds :: Id -> Id -> Maybe (Map String Id)
 unifyIds (S s1) (S s2)       = if s1 == s2 then Just Map.empty else Nothing
 unifyIds (I i1) (I i2)       = if i1 == i2 then Just Map.empty else Nothing
 unifyIds (B b1) (B b2)       = if b1 == b2 then Just Map.empty else Nothing
 unifyIds id (V varName)      = Just $ Map.fromList [(varName, id)]
 unifyIds (Comp []) (Comp []) = Just Map.empty
-unifyIds id1 (Comp [id2]) = unifyIds id1 id2
+unifyIds id1 (Comp [id2])    = unifyIds id1 id2
+unifyIds (Comp [id1]) id2    = unifyIds id1 id2
 unifyIds (Comp (id1:ids1)) (Comp (id2:ids2)) = Map.union <$> unifyIds id1 id2 <*> unifyIds (Comp ids1) (Comp ids2)
 unifyIds _ _ = Nothing
 
@@ -153,7 +158,7 @@ funcParamTypes _                                    = Map.empty
 pairWithParamType :: Monad m => TypedDef -> Map String Id -> StateT Environment m (Map String (Type, Id), TypedDef)
 pairWithParamType def idMap = do
     newDef <- freshDefType def
-    pure $ (Map.intersectionWith (,) (funcParamTypes newDef) idMap, newDef)
+    pure (Map.intersectionWith (,) (funcParamTypes newDef) idMap, newDef)
 
 join :: Type -> Type -> Maybe Type
 join x (Any _) = Just x
@@ -163,7 +168,7 @@ join x y
     | otherwise = Nothing
 
 unifyFunc :: Monad m => Id -> TypedDef -> StateT Environment m (Maybe (Map String (Type, Id), TypedDef))
-unifyFunc id def = do
+unifyFunc id def =
     case unifyIds id (defId def) of
         Nothing -> pure Nothing
         Just idMap -> Just <$> pairWithParamType def idMap
@@ -194,13 +199,14 @@ unify t (FuncCall def _) = do
 inferAndUnify :: Monad m => (Type, Id) -> StateT Environment m Bool
 inferAndUnify (t, id) = do
     inferred <- infer id
-    unify t inferred
+    res <- unify t inferred
+    pure res
 
 unifyAll :: Monad m => [(Type, Id)] -> StateT Environment m ()
 unifyAll pairs = do
     res <- mapM inferAndUnify pairs
     if not $ and res then
-        error $ "Failed to unify parameters: " ++ show pairs
+        error $ "Failed to unify parameters: " ++ show pairs ++ " " ++ show res
     else
         pure ()
 
@@ -209,8 +215,8 @@ freshTypeVars t = do
     -- Save state so we can restore it later
     origVars <- (^.typeVars) <$> get
 
-    -- Clear state, we want all empty typeVars for this purpose
-    modify $ over typeVars $ const Map.empty
+    -- Clear state so that we end up with fresh variables
+    modify $ set typeVars Map.empty
 
     newT <- go t
 
@@ -236,11 +242,26 @@ freshTypeVars t = do
         go (TypeName types) = TypeName <$> mapM go types
         go t = pure t
 
+-- | Makes a typeddef from a def, with an empty body. Exists to allow for recursive calls.
+makeTempTyped :: Monad m => Def -> StateT Environment m TypedDef
+makeTempTyped (Func id _ _) = do
+    paramTypes <- mapM lookupType $ vars id
+    retType <- freshType
+    pure $ TypedFunc id (foldr1 FuncType (paramTypes ++ [retType])) (TypedConstraints []) (TypedExpr (VarVal "DUMMY_VAR"))
+makeTempTyped (Rule id _) = do
+    paramTypes <- mapM lookupType $ vars id
+    pure $ TypedRule id (foldr1 RuleType paramTypes) (TypedConstraints [])
+
 findCall :: Monad m => Id -> StateT Environment m (Maybe (Map String (Type, Id), TypedDef))
 findCall id = do
     funcs <- (^.funcEnv) <$> get
+    maybeDef <- (^.curDef) <$> get
+    curTyped <- case maybeDef of
+                    Nothing -> pure []
+                    Just def -> (:[]) <$> makeTempTyped def
+
     -- TODO: Take the longest match
-    listToMaybe . catMaybes <$> mapM (unifyFunc id) funcs
+    listToMaybe . catMaybes <$> mapM (unifyFunc id) (curTyped ++ funcs)
 
 class Typeable a where
     getType :: Monad m => a -> StateT Environment m Type
@@ -273,15 +294,19 @@ typeOf :: (Typeable a, Monad m) => a -> StateT Environment m Type
 typeOf = resolveType <=< getType
 
 isOp :: String -> Bool
-isOp s = s `elem` ["+", "-", "*", "/", "^", "=", ".."]
+isOp s = s `elem` ["+", "-", "*", "/", "^", "=", "..", ">", ">=", "<", "<="]
 
 opType :: Monad m => String -> StateT Environment m (Maybe (Type, Type, Type))
-opType "+" = pure $ Just (EnkiInt, EnkiInt, EnkiInt)
-opType "-" = pure $ Just (EnkiInt, EnkiInt, EnkiInt)
-opType "*" = pure $ Just (EnkiInt, EnkiInt, EnkiInt)
-opType "/" = pure $ Just (EnkiInt, EnkiInt, EnkiInt)
-opType "^" = pure $ Just (EnkiInt, EnkiInt, EnkiInt)
-opType "=" = do
+opType "+"  = pure $ Just (EnkiInt, EnkiInt, EnkiInt)
+opType "-"  = pure $ Just (EnkiInt, EnkiInt, EnkiInt)
+opType "*"  = pure $ Just (EnkiInt, EnkiInt, EnkiInt)
+opType "/"  = pure $ Just (EnkiInt, EnkiInt, EnkiInt)
+opType "<"  = pure $ Just (EnkiInt, EnkiInt, Void)
+opType "<=" = pure $ Just (EnkiInt, EnkiInt, Void)
+opType ">"  = pure $ Just (EnkiInt, EnkiInt, Void)
+opType ">=" = pure $ Just (EnkiInt, EnkiInt, Void)
+opType "^"  = pure $ Just (EnkiInt, EnkiInt, EnkiInt)
+opType "="  = do
     t <- freshType
     pure $ Just (t,t,Void)
 opType ".." = pure $ Just (EnkiString, EnkiString, EnkiString)
@@ -347,7 +372,9 @@ makeConstructor resType (Constructor id fields) = do
     pure $ TypedConstructor id $ foldr DataType resType fieldTypes
 
 instance Inferable Def TypedDef where
-    infer (Func id constr expr) = do
+    infer def@(Func id constr expr) = do
+        modify $ set curDef $ Just def
+
         -- Add types for each parameter of the function
         mapM_ (infer . V) $ vars id
 
@@ -358,7 +385,9 @@ instance Inferable Def TypedDef where
 
         defineNew $ TypedFunc id funcType tConstr tExpr
 
-    infer (Rule id constr) = do
+    infer def@(Rule id constr) = do
+        modify $ set curDef $ Just def
+
         mapM_ (infer . V) $ vars id
 
         tConstr <- infer constr
@@ -369,7 +398,7 @@ instance Inferable Def TypedDef where
 
     infer (Data id constrs) = do
         let resType = TypeName $ makeTypeName id
-        TypedData id <$> mapM (defineNew <=< (makeConstructor resType)) constrs
+        TypedData id <$> mapM (defineNew <=< makeConstructor resType) constrs
     infer (Exec constr) = TypedExec <$> infer constr
     infer (Module name defs) = TypedModule name <$> mapM infer defs
 
