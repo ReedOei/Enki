@@ -31,6 +31,7 @@ Then you can run:
 git clone https://github.com/ReedOei/Enki
 cd Enki
 stack install
+echo "export ENKI_PATH=\"$(pwd)/libraries/base\"" >> ~/.bashrc
 ```
 
 # Examples
