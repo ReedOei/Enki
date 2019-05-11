@@ -55,3 +55,15 @@ answer less than N is
 display as text answer less than 999.
 ```
 
+Sample code to solve [Problem 2](https://projecteuler.net/problem=2) on [Project Euler](https://projecteuler.net/):
+
+```
+fib seq A B Limit is
+    when A > Limit then empty.
+    otherwise then prepend A to fib seq B (A + B) Limit.
+
+fib seq up to N is fib seq 0 1 N.
+
+display as text sum of multiples of 2 in fib seq up to 4000000.
+```
+

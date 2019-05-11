@@ -4,5 +4,5 @@ fib seq A B Limit is
 
 fib seq up to N is fib seq 0 1 N.
 
-display sum of multiples of 2 in fib seq up to 4000000.
+display as text sum of multiples of 2 in fib seq up to 4000000.
 
