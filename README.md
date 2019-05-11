@@ -46,9 +46,9 @@ multiples of A in List is
     otherwise then empty.
 
 answer less than N is
-    ThreeMult = multiples of 3 in (range 1 to N),
-    FiveMult = multiples of 5 in (range 1 to N),
-    FifteenMult = multiples of 15 in (range 1 to N),
+    ThreeMult = multiples of 3 in range 1 to N,
+    FiveMult = multiples of 5 in range 1 to N,
+    FifteenMult = multiples of 15 in range 1 to N,
     sum ThreeMult + sum FiveMult - sum FifteenMult.
 
 display as text answer less than 999.
