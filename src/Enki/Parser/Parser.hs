@@ -322,7 +322,7 @@ str list = do
 
     where
         letters = nonEmpty ['a'..'z'] cs
-        cs = ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9']
+        cs = ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ ['_']
 
         symbols = many1 $ oneOf "!@#$%^&*[]{}|\\:;"
 

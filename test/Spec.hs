@@ -83,7 +83,7 @@ main = hspec $ do
             res `shouldBe` TypedFunc (Comp [S "add",V "X",S "to",V "Y"]) (FuncType (Any "T3") (FuncType (Any "T3") (Any "T3"))) (TypedConstraints [TypedConstraint (BinOp "=" Void (VarVal "X") (VarVal "Y"))]) (TypedExpr {exprId = VarVal "Y"})
         it "infers the type of functions (string operators)" $ do
             (res,_) <- inferDef "concat X with Y is X .. Y."
-            res `shouldBe` TypedFunc (Comp [S "concat",V "X",S "with",V "Y"]) (FuncType EnkiString (FuncType EnkiString EnkiString)) (TypedConstraints []) (TypedExpr {exprId = BinOp ".." EnkiString (VarVal "X") (VarVal "Y")})
+            res `shouldBe` TypedFunc (Comp [S "concat",V "X",S "with",V "Y"]) (FuncType EnkiString (FuncType EnkiString EnkiString)) (TypedConstraints []) (TypedExpr {exprId = FuncCall (TypedFunc (Comp [S "atom_concat",V "X",V "Y"]) (FuncType EnkiString (FuncType EnkiString EnkiString)) (TypedConstraints []) (TypedExpr {exprId = StringVal "dummy value"})) (Map.fromList [("X",VarVal "X"),("Y",VarVal "Y")])})
 
         it "infers the type of functions (simple function callS)" $ do
             (res, _) <- inferDefs "inc X is X + 1.\ninc X twice is inc (inc X)."
@@ -95,7 +95,7 @@ main = hspec $ do
 
         it "infers the type of functions (using nested data constructors and type variables)" $ do
             res <- runInfer "pair A B may be pair of X and Y has X : A, Y : B. f X Y is pair of (pair of X and Y) and 2."
-            res `shouldBe` [TypedData (Comp [S "pair",V "A",V "B"]) [TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (Any "A") (DataType (Any "B") (TypeName [Named "pair",Any "A",Any "B"])))],TypedFunc (Comp [S "f",V "X",V "Y"]) (FuncType (Any "T9") (FuncType (Any "T10") (TypeName [Named "pair",TypeName [Named "pair",Any "T9",Any "T10"],EnkiInt]))) (TypedConstraints []) (TypedExpr {exprId = FuncCall (TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (TypeName [Named "pair",Any "T9",Any "T10"]) (DataType EnkiInt (TypeName [Named "pair",TypeName [Named "pair",Any "T9",Any "T10"],EnkiInt])))) (Map.fromList [("X",FuncCall (TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (Any "T9") (DataType (Any "T10") (TypeName [Named "pair",Any "T9",Any "T10"])))) (Map.fromList [("X",VarVal "X"),("Y",VarVal "Y")])),("Y",IntVal 2)])})]
+            res `shouldBe` [TypedData (Comp [S "pair",V "A",V "B"]) [TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (Any "A") (DataType (Any "B") (TypeName [Named "pair",Any "A",Any "B"])))],TypedFunc (Comp [S "f",V "X",V "Y"]) (FuncType (Any "T12") (FuncType (Any "T13") (TypeName [Named "pair",TypeName [Named "pair",Any "T12",Any "T13"],EnkiInt]))) (TypedConstraints []) (TypedExpr {exprId = FuncCall (TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (TypeName [Named "pair",Any "T12",Any "T13"]) (DataType EnkiInt (TypeName [Named "pair",TypeName [Named "pair",Any "T12",Any "T13"],EnkiInt])))) (Map.fromList [("X",FuncCall (TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (Any "T12") (DataType (Any "T13") (TypeName [Named "pair",Any "T12",Any "T13"])))) (Map.fromList [("X",VarVal "X"),("Y",VarVal "Y")])),("Y",IntVal 2)])})]
 
     describe "func" $ do
         it "parses function declarations" $ do

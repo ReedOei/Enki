@@ -10,6 +10,7 @@ import Control.Lens
 import Control.Monad.Trans.State.Lazy
 
 import Data.Char
+import Data.Either
 import Data.List
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -28,7 +29,8 @@ newCodeGenEnv = CodeGenEnv 0
 newtype PrologFile = PrologFile { defs :: [PrologDef] }
     deriving (Eq, Show)
 
-data PrologDef = Predicate String [String] [PrologConstraint]
+data PrologDef = Predicate String String [String] [PrologConstraint]
+               | Main [PrologConstraint]
     deriving (Eq, Show)
 
 data PrologExpr = PrologInt Integer
@@ -114,6 +116,7 @@ prologOp ">"  = "#>"
 prologOp ">=" = "#>="
 prologOp "<"  = "#<"
 prologOp "<=" = "#=<"
+prologOp "="  = "="
 prologOp str  = error $ "Unknown operator: '" ++ str ++ "'"
 
 instance CodeGen TypedId Computation where
@@ -135,8 +138,8 @@ instance CodeGen TypedId Computation where
         let [Computation aConstrs aRes] = aComp
         let [Computation bConstrs bRes] = bComp
 
-        if op == "=" then
-            pure [ConstraintComp $ aConstrs ++ bConstrs ++ [PrologOp "=" aRes bRes]]
+        if opType == Void then
+            pure [ConstraintComp $ aConstrs ++ bConstrs ++ [PrologOp (prologOp op) aRes bRes]]
         else do
             res <- newVar
 
@@ -171,21 +174,30 @@ instance CodeGen TypedConstraint Computation where
 
 instance CodeGen TypedDef PrologDef where
     codeGen (TypedFunc funcId funcType constr expr) = do
-        resetCounter
         constrComp <- codeGen constr
         eComp <- codeGen expr
 
         case (constrComp, eComp) of
             ([ConstraintComp cs], [Computation es res]) ->
-                pure [Predicate (idToName funcId) (vars funcId ++ [prettyExpr res]) $ cs ++ es]
+                pure [Predicate (show funcType) (idToName funcId) (vars funcId ++ [prettyExpr res]) $ cs ++ es]
+
     codeGen (TypedRule ruleId ruleType constr) = do
-        resetCounter
         constrComp <- codeGen constr
 
         case constrComp of
-            [ConstraintComp cs] ->
-                pure [Predicate (idToName ruleId) (vars ruleId) cs]
+            [ConstraintComp cs] -> pure [Predicate (show ruleType) (idToName ruleId) (vars ruleId) cs]
+
     codeGen (TypedData _ _) = pure []
+
+    codeGen (TypedModule _ defs) = concat <$> mapM codeGen defs
+
+    codeGen (TypedExec constr) = do
+        constrComp <- codeGen constr
+
+        case constrComp of
+            [ConstraintComp cs] -> pure [Main cs]
+
+    codeGen e = error $ show e
 
 class PrettyPrint a where
     prettyPrint :: a -> [String]
@@ -217,19 +229,36 @@ instance PrettyPrint PrologConstraint where
     prettyPrint (PredCall name exprs) = [name ++ "(" ++ intercalate "," (map prettyExpr exprs) ++ ")"]
     prettyPrint (PrologOp op e1 e2)   = [prettyExpr e1 ++ " " ++ op ++ " " ++ prettyExpr e2]
     prettyPrint (Condition cond body) =
-        ["("] ++ mapConj cond ++ ["    ->"] ++ mapConj body ++ [")"]
+        mapConj cond ++ ["    ->"] ++ mapConj body
     prettyPrint (Disjunction a [])    = mapConj a
     prettyPrint (Disjunction a b)     =
         ["("] ++ mapConj a ++ ["    ;"] ++ mapConj b ++ [")"]
 
 instance PrettyPrint PrologDef where
-    prettyPrint (Predicate name params []) = [name ++ "(" ++ intercalate "," params ++ ")."]
-    prettyPrint (Predicate name params constrs) =
-        [name ++ "(" ++ intercalate "," params ++ ")" ++ " :-"] ++
+    prettyPrint (Predicate typeStr name params []) = ["% " ++ typeStr ++ "\n" ++ name ++ "(" ++ intercalate "," params ++ ")."]
+    prettyPrint (Predicate typeStr name params constrs) =
+        ["% " ++ typeStr, name ++ "(" ++ intercalate "," params ++ ") :-"] ++
         placeLast "." (mapConj constrs)
 
+findMains :: [PrologDef] -> ([PrologConstraint], [PrologDef])
+findMains = (\(a, b) -> (concat a, b)) . partitionEithers . map go
+    where
+        go (Main c) = Left c
+        go def      = Right def
+
+makeMain :: [PrologDef] -> ([String], [PrologDef])
+makeMain defs = (mainStr, rest)
+    where
+        (mains, rest) = findMains defs
+        mainStr =
+            case mains of
+                [] -> []
+                _  -> [":- initialization(main, main).\n", "main(Argv) :-"] ++ placeLast "." (mapConj mains)
+
 instance PrettyPrint PrologFile where
-    prettyPrint (PrologFile defs) = [header ++ "\n"] ++ concat (placeSep "\n" (map prettyPrint defs))
+    prettyPrint (PrologFile defs) = [header ++ "\n"] ++ main ++ concat (placeSep "\n" (map prettyPrint rest))
+        where
+            (main, rest) = makeMain defs
 
 header = "#!/usr/bin/env swipl\n\n" ++
          ":- use_module(library(clpfd)).\n\n" ++

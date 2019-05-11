@@ -4,5 +4,5 @@ answer less than N is
     FifteenMult = multiples of 15 in (range 1 to N),
     sum ThreeMult + sum FiveMult - sum FifteenMult.
 
-display (answer less than 999).
+display as text answer less than 999.
 

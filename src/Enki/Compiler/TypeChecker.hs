@@ -7,7 +7,7 @@
 module Enki.Compiler.TypeChecker where
 
 import Control.Lens hiding (get)
-import Control.Monad ((<=<), zipWithM_)
+import Control.Monad ((<=<), zipWithM_, zipWithM)
 import Control.Monad.Trans.State.Lazy
 
 import Data.Map (Map)
@@ -18,8 +18,6 @@ import Enki.Types
 import Enki.Parser.AST
 import Enki.Compiler.Types
 
-import System.IO.Unsafe
-
 data Environment = Environment
     { _typeEnv :: Map String Type
     , _typeVars :: Map String Type
@@ -29,8 +27,14 @@ data Environment = Environment
     deriving (Eq, Show)
 makeLenses ''Environment
 
+writelnBuiltIn :: TypedDef
+writelnBuiltIn = TypedRule (Comp [S "writeln", V "Str"]) EnkiString (TypedConstraints [])
+
+termToAtom :: TypedDef
+termToAtom = TypedFunc (Comp [S "term_to_atom", V "I"]) (FuncType EnkiInt EnkiString) (TypedConstraints []) (TypedExpr (StringVal "BUILTIN"))
+
 newEnv :: Environment
-newEnv = Environment Map.empty Map.empty Nothing [] 0
+newEnv = Environment Map.empty Map.empty Nothing [writelnBuiltIn, termToAtom] 0
 
 defineNew :: Monad m => TypedDef -> StateT Environment m TypedDef
 defineNew def = do
@@ -136,12 +140,13 @@ types t = [t]
 returnType :: Type -> Type
 returnType (FuncType t1 t2) = returnType' t2
 returnType (DataType t1 t2) = returnType' t2
-returnType _ = Void
+returnType (RuleType _ _)   = Void
+returnType t                = t
 
 returnType' :: Type -> Type
 returnType' (FuncType t1 t2) = returnType' t2
 returnType' (DataType t1 t2) = returnType' t2
-returnType' t = t
+returnType' t                = t
 
 freshDefType :: Monad m => TypedDef -> StateT Environment m TypedDef
 freshDefType (TypedFunc id t constr expr) = TypedFunc <$> pure id <*> freshTypeVars t <*> pure constr <*> pure expr
@@ -163,6 +168,7 @@ pairWithParamType def idMap = do
 join :: Type -> Type -> Maybe Type
 join x (Any _) = Just x
 join (Any _) x = Just x
+join (TypeName parts1) (TypeName parts2) = TypeName <$> zipWithM join parts1 parts2
 join x y
     | x == y = Just x
     | otherwise = Nothing
@@ -200,7 +206,12 @@ inferAndUnify :: Monad m => (Type, Id) -> StateT Environment m Bool
 inferAndUnify (t, id) = do
     inferred <- infer id
     res <- unify t inferred
-    pure res
+    if not res then do
+        vars <- (^.typeVars) <$> get
+        env <- (^.typeEnv) <$> get
+        error $ "Inferred " ++ show inferred ++ " for " ++ show id ++ " but failed to unify this with " ++ show t ++ " in the environment " ++ show env ++ " with type vars " ++ show vars
+    else
+        pure res
 
 unifyAll :: Monad m => [(Type, Id)] -> StateT Environment m ()
 unifyAll pairs = do
@@ -296,20 +307,28 @@ typeOf = resolveType <=< getType
 isOp :: String -> Bool
 isOp s = s `elem` ["+", "-", "*", "/", "^", "=", "..", ">", ">=", "<", "<="]
 
-opType :: Monad m => String -> StateT Environment m (Maybe (Type, Type, Type))
-opType "+"  = pure $ Just (EnkiInt, EnkiInt, EnkiInt)
-opType "-"  = pure $ Just (EnkiInt, EnkiInt, EnkiInt)
-opType "*"  = pure $ Just (EnkiInt, EnkiInt, EnkiInt)
-opType "/"  = pure $ Just (EnkiInt, EnkiInt, EnkiInt)
-opType "<"  = pure $ Just (EnkiInt, EnkiInt, Void)
-opType "<=" = pure $ Just (EnkiInt, EnkiInt, Void)
-opType ">"  = pure $ Just (EnkiInt, EnkiInt, Void)
-opType ">=" = pure $ Just (EnkiInt, EnkiInt, Void)
-opType "^"  = pure $ Just (EnkiInt, EnkiInt, EnkiInt)
+type OpConstructor = TypedId -> TypedId -> TypedId
+
+opType :: Monad m => String -> StateT Environment m (Maybe (Type, Type, OpConstructor))
+opType "+"  = pure $ Just (EnkiInt, EnkiInt, BinOp "+" EnkiInt)
+opType "-"  = pure $ Just (EnkiInt, EnkiInt, BinOp "-" EnkiInt)
+opType "*"  = pure $ Just (EnkiInt, EnkiInt, BinOp "*" EnkiInt)
+opType "/"  = pure $ Just (EnkiInt, EnkiInt, BinOp "/" EnkiInt)
+opType "^"  = pure $ Just (EnkiInt, EnkiInt, BinOp "^" EnkiInt)
+opType "<"  = pure $ Just (EnkiInt, EnkiInt, BinOp "<" Void)
+opType "<=" = pure $ Just (EnkiInt, EnkiInt, BinOp "<=" Void)
+opType ">"  = pure $ Just (EnkiInt, EnkiInt, BinOp ">" Void)
+opType ">=" = pure $ Just (EnkiInt, EnkiInt, BinOp ">=" Void)
 opType "="  = do
     t <- freshType
-    pure $ Just (t,t,Void)
-opType ".." = pure $ Just (EnkiString, EnkiString, EnkiString)
+    pure $ Just (t,t,BinOp "=" Void)
+opType ".." = pure $ Just (EnkiString, EnkiString,
+    \x y -> FuncCall (TypedFunc
+                        (Comp [S "atom_concat", V "X", V "Y"])
+                        (FuncType EnkiString (FuncType EnkiString EnkiString))
+                        (TypedConstraints [])
+                        (TypedExpr (StringVal "dummy value")))
+                     (Map.fromList [("X", x), ("Y", y)]))
 opType _ = pure Nothing
 
 inferOp :: Monad m => Id -> StateT Environment m TypedId
@@ -317,7 +336,7 @@ inferOp id@(Comp [id1, S op, id2]) = do
     t <- opType op
     case t of
         Nothing -> error $ "Could not resolve function call: " ++ show id
-        Just (t1, t2, ret) -> do
+        Just (t1, t2, constr) -> do
             tid1 <- infer id1
             succeed1 <- unify t1 tid1
 
@@ -330,28 +349,38 @@ inferOp id@(Comp [id1, S op, id2]) = do
             succeed3 <- joinTypes newT1 newT2
 
             if not succeed1 then
-                error $ "Could not unify: " ++ show (t1, tid1)
+                error $ "Could not unify (1): " ++ show (t1, tid1)
             else if not succeed2 then
-                error $ "Could not unify: " ++ show (t2, tid2)
+                error $ "Could not unify (2): " ++ show (t2, tid2)
             else if not succeed3 then
-                error $ "Could not unify: " ++ show (newT1, newT2)
+                error $ "Could not unify (3): " ++ show (tid1, newT1, tid2, newT2)
             else
-                pure $ BinOp op ret tid1 tid2
+                pure $ constr tid1 tid2
 inferOp id = error $ "Not an operator expression: " ++ show id
 
 instance Inferable Id TypedId where
-    infer (S str) = pure $ StringVal str
+    infer id@(S str) = do
+        res <- findCall $ Comp [id]
+        case res of
+            Nothing -> pure $ StringVal str
+            Just (typeMap, func) -> do
+                unifyAll $ Map.elems typeMap
+                params <- mapM (infer . snd) typeMap
+                newDef <- resolveDefType func
+                pure $ FuncCall newDef params
     infer (I i) = pure $ IntVal i
     infer (B b) = pure $ BoolVal b
     infer (V str) = do
         -- Do this to generate a new type if necessary
         lookupType str
         pure $ VarVal str
-    infer (Comp [id]) = infer id
     infer id@(Comp ids) = do
         res <- findCall id
         case res of
-            Nothing -> inferOp id
+            Nothing ->
+                case ids of
+                    [inner] -> infer inner
+                    _       -> inferOp id
             Just (typeMap, func) -> do
                 unifyAll $ Map.elems typeMap
                 params <- mapM (infer . snd) typeMap
@@ -399,8 +428,12 @@ instance Inferable Def TypedDef where
     infer (Data id constrs) = do
         let resType = TypeName $ makeTypeName id
         TypedData id <$> mapM (defineNew <=< makeConstructor resType) constrs
+
     infer (Exec constr) = TypedExec <$> infer constr
+
     infer (Module name defs) = TypedModule name <$> mapM infer defs
+
+    infer e = error $ show e
 
 instance Inferable a b => Inferable [a] [b] where
     infer = mapM infer

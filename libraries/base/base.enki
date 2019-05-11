@@ -1,3 +1,7 @@
+display X where writeln X.
+
+as text X is term_to_atom X.
+
 odd X if X = 2*K + 1.
 even X if X = 2*K.
 
@@ -5,21 +9,21 @@ square root X is (Root^2) = X, Root.
 
 A divides B if B = A*N.
 
-list may be
+list A may be
     empty.
     cons Head Tail has
-        Head : int,
-        Tail : list.
+        Head : A,
+        Tail : list A.
 
-pair may be
-    pair X and Y has X : int, Y : int.
+pair A B may be
+    pair X and Y has X : A, Y : B.
 
 length of List is
     when List = cons H T then 1 + length of T.
     otherwise then 0.
 
 construct Head Full is
-    Full = (cons Head Tail),
+    Full = cons Head Tail,
     Tail.
 
 concat A B is
@@ -29,7 +33,7 @@ concat A B is
 concat A with B is concat A B.
 
 flatten List is
-    when List = cons H T then concat H with (flatten T).
+    when List = cons H T then concat H with flatten T.
     otherwise then empty.
 
 reverseAcc A Acc is
@@ -133,16 +137,15 @@ drop N from List is
     otherwise then List.
 
 product List is
-    when List = cons H T then H * product T.
+    when List = cons H T then H * (product T).
     otherwise then 1.
 
 product of List is product List.
 
-element N of List is
-    when N <= 0, List = cons H T then H.
-    otherwise then
-        N > 0, List = cons H T,
-        element (N - 1) of T.
+element N of List starting with H is
+    when N <= 0 then H.
+    when List = cons X Rest then element (N - 1) of Rest starting with X.
+    otherwise then H.
 
 chunks of size L in List is
     when List = empty then empty.

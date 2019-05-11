@@ -31,6 +31,7 @@ dependencies:
 - hspec
 - QuickCheck
 - lens
+- process
 
 library:
   source-dirs: src

@@ -8,6 +8,7 @@
 :- style_check(-discontiguous).
 :- style_check(-charset).
 
+% RuleType EnkiInt EnkiInt
 collatz_is(X,N) :-
     (
         (
@@ -24,6 +25,7 @@ collatz_is(X,N) :-
             X = Temp4
     ).
 
+% RuleType EnkiInt EnkiInt
 collatz_sequence_on_takes_steps(X,N) :-
     (
         (

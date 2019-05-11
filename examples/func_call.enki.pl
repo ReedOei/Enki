@@ -8,10 +8,12 @@
 :- style_check(-discontiguous).
 :- style_check(-charset).
 
+% FuncType EnkiInt EnkiInt
 square_root(X,Root) :-
     Temp0 #= (Root ^ 2),
     Temp0 = X.
 
+% FuncType EnkiInt (FuncType EnkiInt (FuncType EnkiInt (FuncType EnkiInt EnkiInt)))
 distance_from_to(X1,Y1,X2,Y2,Temp5) :-
     Temp0 #= (X1 - X2),
     Temp1 #= (Temp0 ^ 2),
