@@ -10,6 +10,7 @@ import Control.Lens hiding (get)
 import Control.Monad ((<=<), zipWithM_, zipWithM)
 import Control.Monad.Trans.State.Lazy
 
+import Data.List
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe
@@ -17,6 +18,7 @@ import Data.Maybe
 import Enki.Types
 import Enki.Parser.AST
 import Enki.Compiler.Types
+import Enki.Util
 
 data Environment = Environment
     { _typeEnv :: Map String Type
@@ -263,6 +265,13 @@ makeTempTyped (Rule id _) = do
     paramTypes <- mapM lookupType $ vars id
     pure $ TypedRule id (foldr1 RuleType paramTypes) (TypedConstraints [])
 
+showMapping :: (String, (Type, Id)) -> String
+showMapping (name, (t, id)) = name ++ " -> " ++ show id ++ " : " ++ show t
+
+showFuncMatch :: (Map String (Type, Id), TypedDef) -> String
+showFuncMatch (mapping, def) = "Match: " ++ show (defId def) ++ ". Parameters:\n" ++
+    intercalate "\n" (map (indent 1 . showMapping) (Map.toList mapping))
+
 findCall :: Monad m => Id -> StateT Environment m (Maybe (Map String (Type, Id), TypedDef))
 findCall id = do
     funcs <- (^.funcEnv) <$> get
@@ -271,8 +280,13 @@ findCall id = do
                     Nothing -> pure []
                     Just def -> (:[]) <$> makeTempTyped def
 
-    -- TODO: Take the longest match
-    listToMaybe . catMaybes <$> mapM (unifyFunc id) (curTyped ++ funcs)
+    possible <- catMaybes <$> mapM (unifyFunc id) (curTyped ++ funcs)
+
+    case possible of
+        [] -> pure Nothing
+        [match] -> pure $ Just match
+        _ -> error $ "The function call " ++ show id ++ " is ambiguous. It could match any of:\n" ++
+            intercalate "\n" (map showFuncMatch possible)
 
 class Typeable a where
     getType :: Monad m => a -> StateT Environment m Type

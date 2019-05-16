@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5db40d757efee27ce805b60bf4832b1d520856201c0f9f7e7c6a9166787d1155
+-- hash: 75894ec87bff339b47c2a492b2fe90a4b2a118139d5c209f82c48b1cced93c6c
 
 name:           Enki
 version:        0.1.0.0
@@ -36,6 +36,7 @@ library
       Enki.Parser.Parser
       Enki.Parser.Util
       Enki.Types
+      Enki.Util
   other-modules:
       Paths_Enki
   hs-source-dirs:

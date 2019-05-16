@@ -1,0 +1,9 @@
+pair A B may be
+    pair of X and Y has X : A, Y : B.
+
+test X is pair of X and X.
+
+break X is
+    when X = 1, test X = pair of X and "test" then 2.
+    otherwise then "test2".
+

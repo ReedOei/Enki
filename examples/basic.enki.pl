@@ -14,10 +14,10 @@ add_to(X,Y,Temp0) :-
 
 % RuleType EnkiInt EnkiInt
 half(X,H) :-
-    Temp0 #= (2 * H),
-    X = Temp0.
+    Temp1 #= (2 * H),
+    X = Temp1.
 
 % FuncType EnkiInt EnkiInt
 square_root(X,Root) :-
-    Temp0 #= (Root ^ 2),
-    Temp0 = X.
+    Temp2 #= (Root ^ 2),
+    Temp2 = X.

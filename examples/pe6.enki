@@ -1,11 +1,11 @@
 squares of List is
-    when List = cons H T then cons (H^2) (squares of T).
+    when List = cons H T then prepend (H^2) to squares of T.
     otherwise then empty.
 
 answer up to N is
-    SumSquare = sum of squares of integers from 1 to N,
+    SumSquare = the sum of squares of integers from 1 to N,
     SquareSum = (sum of integers from 1 to N)^2,
     SquareSum - SumSquare.
 
-display answer up to 100.
+display as text the answer up to 100.
 
