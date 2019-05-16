@@ -50,7 +50,7 @@ answer less than N is
     ThreeMult = multiples of 3 in range 1 to N,
     FiveMult = multiples of 5 in range 1 to N,
     FifteenMult = multiples of 15 in range 1 to N,
-    sum ThreeMult + sum FiveMult - sum FifteenMult.
+    sum of ThreeMult + sum of FiveMult - sum of FifteenMult.
 
 display as text answer less than 999.
 ```
@@ -58,12 +58,13 @@ display as text answer less than 999.
 Sample code to solve [Problem 2](https://projecteuler.net/problem=2) on [Project Euler](https://projecteuler.net/):
 
 ```
-fib seq A B Limit is
+fib nums A B Limit is
     when A > Limit then empty.
-    otherwise then prepend A to fib seq B (A + B) Limit.
+    otherwise then prepend A to fib nums B (A + B) Limit.
 
-fib seq up to N is fib seq 0 1 N.
+fib seq up to N is fib nums 0 1 N.
 
 display as text sum of multiples of 2 in fib seq up to 4000000.
+
 ```
 
