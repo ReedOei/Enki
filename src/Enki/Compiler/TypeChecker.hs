@@ -33,10 +33,13 @@ writelnBuiltIn :: TypedDef
 writelnBuiltIn = TypedRule (Comp [S "writeln", V "Str"]) EnkiString (TypedConstraints [])
 
 termToAtom :: TypedDef
-termToAtom = TypedFunc (Comp [S "term_to_atom", V "I"]) (FuncType EnkiInt EnkiString) (TypedConstraints []) (TypedExpr (StringVal "BUILTIN"))
+termToAtom = TypedFunc (Comp [S "term_to_atom", V "I"]) (FuncType (Any "ANYTHING") EnkiString) (TypedConstraints []) (TypedExpr (StringVal "BUILTIN"))
+
+prologNot :: TypedDef
+prologNot = TypedRule (Comp [S "not", V "G"]) (Any "ANYTHING") (TypedConstraints [])
 
 newEnv :: Environment
-newEnv = Environment Map.empty Map.empty Nothing [writelnBuiltIn, termToAtom] 0
+newEnv = Environment Map.empty Map.empty Nothing [writelnBuiltIn, termToAtom, prologNot] 0
 
 defineNew :: Monad m => TypedDef -> StateT Environment m TypedDef
 defineNew def = do
@@ -211,7 +214,7 @@ inferAndUnify (t, id) = do
     if not res then do
         vars <- (^.typeVars) <$> get
         env <- (^.typeEnv) <$> get
-        error $ "Inferred " ++ show inferred ++ " for " ++ show id ++ " but failed to unify this with " ++ show t ++ " in the environment " ++ show env ++ " with type vars " ++ show vars
+        error $ "Inferred\n" ++ show inferred ++ "\nfor\n" ++ show id ++ "\nbut failed to unify this with\n" ++ show t ++ "\nin the environment\n" ++ show env ++ "\nwith type vars\n" ++ show vars
     else
         pure res
 
@@ -434,7 +437,6 @@ instance Inferable Def TypedDef where
         mapM_ (infer . V) $ vars id
 
         tConstr <- infer constr
-
         ruleType <- makeRuleType $ vars id
 
         defineNew $ TypedRule id ruleType tConstr

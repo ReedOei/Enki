@@ -209,7 +209,7 @@ singleEnkiType = choice $ map try [namedType "int" EnkiInt, namedType "bool" Enk
 
 dataTypeName :: Parser Type
 dataTypeName = do
-    id <- symbol $ baseEnkiId []
+    id <- symbol $ baseEnkiId ["->", "~", "*"]
     pure $ case id of
         Comp [V s] -> Any s
         _ -> TypeName $ makeTypeName id
@@ -266,8 +266,46 @@ withWs parser = do
     wsSkip
     pure a
 
+operators = ["=", "+", "-", "<=", ">=", "*", "/", "^", "..", "<", ">"]
+
+sanitizeStr :: String -> String
+sanitizeStr str
+    | str `elem` operators = str
+    | otherwise = concatMap sanitizeChar str
+    where
+        sanitizeChar '|'  = "pipe_"
+        sanitizeChar '-'  = "dash_"
+        sanitizeChar '!'  = "exclamation_"
+        sanitizeChar '@'  = "at_"
+        sanitizeChar '#'  = "num_"
+        sanitizeChar '$'  = "dollar_"
+        sanitizeChar '%'  = "percent_"
+        sanitizeChar '^'  = "caret_"
+        sanitizeChar '&'  = "amp_"
+        sanitizeChar '['  = "leftsquare_"
+        sanitizeChar ']'  = "rightsquare_"
+        sanitizeChar '{'  = "leftcurly_"
+        sanitizeChar '}'  = "rightcurly_"
+        sanitizeChar '\\' = "backslash_"
+        sanitizeChar ':'  = "colon_"
+        sanitizeChar ';'  = "semicolon_"
+        sanitizeChar '>'  = "gt_"
+        sanitizeChar '<'  = "lt_"
+        sanitizeChar '='  = "equals_"
+        sanitizeChar '+'  = "plus_"
+        sanitizeChar '*'  = "times_"
+        sanitizeChar '/'  = "div_"
+        sanitizeChar c    = [c]
+
+sanitize :: Id -> Id
+sanitize i@(I _)    = i
+sanitize b@(B _)    = b
+sanitize v@(V _)    = v
+sanitize (S str)    = S $ sanitizeStr str
+sanitize (Comp ids) = Comp $ map sanitize ids
+
 enkiId :: Stream s m Char => [String] -> ParsecT s st m Id
-enkiId = buildExpressionParser opTable . baseEnkiId
+enkiId = fmap sanitize . buildExpressionParser opTable . baseEnkiId . (operators ++ )
 
 baseEnkiId :: [String] -> Parser Id
 baseEnkiId excluded =
@@ -297,9 +335,9 @@ opTable =
         [binary "*" AssocLeft, binary "/" AssocLeft, binary "mod" AssocLeft],
         [binary "+" AssocLeft, binary "-" AssocLeft],
         [binary ".." AssocLeft],
+        [binary "=" AssocNone],
         [binary ">=" AssocNone, binary "<=" AssocNone,
-         binary "<" AssocNone, binary ">" AssocNone],
-        [binary "=" AssocNone]
+         binary "<" AssocNone, binary ">" AssocNone]
     ]
 
 flatten (Comp [id]) = id
@@ -324,7 +362,7 @@ str list = do
         letters = nonEmpty ['a'..'z'] cs
         cs = ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ ['_']
 
-        symbols = many1 $ oneOf "!@#$%^&*[]{}|\\:;"
+        symbols = many1 $ oneOf "!@#$%^&*[]{}|\\:;>-<=+*/"
 
 nonEmpty :: String -> String -> Parser String
 nonEmpty start ending = do
@@ -334,7 +372,9 @@ nonEmpty start ending = do
     pure $ s:ss
 
 opStr :: String -> Parser Id
-opStr str = S <$> symbol (string str)
+opStr str = S <$> do
+    s <- symbol (string str)
+    pure s
 
 exclude :: Stream s m Char => [String] -> ParsecT s st m String -> ParsecT s st m String
 exclude strs parser = do
