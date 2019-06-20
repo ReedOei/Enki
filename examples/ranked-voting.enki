@@ -9,15 +9,16 @@ tally votes for Candidates in Ballots is
         increment key Candidate in (tally votes for Candidates in Rest).
     otherwise then empty.
 
+Candidate has Votes is Candidate maps to Votes.
+
 run voting for Candidates using Ballots is
+    Tally = tally votes for Candidates in Ballots,
     when
-        Tally = tally votes for Candidates in Ballots,
         Best = max value in Tally,
-        just (Winner maps to Votes) = Best,
+        just (Winner has Votes) = Best,
         Votes > (length of Ballots) / 2 then Best.
     otherwise then
-        Tally = tally votes for Candidates in Ballots,
-        just (Candidate |-> Votes) = min value in Tally,
+        just (Candidate has Votes) = min value in Tally,
         run voting for (remove Candidate from Candidates) using Ballots.
 
 display format list increment key 1 in insert 1 2 into empty.
