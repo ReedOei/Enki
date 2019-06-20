@@ -16,6 +16,7 @@ addons:
   apt:
     packages:
       - libgmp-dev
+      - swi-prolog
 
 before_install:
 # Download and unpack the stack executable
