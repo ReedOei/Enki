@@ -16,13 +16,17 @@ addons:
   apt:
     packages:
       - libgmp-dev
-      - swi-prolog
 
 before_install:
 # Download and unpack the stack executable
 - mkdir -p ~/.local/bin
 - export PATH=$HOME/.local/bin:$PATH
 - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+# Install prolog
+- sudo apt-get install software-properties-common
+- sudo apt-add-repository ppa:swi-prolog/stable
+- sudo apt-get update
+- sudo apt-get install swi-prolog
 
 install:
 # Build dependencies
