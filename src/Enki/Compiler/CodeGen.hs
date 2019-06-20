@@ -159,10 +159,16 @@ instance CodeGen TypedConstraint Computation where
         let (branch, _) = concatComps branchGen
         let (rest, _) = concatComps restGen
         pure [ConstraintComp [Disjunction branch rest]]
-    codeGen (TypedConstraints cs) = do
-        res <- mapM (fmap head . codeGen) cs
 
-        pure [ConstraintComp $ fst $ concatComps res]
+    codeGen (TypedConstraints []) = pure [ConstraintComp []]
+    codeGen (TypedConstraints (c:cs)) = do
+        first <- codeGen c
+        restGen <- codeGen $ TypedConstraints cs
+
+        let (ctr, _) = concatComps first
+        let (rest, _) = concatComps restGen
+
+        pure [ConstraintComp $ ctr ++ rest]
 
     codeGen (TypedWhen cond (TypedConstraints [])) = codeGen cond
     codeGen (TypedWhen cond body) = do

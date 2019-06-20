@@ -13,6 +13,8 @@ import Data.String.Utils
 import Test.Hspec
 import Text.Parsec
 
+import System.Process
+
 import Enki.Types
 import Enki.Parser.AST
 import Enki.Parser.Parser
@@ -25,6 +27,13 @@ tryCompile fname = it fname $ do
     actual <- strip <$> compile fname
     expected <- strip <$> readFile (fname ++ ".pl")
 
+    actual `shouldBe` expected
+
+runFile fname expected = it fname $ do
+    source <- compile fname
+    let outputName = fname ++ "_out.pl"
+    writeFile outputName source
+    actual <- readProcess "swipl" [outputName] ""
     actual `shouldBe` expected
 
 inferDef :: String -> IO (TypedDef, Environment)
@@ -123,10 +132,10 @@ main = hspec $ do
 
     describe "str" $ do
         it "parses a single string" $ do
-            let (Right v) = parse (str []) "" "hello"
+            let (Right v) = parse (str "" []) "" "hello"
             v `shouldBe` S "hello"
         it "does not parse strings ending in a ':'" $
-            isLeft (parse (str ["is"]) "" "is") `shouldBe` True
+            isLeft (parse (str "" ["is"]) "" "is") `shouldBe` True
 
     describe "int" $ do
         it "parses integers" $ do
@@ -138,16 +147,16 @@ main = hspec $ do
 
     describe "enkiId" $ do
         it "parses a single expression" $ do
-            let (Right v) = parse (enkiId []) "" "test"
+            let (Right v) = parse (enkiId "" []) "" "test"
             v `shouldBe` Comp [S "test"]
         it "parses multiple expressions" $ do
-            let (Right v) = parse (enkiId []) "" "t y false B"
+            let (Right v) = parse (enkiId "" []) "" "t y false B"
             v `shouldBe` Comp [S "t", S "y", B False, V "B"]
         it "parses nested expressions" $ do
-            let (Right v) = parse (enkiId []) "" "(1 + 2) + 4"
+            let (Right v) = parse (enkiId "" []) "" "(1 + 2) + 4"
             v `shouldBe` Comp [Comp [I 1, S "+",I 2], S "+", I 4]
         it "parses up to an excluded identifier" $ do
-            let (Right v) = parse (enkiId ["is"]) "" "factorial X is"
+            let (Right v) = parse (enkiId "" ["is"]) "" "factorial X is"
             v `shouldBe` Comp [S "factorial", V "X"]
 
     describe "enkiType" $ do
@@ -218,4 +227,12 @@ main = hspec $ do
         tryCompile "examples/func_call.enki"
         tryCompile "examples/collatz.enki"
         tryCompile "examples/collatz_func.enki"
+        tryCompile "examples/constraints.enki"
+
+    describe "execute" $ do
+        runFile "examples/pe1.enki" "233168\n"
+        runFile "examples/pe2.enki" "4613732\n"
+        runFile "examples/pe3.enki" "6857\n"
+        runFile "examples/pe5.enki" "232792560\n"
+        runFile "examples/pe6.enki" "25164150\n"
 

@@ -1,0 +1,12 @@
+do not use base.
+
+pair A B may be {X;Y} has X : A, Y : B.
+
+first {A;B} is A.
+second {A;B} is B.
+
+test {A;B} {C;D} is
+    A = (B + 1) * (D + 1),
+    when A > C then D.
+    otherwise then C.
+

@@ -56,8 +56,8 @@ multiples of A in List is
     otherwise then empty.
 
 formatHelper List is
-    when List = cons H empty then H .. "]".
-    when List = cons H T then H .. "," .. formatHelper T.
+    when List = cons H empty then (as text H) .. "]".
+    when List = cons H T then (as text H) .. "," .. formatHelper T.
     otherwise then "]".
 
 format list List is "[" .. formatHelper List.
@@ -150,4 +150,84 @@ chunks of size L in List is
     otherwise then cons (take L from List) (chunks of size L in drop L from List).
 
 chunks of length L in List is chunks of size L in List.
+
+List contains Element if
+    when List = cons H T, H = Element then 1 = 1.
+    when List = cons H T then T contains Element.
+    otherwise then 1 = 2.
+
+remove Element from List is
+    when List = cons H T, H = Element then T.
+    when List = cons H T then cons H (remove Element from T).
+    otherwise then 1 = 2, empty.
+
+mapping K V may be X |-> Y has X : K, Y : V.
+
+X maps to Y is X |-> Y.
+
+maybe A may be
+    nothing.
+    just X has X : A.
+
+ordering may be
+    equal.
+    greater.
+    less.
+
+compare A to B is
+    when A > B then greater.
+    when A < B then less.
+    otherwise then equal.
+
+key in (K maps to V) is K.
+value in (K maps to V) is V.
+
+compare keys (K1 |-> V1) to (K2 |-> V2) is compare K1 to K2.
+compare values (K1 |-> V1) to (K2 |-> V2) is compare V1 to V2.
+
+get key Key from Map is
+    Map contains (Key |-> V),
+    V.
+
+insert K V into Map is cons (K |-> V) Map.
+
+remove key Key from Map is remove (Key |-> V) from Map.
+
+increment key Key in Map is insert Key (V + 1) into (remove (Key |-> V) from Map).
+
+max key at least M1 in Map is
+    when Map = cons M2 Assocs, compare keys M2 to M1 = less then max key at least M2 in Assocs.
+    when Map = cons P Assocs then max key at least M1 in Assocs.
+    otherwise then M1.
+
+max key in Map is
+    when Map = cons M1 Assocs then just (max key at least M1 in Map).
+    otherwise then nothing.
+
+min key no more than M1 in Map is
+    when Map = cons M2 Assocs, compare keys M2 to M1 = less then min key no more than M2 in Assocs.
+    when Map = cons P Assocs then min key no more than M1 in Assocs.
+    otherwise then M1.
+
+min key in Map is
+    when Map = cons M1 Assocs then just (min key no more than M1 in Map).
+    otherwise then nothing.
+
+max value at least M1 in Map is
+    when Map = cons M2 Assocs, compare values M2 to M1 = less then max value at least M2 in Assocs.
+    when Map = cons P Assocs then max value at least M1 in Assocs.
+    otherwise then M1.
+
+max value in Map is
+    when Map = cons M1 Assocs then just (max value at least M1 in Map).
+    otherwise then nothing.
+
+min value no more than M1 in Map is
+    when Map = cons M2 Assocs, compare values M2 to M1 = less then min value no more than M2 in Assocs.
+    when Map = cons P Assocs then min value no more than M1 in Assocs.
+    otherwise then M1.
+
+min value in Map is
+    when Map = cons M1 Assocs then just (min value no more than M1 in Map).
+    otherwise then nothing.
 

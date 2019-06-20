@@ -1,0 +1,27 @@
+first vote for Candidates in Votes is
+    when Votes = cons Vote Rest, Candidates contains Vote then Vote.
+    when Votes = cons Vote Rest then first vote for Candidates in Rest.
+    otherwise then 1.
+
+tally votes for Candidates in Ballots is
+    when Ballots = cons Ballot Rest then
+        Candidate = first vote for Candidates in Ballot,
+        increment key Candidate in (tally votes for Candidates in Rest).
+    otherwise then empty.
+
+run voting for Candidates using Ballots is
+    when
+        Tally = tally votes for Candidates in Ballots,
+        Best = max value in Tally,
+        just (Winner maps to Votes) = Best,
+        Votes > (length of Ballots) / 2 then Best.
+    otherwise then
+        Tally = tally votes for Candidates in Ballots,
+        just (Candidate |-> Votes) = min value in Tally,
+        run voting for (remove Candidate from Candidates) using Ballots.
+
+display format list increment key 1 in insert 1 2 into empty.
+display as text (first vote for (cons 1 (cons 2 empty)) in (cons 1 empty)).
+display as text (tally votes for (cons 1 (cons 2 empty)) in (cons (cons 1 empty) empty)).
+display as text (tally votes for (cons 1 (cons 2 empty)) in (cons (cons 1 empty) (cons (cons 1 (cons 2 empty)) empty))).
+
