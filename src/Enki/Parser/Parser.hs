@@ -163,10 +163,11 @@ func = do
 makeResult :: Constraint -> Constraint
 makeResult (When cond (Constraints [])) = When (makeResult cond) $ Constraints []
 makeResult (When cond body)             = When cond $ makeResult body
-makeResult (Constraints cs)             =
-    -- TODO: Handle other cases (if they exist?)
-    case last cs of
-        Constraint id -> Constraints $ init cs ++ [Constraint (Comp [funcResultVar, S "=", id])]
+makeResult (Constraints cs)             = Constraints $ map go (init cs) ++ [makeResult (last cs)]
+    where
+        -- Need to process all the when's here to make sure we don't miss their results
+        go (When cond body) = When cond $ makeResult body
+        go c = c
 makeResult c@(Constraint id) = Constraint $ Comp [funcResultVar, S "=", id]
 
 isWhen (When _ _) = True

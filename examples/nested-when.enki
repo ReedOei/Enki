@@ -1,0 +1,18 @@
+do not use base.
+
+display X where writeln X.
+
+f X is
+    when X > 5 then
+        when X > 10 then "more than 10".
+        when X > 7 then "more than 7".
+        otherwise then "at least 5".
+    when X < 0 then "negative".
+    otherwise then "blah".
+
+display f -1.
+display f 3.
+display f 6.
+display f 10.
+display f 20.
+
