@@ -14,10 +14,10 @@ square_root(X,Root) :-
     Temp0 = X.
 
 % FuncType EnkiInt (FuncType EnkiInt (FuncType EnkiInt (FuncType EnkiInt EnkiInt)))
-distance_from_to(X1,Y1,X2,Y2,Temp6) :-
-    Temp1 #= (X1 - X2),
-    Temp2 #= (Temp1 ^ 2),
-    Temp3 #= (Y1 - Y2),
-    Temp4 #= (Temp3 ^ 2),
-    Temp5 #= (Temp2 + Temp4),
-    square_root(Temp5,Temp6).
+distance_from_to(X1,Y1,X2,Y2,Temp1) :-
+    Temp2 #= (X1 - X2),
+    Temp3 #= (Temp2 ^ 2),
+    Temp4 #= (Y1 - Y2),
+    Temp5 #= (Temp4 ^ 2),
+    Temp6 #= (Temp3 + Temp5),
+    square_root(Temp6,Temp1).

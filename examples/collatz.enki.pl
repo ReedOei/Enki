@@ -31,6 +31,6 @@ collatz_sequence_on_takes_steps(X,N) :-
             N = 0
         ;
             collatz_is(X,K),
-            Temp5 #= (N - 1),
-            collatz_sequence_on_takes_steps(K,Temp5)
+            Temp7 #= (N - 1),
+            collatz_sequence_on_takes_steps(K,Temp7)
     ).

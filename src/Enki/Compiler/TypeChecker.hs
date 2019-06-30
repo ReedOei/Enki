@@ -349,6 +349,9 @@ opType ">=" = pure $ Just (EnkiInt, EnkiInt, BinOp ">=" Void)
 opType "="  = do
     t <- freshType
     pure $ Just (t,t,BinOp "=" Void)
+opType "!="  = do
+    t <- freshType
+    pure $ Just (t,t,BinOp "!=" Void)
 opType ".." = pure $ Just (EnkiString, EnkiString,
     \x y -> FuncCall (TypedFunc
                         (Comp [S "atom_concat", V "X", V "Y"])

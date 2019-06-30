@@ -79,22 +79,20 @@ destructComp (ConstraintComp cs) = (cs, [])
 concatComps :: [Computation] -> ([PrologConstraint], [PrologExpr])
 concatComps = over _2 concat . over _1 concat . unzip . map destructComp
 
-genFuncCall :: Monad m => TypedDef -> Map String Computation -> StateT CodeGenEnv m ([PrologConstraint], PrologExpr)
-genFuncCall def paramVals = do
+genFuncCall :: Monad m => TypedDef -> Map String Computation -> String -> StateT CodeGenEnv m ([PrologConstraint], PrologExpr)
+genFuncCall def paramVals resName = do
     let comps = map doLookup $ vars $ defId def
     let name  = idToName $ defId def
 
     let (constraints, params) = concatComps comps
 
-    case def of
-        TypedConstructor _ _ -> pure (constraints, (PrologFunctor name params))
+    pure $ case def of
+        TypedConstructor _ _ -> (constraints, PrologFunctor name params)
 
-        TypedFunc _ _ _ _ -> do
-            resName <- newVar
-            pure (constraints ++ [PredCall name $ params ++ [PrologVar resName]], PrologVar resName)
+        TypedFunc _ _ _ _ -> (constraints ++ [PredCall name $ params ++ [PrologVar resName]], PrologVar resName)
 
         -- The result of this is not really used, but we return it anyway for consistency's sake
-        TypedRule _ _ _ -> pure (constraints ++ [PredCall name params], last params)
+        TypedRule _ _ _ -> (constraints ++ [PredCall name params], last params)
 
     where
         doLookup paramName =
@@ -117,23 +115,42 @@ prologOp ">=" = "#>="
 prologOp "<"  = "#<"
 prologOp "<=" = "#=<"
 prologOp "="  = "="
+prologOp "!="  = "\\="
 prologOp str  = error $ "Unknown operator: '" ++ str ++ "'"
+
+genFuncCallWith (FuncCall def varMap) resName = do
+    params <- mapM (fmap head . codeGen) varMap
+
+    (constrs, res) <- genFuncCall def params resName
+
+    pure [Computation constrs res]
 
 instance CodeGen TypedId Computation where
     codeGen (StringVal v)         = pure [Computation [] $ PrologAtom v]
     codeGen (IntVal i)            = pure [Computation [] $ PrologInt i]
     codeGen (BoolVal b)           = pure [Computation [] $ PrologAtom $ map toLower $ show b]
     codeGen (VarVal v)            = pure [Computation [] $ PrologVar v]
-    codeGen (FuncCall def varMap) = do
-        params <- mapM (fmap head . codeGen) varMap
-
-        (constrs, res) <- genFuncCall def params
-
-        pure [Computation constrs res]
+    codeGen f@(FuncCall def varMap) = do
+        resName <- newVar
+        genFuncCallWith f resName
 
     codeGen (BinOp op opType a b) = do
-        aComp <- codeGen a
-        bComp <- codeGen b
+        (aComp, bComp) <-
+            case (a, op, b) of
+                (VarVal varName, "=", f@(FuncCall _ _)) -> do
+                    aRes <- codeGen a
+                    bRes <- genFuncCallWith f varName
+
+                    pure (aRes, bRes)
+
+                -- TODO: Maybe just do an AST manipulation so it always looks like X = f(Ys) so we only need one case
+                (f@(FuncCall _ _), "=", VarVal varName) -> do
+                    aRes <- genFuncCallWith f varName
+                    bRes <- codeGen b
+
+                    pure (aRes, bRes)
+
+                (_,_,_) -> (,) <$> codeGen a <*> codeGen b
 
         let [Computation aConstrs aRes] = aComp
         let [Computation bConstrs bRes] = bComp

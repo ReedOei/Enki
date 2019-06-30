@@ -231,3 +231,20 @@ min value in Map is
     when Map = cons M1 Assocs then just (min value no more than M1 in Map).
     otherwise then nothing.
 
+singleton X is cons X empty.
+
+init List is
+    when List = cons H empty then empty.
+    when List = cons H T then cons H (init T).
+    otherwise then empty.
+
+last List is
+    when List = cons H empty then just H.
+    when List = cons H T then last T.
+    otherwise then nothing.
+
+List does not contain Element if
+    when List = cons Element T then 1 = 2.
+    when List = cons H T, H != Element then T does not contain Element.
+    otherwise then 1 = 1.
+

@@ -298,7 +298,7 @@ withWs parser = do
     wsSkip
     pure a
 
-operators = ["=", "+", "-", "<=", ">=", "*", "/", "^", "..", "<", ">"]
+operators = ["!=", "=", "+", "-", "<=", ">=", "*", "/", "^", "..", "<", ">"]
 
 sanitizeStr :: String -> String
 sanitizeStr str
@@ -384,7 +384,7 @@ opTable =
         [binary "*" AssocLeft, binary "/" AssocLeft, binary "mod" AssocLeft],
         [binary "+" AssocLeft, binary "-" AssocLeft],
         [binary ".." AssocLeft],
-        [binary "=" AssocNone],
+        [binary "!=" AssocNone, binary "=" AssocNone],
         [binary ">=" AssocNone, binary "<=" AssocNone,
          binary "<" AssocNone, binary ">" AssocNone]
     ]
