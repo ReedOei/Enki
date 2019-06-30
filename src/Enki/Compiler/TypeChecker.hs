@@ -20,6 +20,8 @@ import Enki.Parser.AST
 import Enki.Compiler.Types
 import Enki.Util
 
+import System.IO.Unsafe
+
 data Environment = Environment
     { _typeEnv :: Map String Type
     , _typeVars :: Map String Type
@@ -104,11 +106,15 @@ unifyTypeVars old new = pure ()
 updateAllType :: Monad m => Type -> Type -> StateT Environment m ()
 updateAllType oldType newType = do
     unifyTypeVars oldType newType
-    modify $ over typeEnv $ Map.map go
+
+    env <- (^.typeEnv) <$> get
+    newEnv <- mapM go env
+    modify $ set typeEnv newEnv
+
     where
         go t
-            | t == oldType = newType
-            | otherwise = t
+            | t == oldType = resolveType newType
+            | otherwise = resolveType t
 
 makeFuncType :: Monad m => [String] -> TypedExpr -> StateT Environment m Type
 makeFuncType vars tExpr = do
@@ -205,12 +211,16 @@ unify t (VarVal str)  = do
 unify t (BinOp _ opType _ _) = joinTypes t opType
 unify t (FuncCall def _) = do
     funcType <- typeOf def
+    vars <- (^.typeVars) <$> get
+    env <- (^.typeEnv) <$> get
+
     joinTypes t $ returnType funcType
 
 inferAndUnify :: Monad m => (Type, Id) -> StateT Environment m Bool
 inferAndUnify (t, id) = do
+    newT <- resolveType t
     inferred <- infer id
-    res <- unify t inferred
+    res <- unify newT inferred
     if not res then do
         vars <- (^.typeVars) <$> get
         env <- (^.typeEnv) <$> get
@@ -393,6 +403,7 @@ instance Inferable Id TypedId where
         pure $ VarVal str
     infer id@(Comp ids) = do
         res <- findCall id
+
         case res of
             Nothing ->
                 case ids of
@@ -401,6 +412,7 @@ instance Inferable Id TypedId where
             Just (typeMap, func) -> do
                 unifyAll $ Map.elems typeMap
                 params <- mapM (infer . snd) typeMap
+
                 newDef <- resolveDefType func
                 pure $ FuncCall newDef params
 
