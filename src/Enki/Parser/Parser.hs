@@ -89,6 +89,7 @@ enkiImport = do
                 Just name -> if ".enki" `isSuffixOf` name then name else name ++ ".enki"
 
     -- TODO: Make this search multiple paths
+    -- TODO: Also make this search the ENKI_PATH
     defs <- liftIO $ parseFileAst filename
     pure $ Module moduleName defs
 

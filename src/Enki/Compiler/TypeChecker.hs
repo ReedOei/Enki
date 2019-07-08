@@ -31,6 +31,7 @@ data Environment = Environment
     deriving (Eq, Show)
 makeLenses ''Environment
 
+-- TODO: Move these builtins somewhere else where thye can just be "read" in (e.g., a file listing thing or something, in the standard library directory)
 writelnBuiltIn :: TypedDef
 writelnBuiltIn = TypedRule (Comp [S "writeln", V "Str"]) EnkiString (TypedConstraints [])
 
@@ -40,8 +41,22 @@ termToAtom = TypedFunc (Comp [S "term_to_atom", V "I"]) (FuncType (Any "ANYTHING
 prologNot :: TypedDef
 prologNot = TypedRule (Comp [S "not", V "G"]) (Any "ANYTHING") (TypedConstraints [])
 
+call :: TypedDef
+call = TypedFunc (Comp [S "call", V "F", V "X"])
+                 (FuncType (FuncType (Any "INPUTARG") (Any "OUTPUTARG")) (FuncType (Any "INPUTARG") (Any "OUTPUTARG")))
+                 (TypedConstraints [])
+                 (TypedExpr (StringVal "BUILTIN"))
+
+mapBuiltIn :: TypedDef
+mapBuiltIn = TypedFunc (Comp [S "map_built_in", V "F", V "Xs"])
+                (FuncType (FuncType (Any "INPUTARG") (Any "OUTPUTARG")) (FuncType (TypeName [Named "list", Any "INPUTARG"]) (TypeName [Named "list", Any "OUTPUTARG"])))
+                (TypedConstraints [])
+                (TypedExpr (StringVal "BUILTIN"))
+
+builtIns = [writelnBuiltIn, termToAtom, prologNot, call, mapBuiltIn]
+
 newEnv :: Environment
-newEnv = Environment Map.empty Map.empty Nothing [writelnBuiltIn, termToAtom, prologNot] 0
+newEnv = Environment Map.empty Map.empty Nothing builtIns 0
 
 defineNew :: Monad m => TypedDef -> StateT Environment m TypedDef
 defineNew def = do
@@ -176,10 +191,24 @@ pairWithParamType def idMap = do
     newDef <- freshDefType def
     pure (Map.intersectionWith (,) (funcParamTypes newDef) idMap, newDef)
 
+meet :: Type -> Type -> Maybe Type
+meet x a@(Any _) = Just a
+meet a@(Any _) x = Just a
+meet (TypeName parts1) (TypeName parts2) = TypeName <$> zipWithM meet parts1 parts2
+meet (FuncType t1 t2) (FuncType t3 t4) = FuncType <$> join t1 t3 <*> meet t2 t4
+meet (RuleType t1 t2) (RuleType t3 t4) = RuleType <$> join t1 t3 <*> join t2 t4
+meet (DataType t1 t2) (DataType t3 t4) = DataType <$> join t1 t3 <*> meet t2 t4
+meet x y
+    | x == y = Just x
+    | otherwise = Nothing
+
 join :: Type -> Type -> Maybe Type
 join x (Any _) = Just x
 join (Any _) x = Just x
 join (TypeName parts1) (TypeName parts2) = TypeName <$> zipWithM join parts1 parts2
+join (FuncType t1 t2) (FuncType t3 t4) = FuncType <$> meet t1 t3 <*> join t2 t4
+join (RuleType t1 t2) (RuleType t3 t4) = RuleType <$> meet t1 t3 <*> meet t2 t4
+join (DataType t1 t2) (DataType t3 t4) = DataType <$> meet t1 t3 <*> join t2 t4
 join x y
     | x == y = Just x
     | otherwise = Nothing
@@ -209,11 +238,9 @@ unify t (VarVal str)  = do
     curT <- lookupType str
     joinTypes t curT
 unify t (BinOp _ opType _ _) = joinTypes t opType
+unify t (FuncRef _ funcType) = joinTypes t funcType
 unify t (FuncCall def _) = do
     funcType <- typeOf def
-    vars <- (^.typeVars) <$> get
-    env <- (^.typeEnv) <$> get
-
     joinTypes t $ returnType funcType
 
 inferAndUnify :: Monad m => (Type, Id) -> StateT Environment m Bool
@@ -320,6 +347,7 @@ instance Typeable TypedId where
     getType (BoolVal _)      = pure EnkiBool
     getType (VarVal name)    = lookupType name
     getType (FuncCall def _) = returnType <$> getType def
+    getType (FuncRef _ t)    = pure t
     getType (BinOp _ t _ _)  = pure t
 
 instance Typeable TypedExpr where
@@ -392,7 +420,11 @@ instance Inferable Id TypedId where
     infer id@(S str) = do
         res <- findCall $ Comp [id]
         case res of
-            Nothing -> pure $ StringVal str
+            Nothing -> do
+                secondRes <- findCall $ Comp [id, V "FAKEARGNAME"]
+                case secondRes of
+                    Nothing -> pure $ StringVal str
+                    Just (typeMap, func) -> FuncRef str <$> (typeOf =<< resolveDefType func)
             Just (typeMap, func) -> do
                 unifyAll $ Map.elems typeMap
                 params <- mapM (infer . snd) typeMap

@@ -1,0 +1,4 @@
+increment X is X + 1.
+
+display as text the sum of map increment over the integers from 1 to 10.
+

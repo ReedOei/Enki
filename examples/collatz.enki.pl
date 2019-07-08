@@ -8,6 +8,14 @@
 :- style_check(-discontiguous).
 :- style_check(-charset).
 
+
+map_built_in(F,empty(), empty()).
+map_built_in(F,cons(H,T),cons(NewH,NewT)) :-
+    call(F, H, NewH),
+    map_built_in(F, T, NewT).
+
+
+
 % RuleType EnkiInt EnkiInt
 collatz_is(X,N) :-
     (

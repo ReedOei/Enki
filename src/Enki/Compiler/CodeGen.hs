@@ -26,7 +26,7 @@ makeLenses ''CodeGenEnv
 newCodeGenEnv :: CodeGenEnv
 newCodeGenEnv = CodeGenEnv 0
 
-newtype PrologFile = PrologFile { defs :: [PrologDef] }
+data PrologFile = PrologFile String [PrologDef]
     deriving (Eq, Show)
 
 data PrologDef = Predicate String String [String] [PrologConstraint]
@@ -130,6 +130,7 @@ instance CodeGen TypedId Computation where
     codeGen (IntVal i)            = pure [Computation [] $ PrologInt i]
     codeGen (BoolVal b)           = pure [Computation [] $ PrologAtom $ map toLower $ show b]
     codeGen (VarVal v)            = pure [Computation [] $ PrologVar v]
+    codeGen (FuncRef name _)      = pure [Computation [] $ PrologAtom name]
     codeGen f@(FuncCall def varMap) = do
         resName <- newVar
         genFuncCallWith f resName
@@ -279,7 +280,10 @@ makeMain defs = (mainStr, rest)
                 _  -> [":- initialization(main, main).\n", "main(Argv) :-"] ++ placeLast "." (mapConj mains)
 
 instance PrettyPrint PrologFile where
-    prettyPrint (PrologFile defs) = [header ++ "\n"] ++ main ++ concat (placeSep "\n" (map prettyPrint rest))
+    prettyPrint (PrologFile prologLibrary defs) =
+        [header ++ "\n", "\n" ++ prologLibrary ++ "\n"] ++
+        main ++
+        concat (placeSep "\n" (map prettyPrint rest))
         where
             (main, rest) = makeMain defs
 

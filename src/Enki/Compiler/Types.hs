@@ -11,6 +11,7 @@ data TypedId = StringVal String
              | BoolVal Bool
              | VarVal String
              | FuncCall TypedDef (Map String TypedId)
+             | FuncRef String Type
              | BinOp String Type TypedId TypedId
     deriving (Eq, Show)
 
