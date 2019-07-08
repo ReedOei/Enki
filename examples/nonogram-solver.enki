@@ -1,0 +1,22 @@
+board may be
+    board Rows has Rows : list (list int).
+
+head (cons X Xs) is X.
+
+tail Xs is
+    when Xs = cons H T then T.
+    otherwise then empty.
+
+transpose Xs is
+    when Xs = empty then empty.
+    when Xs = cons empty T then transpose T.
+    otherwise then prepend (map head over Xs) to transpose (map tail over Xs).
+
+repeat X N times is
+    when N <= 0 then empty.
+    otherwise then prepend X to repeat X (N - 1) times.
+
+rows (board Rows) is Rows.
+
+columns (board Rows) is transpose Rows.
+
