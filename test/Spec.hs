@@ -237,4 +237,5 @@ main = hspec $ do
         runFile "examples/pe6.enki" "25164150\n"
         runFile "examples/nested-when.enki" "negative\nblah\nat least 5\nmore than 7\nmore than 10\n"
         runFile "examples/map-test.enki" "65\n"
+        runFile "examples/call-test.enki" "11\n"
 

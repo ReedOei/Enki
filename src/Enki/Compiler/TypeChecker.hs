@@ -42,7 +42,7 @@ prologNot :: TypedDef
 prologNot = TypedRule (Comp [S "not", V "G"]) (Any "ANYTHING") (TypedConstraints [])
 
 call :: TypedDef
-call = TypedFunc (Comp [S "call", V "F", V "X"])
+call = TypedFunc (Comp [S "call_built_in", V "F", V "X"])
                  (FuncType (FuncType (Any "INPUTARG") (Any "OUTPUTARG")) (FuncType (Any "INPUTARG") (Any "OUTPUTARG")))
                  (TypedConstraints [])
                  (TypedExpr (StringVal "BUILTIN"))

@@ -1,0 +1,4 @@
+increment X is X + 1.
+
+display as text call increment on 10.
+

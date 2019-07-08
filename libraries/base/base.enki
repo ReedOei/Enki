@@ -4,6 +4,8 @@ as text X is term_to_atom X.
 
 map F over Xs is map_built_in F Xs.
 
+call F on X is call_built_in F X.
+
 the X is X.
 
 id X is X.
