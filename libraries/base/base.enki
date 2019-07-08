@@ -3,6 +3,7 @@ display X where writeln X.
 as text X is term_to_atom X.
 
 map F over Xs is map_built_in F Xs.
+filter Xs with F is filter_built_in F Xs.
 
 call F on X is call_built_in F X.
 

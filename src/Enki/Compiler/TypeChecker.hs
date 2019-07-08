@@ -53,7 +53,14 @@ mapBuiltIn = TypedFunc (Comp [S "map_built_in", V "F", V "Xs"])
                 (TypedConstraints [])
                 (TypedExpr (StringVal "BUILTIN"))
 
-builtIns = [writelnBuiltIn, termToAtom, prologNot, call, mapBuiltIn]
+-- TODO: Allow ruletype with only one argument...
+filterBuiltIn :: TypedDef
+filterBuiltIn = TypedFunc (Comp [S "filter_built_in", V "F", V "Xs"])
+                (FuncType (Any "INPUTARG") (FuncType (TypeName [Named "list", Any "INPUTARG"]) (TypeName [Named "list", Any "INPUTARG"])))
+                (TypedConstraints [])
+                (TypedExpr (StringVal "BUILTIN"))
+
+builtIns = [writelnBuiltIn, termToAtom, prologNot, call, mapBuiltIn, filterBuiltIn]
 
 newEnv :: Environment
 newEnv = Environment Map.empty Map.empty Nothing builtIns 0

@@ -23,12 +23,6 @@ import Enki.Compiler
 import Enki.Compiler.Types
 import Enki.Compiler.TypeChecker
 
-tryCompile fname = it fname $ do
-    actual <- strip <$> compile fname
-    expected <- strip <$> readFile (fname ++ ".pl")
-
-    actual `shouldBe` expected
-
 runFile fname expected = it fname $ do
     source <- compile fname
     let outputName = fname ++ "_out.pl"
@@ -61,13 +55,13 @@ main = hspec $ do
 
     describe "infer (TypedId)" $ do
         it "infers the type of basic ids (int)" $ do
-            let res = fst $ runState (infer (I 1)) newEnv
+            let res = evalState (infer (I 1)) newEnv
             res `shouldBe` IntVal 1
         it "infers the type of basic ids (string)" $ do
-            let res = fst $ runState (infer (S "testing")) newEnv
+            let res = evalState (infer (S "testing")) newEnv
             res `shouldBe` StringVal "testing"
         it "infers the type of basic ids (bool)" $ do
-            let res = fst $ runState (infer (B False)) newEnv
+            let res = evalState (infer (B False)) newEnv
             res `shouldBe` BoolVal False
         it "infers the type of basic ids (var)" $ do
             let (res, env) = runState (infer (V "X")) newEnv
@@ -221,13 +215,6 @@ main = hspec $ do
                             [Constructor (Comp [S "empty"]) [],
                              Constructor (Comp [S "cons",V "Head",V "Tail"])
                                 [Field (Comp [V "Head"]) EnkiInt,Field (Comp [V "Tail"]) (TypeName [Named "list"])]]
-
-    describe "compile" $ do
-        tryCompile "examples/basic.enki"
-        tryCompile "examples/func_call.enki"
-        tryCompile "examples/collatz.enki"
-        tryCompile "examples/collatz_func.enki"
-        tryCompile "examples/constraints.enki"
 
     describe "execute" $ do
         runFile "examples/pe1.enki" "233168\n"
