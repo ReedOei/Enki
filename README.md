@@ -55,6 +55,12 @@ answer less than N is
 display as text answer less than 999.
 ```
 
+Alternatively, we may use partial application and higher order functions to rewrite `multiples of _ in _` as:
+
+```
+multiples of A in List is filter List with (A divides _).
+```
+
 Sample code to solve [Problem 2](https://projecteuler.net/problem=2) on [Project Euler](https://projecteuler.net/):
 
 ```
