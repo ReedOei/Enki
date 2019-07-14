@@ -37,7 +37,7 @@ main(Argv) :-
     display(Temp126),
     range_to(1,20,Temp133),
     map_over({X}/[_6]>>({X,_6}/[Temp132]>>(add(4,_6,Temp132))),Temp133,Temp131),
-    as_text(Temp131,Temp130),
+    format_list(Temp131,Temp130),
     display(Temp130).
 % EnkiString
 display(X) :-

@@ -12,5 +12,5 @@ const X Y is X.
 
 display test (const _ _) 24.
 display as text test (add _ _) 1.
-display as text map (add 4 _) over (range 1 to 20).
+display format list map (add 4 _) over (range 1 to 20).
 

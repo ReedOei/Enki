@@ -32,7 +32,7 @@ call_built_in(F, X, Res) :- call(F, X, Res).
 main(Argv) :-
     integers_from_to(1,10,Temp124),
     the(Temp124,Temp123),
-    map_over({}/[FAKEARGNAME]>>([Temp122]>>(increment(FAKEARGNAME,Temp122))),Temp123,Temp121),
+    map_over({}/[FAKEARGNAME]>>({FAKEARGNAME}/[Temp122]>>(increment(FAKEARGNAME,Temp122))),Temp123,Temp121),
     sum_of(Temp121,Temp120),
     the(Temp120,Temp119),
     as_text(Temp119,Temp118),
