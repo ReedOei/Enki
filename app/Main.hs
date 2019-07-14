@@ -14,7 +14,7 @@ main = do
     case args of
         ["run", fname] -> do
             source <- compile fname
-            let outputName = fname ++ ".pl"
+            let outputName = fname ++ "_out.pl"
             writeFile outputName source
             callProcess "swipl" [outputName]
 
