@@ -32,6 +32,8 @@ dependencies:
 - QuickCheck
 - lens
 - process
+- cmark-gfm
+- text
 
 library:
   source-dirs: src

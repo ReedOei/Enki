@@ -38,6 +38,7 @@ data PrologExpr = PrologInt Integer
                 | PrologVar String
                 | PrologOpExpr String PrologExpr PrologExpr
                 | PrologFunctor String [PrologExpr]
+                | PrologLambda [String] [String] PrologConstraint
     deriving (Eq, Show)
 
 data PrologConstraint = PredCall String [PrologExpr]
@@ -130,7 +131,26 @@ instance CodeGen TypedId Computation where
     codeGen (IntVal i)            = pure [Computation [] $ PrologInt i]
     codeGen (BoolVal b)           = pure [Computation [] $ PrologAtom $ map toLower $ show b]
     codeGen (VarVal v)            = pure [Computation [] $ PrologVar v]
-    codeGen (FuncRef name _)      = pure [Computation [] $ PrologAtom name]
+    codeGen (FuncRef func _ freeVars boundParams) = do
+        let boundVarNames = vars (defId func) \\ Map.keys freeVars
+        let boundVars = Map.fromList (zip boundVarNames (map VarVal boundParams))
+        let varMap = Map.union freeVars boundVars
+
+        resName <- newVar
+        gen <- genFuncCallWith (FuncCall func varMap) resName
+
+        case gen of
+            [Computation constrs res] -> do
+                let newRes =
+                        case last constrs of
+                            PredCall name params ->
+                                if isFuncLike func then
+                                    PrologLambda (Map.keys freeVars) (boundParams ++ [resName]) $ PredCall name params
+                                else
+                                    PrologLambda (Map.keys freeVars) boundParams $ PredCall name params
+
+                pure $ [Computation (init constrs) newRes]
+
     codeGen f@(FuncCall def varMap) = do
         resName <- newVar
         genFuncCallWith f resName
@@ -235,6 +255,20 @@ instance PrettyPrint PrologExpr where
     prettyPrint (PrologVar str)             = [str]
     prettyPrint (PrologOpExpr op e1 e2)     = ["(" ++ prettyExpr e1 ++ " " ++ op ++ " " ++ prettyExpr e2 ++ ")"]
     prettyPrint (PrologFunctor name params) = [name ++ "(" ++ intercalate "," (map prettyExpr params) ++ ")"]
+    prettyPrint (PrologLambda free bound body) =
+        [curryBodies free bound body]
+
+curryBodies _ [] body = head $ prettyPrint body
+curryBodies free (a:b:c:rest) body =
+    "{" ++ intercalate "," free ++ "}/" ++
+    "[" ++ a ++ "," ++ resName ++ "]" ++
+    ">>(" ++ resName ++ " = (" ++ curryBodies (free ++ [a]) (b:c:rest) body ++ "))"
+    where
+        resName = a ++ "Result"
+curryBodies free (bound:rest) body =
+    "{" ++ intercalate "," free ++ "}/" ++
+    "[" ++ bound ++ "]" ++
+    ">>(" ++ curryBodies (free ++ [bound]) rest body ++ ")"
 
 placeLast _ []   = []
 placeLast str xs = init xs ++ [last xs ++ str]
@@ -289,6 +323,7 @@ instance PrettyPrint PrologFile where
 
 header = "#!/usr/bin/env swipl\n\n" ++
          ":- use_module(library(clpfd)).\n\n" ++
+         ":- use_module(library(yall)).\n\n" ++
          ":- style_check(-singleton).\n" ++
          ":- style_check(-no_effect).\n" ++
          ":- style_check(-var_branches).\n" ++

@@ -2,6 +2,8 @@
 
 :- use_module(library(clpfd)).
 
+:- use_module(library(yall)).
+
 :- style_check(-singleton).
 :- style_check(-no_effect).
 :- style_check(-var_branches).
@@ -28,9 +30,9 @@ call_built_in(F, X, Res) :- call(F, X, Res).
 :- initialization(main, main).
 
 main(Argv) :-
-    integers_from_to(1,10,Temp123),
-    the(Temp123,Temp122),
-    map_over(increment,Temp122,Temp121),
+    integers_from_to(1,10,Temp124),
+    the(Temp124,Temp123),
+    map_over({}/[FAKEARGNAME]>>([Temp122]>>(increment(FAKEARGNAME,Temp122))),Temp123,Temp121),
     sum_of(Temp121,Temp120),
     the(Temp120,Temp119),
     as_text(Temp119,Temp118),

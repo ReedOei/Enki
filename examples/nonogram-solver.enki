@@ -17,6 +17,5 @@ repeat X N times is
     otherwise then prepend X to repeat X (N - 1) times.
 
 rows (board Rows) is Rows.
-
 columns (board Rows) is transpose Rows.
 

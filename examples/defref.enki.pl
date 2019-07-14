@@ -30,9 +30,15 @@ call_built_in(F, X, Res) :- call(F, X, Res).
 :- initialization(main, main).
 
 main(Argv) :-
-    answer_less_than(999,Temp126),
-    as_text(Temp126,Temp125),
-    display(Temp125).
+    test({}/[_2,_2Result]>>(_2Result = ({_2}/[_3]>>({_2,_3}/[Temp124]>>(const(_2,_3,Temp124))))),24,Temp123),
+    display(Temp123),
+    test({}/[_4,_4Result]>>(_4Result = ({_4}/[_5]>>({_4,_5}/[Temp128]>>(add(_4,_5,Temp128))))),1,Temp127),
+    as_text(Temp127,Temp126),
+    display(Temp126),
+    range_to(1,20,Temp133),
+    map_over({X}/[_6]>>({X,_6}/[Temp132]>>(add(4,_6,Temp132))),Temp133,Temp131),
+    as_text(Temp131,Temp130),
+    display(Temp130).
 % EnkiString
 display(X) :-
     writeln(X).
@@ -860,19 +866,21 @@ int_from(Str,Temp114) :-
     digits_from(Str,Temp115),
     from_digit_list(Temp115,Temp114).
 
-% FuncType EnkiInt EnkiInt
-answer_less_than(N,Temp123) :-
-    range_to(1,N,Temp116),
-    multiples_of_in(3,Temp116,ThreeMult),
-    ThreeMult = ThreeMult,
-    range_to(1,N,Temp117),
-    multiples_of_in(5,Temp117,FiveMult),
-    FiveMult = FiveMult,
-    range_to(1,N,Temp118),
-    multiples_of_in(15,Temp118,FifteenMult),
-    FifteenMult = FifteenMult,
-    sum_of(ThreeMult,Temp119),
-    sum_of(FiveMult,Temp120),
-    Temp121 #= (Temp119 + Temp120),
-    sum_of(FifteenMult,Temp122),
-    Temp123 #= (Temp121 - Temp122).
+% FuncType (FuncType (Any "T1739") (FuncType (Any "T1739") (Any "T1740"))) (FuncType (Any "T1739") (Any "T1740"))
+test(F,X,Temp116) :-
+    call_on(F,X,Temp117),
+    call_on(Temp117,X,Temp116).
+
+% FuncType (Any "T1753") (Any "T1753")
+identity(X,X).
+
+% FuncType (Any "T1760") (Any "T1772")
+secondTest(X,Temp118) :-
+    call_on({X}/[_0]>>({X,_0}/[Temp119]>>(test(_0,X,Temp119))),{}/[_1]>>({_1}/[Temp120]>>(identity(_1,Temp120))),Temp118).
+
+% FuncType EnkiInt (FuncType EnkiInt EnkiInt)
+add(X,Y,Temp121) :-
+    Temp121 #= (X + Y).
+
+% FuncType (Any "T1782") (FuncType (Any "T1783") (Any "T1782"))
+const(X,Y,X).

@@ -2,6 +2,8 @@
 
 :- use_module(library(clpfd)).
 
+:- use_module(library(yall)).
+
 :- style_check(-singleton).
 :- style_check(-no_effect).
 :- style_check(-var_branches).
@@ -28,7 +30,7 @@ call_built_in(F, X, Res) :- call(F, X, Res).
 :- initialization(main, main).
 
 main(Argv) :-
-    call_on(increment,10,Temp119),
+    call_on({}/[FAKEARGNAME]>>([Temp120]>>(increment(FAKEARGNAME,Temp120))),10,Temp119),
     as_text(Temp119,Temp118),
     display(Temp118).
 % EnkiString

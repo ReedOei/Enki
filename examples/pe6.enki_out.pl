@@ -2,6 +2,8 @@
 
 :- use_module(library(clpfd)).
 
+:- use_module(library(yall)).
+
 :- style_check(-singleton).
 :- style_check(-no_effect).
 :- style_check(-var_branches).

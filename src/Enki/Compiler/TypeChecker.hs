@@ -14,6 +14,7 @@ import Data.List
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe
+import Data.Ord
 
 import Enki.Types
 import Enki.Parser.AST
@@ -22,12 +23,16 @@ import Enki.Util
 
 import System.IO.Unsafe
 
+data Error = ErrorMsg String
+    deriving (Eq, Show)
+
 data Environment = Environment
     { _typeEnv :: Map String Type
     , _typeVars :: Map String Type
     , _curDef :: Maybe Def
     , _funcEnv :: [TypedDef]
-    , _freshCounter :: Integer }
+    , _freshCounter :: Integer
+    , _errors :: [Error] }
     deriving (Eq, Show)
 makeLenses ''Environment
 
@@ -62,8 +67,11 @@ filterBuiltIn = TypedFunc (Comp [S "filter_built_in", V "F", V "Xs"])
 
 builtIns = [writelnBuiltIn, termToAtom, prologNot, call, mapBuiltIn, filterBuiltIn]
 
+logError :: Monad m => Error -> StateT Environment m ()
+logError err = modify $ over errors (err:)
+
 newEnv :: Environment
-newEnv = Environment Map.empty Map.empty Nothing builtIns 0
+newEnv = Environment Map.empty Map.empty Nothing builtIns 0 []
 
 defineNew :: Monad m => TypedDef -> StateT Environment m TypedDef
 defineNew def = do
@@ -245,7 +253,7 @@ unify t (VarVal str)  = do
     curT <- lookupType str
     joinTypes t curT
 unify t (BinOp _ opType _ _) = joinTypes t opType
-unify t (FuncRef _ funcType) = joinTypes t funcType
+unify t (FuncRef _ funcType _ _) = joinTypes t funcType
 unify t (FuncCall def _) = do
     funcType <- typeOf def
     joinTypes t $ returnType funcType
@@ -354,7 +362,7 @@ instance Typeable TypedId where
     getType (BoolVal _)      = pure EnkiBool
     getType (VarVal name)    = lookupType name
     getType (FuncCall def _) = returnType <$> getType def
-    getType (FuncRef _ t)    = pure t
+    getType (FuncRef _ t _ _)    = pure t
     getType (BinOp _ t _ _)  = pure t
 
 instance Typeable TypedExpr where
@@ -431,7 +439,10 @@ instance Inferable Id TypedId where
                 secondRes <- findCall $ Comp [id, V "FAKEARGNAME"]
                 case secondRes of
                     Nothing -> pure $ StringVal str
-                    Just (typeMap, func) -> FuncRef str <$> (typeOf =<< resolveDefType func)
+                    Just (typeMap, func) -> do
+                        newDef <- resolveDefType func
+                        funcType <- typeOf =<< resolveDefType func
+                        pure $ FuncRef newDef funcType Map.empty ["FAKEARGNAME"]
             Just (typeMap, func) -> do
                 unifyAll $ Map.elems typeMap
                 params <- mapM (infer . snd) typeMap
@@ -456,7 +467,45 @@ instance Inferable Id TypedId where
                 params <- mapM (infer . snd) typeMap
 
                 newDef <- resolveDefType func
+
                 pure $ FuncCall newDef params
+    infer ref@(DefRef paramCount id) = do
+        res <- findCall id
+
+        case res of
+            Nothing -> error $ "Could not find function referenced by " ++ show ref
+            Just (typeMap, func) -> do
+                -- unsafePerformIO $ do
+                --     print typeMap
+                --     pure $ pure ()
+
+                let newTypeMap = Map.filter (isPlaceholder . snd) typeMap
+                let freeVarsMap = Map.filter (not . isPlaceholder . snd) typeMap
+
+                unifyAll $ Map.elems typeMap
+                params <- mapM (infer . snd) freeVarsMap
+
+                newDef <- resolveDefType func
+                funcType <- typeOf newDef
+
+                let orderedParams = sortBy (comparing ((`elemIndex` paramsOf newDef) . fst)) $ Map.toList typeMap
+
+                let newType = partialApply funcType $ map (snd . snd) orderedParams
+
+                pure $ FuncRef newDef newType params $ map (head . placeHolders . snd) $ Map.elems newTypeMap
+
+-- TODO: Ugh this is very repetive...
+partialApply :: Type -> [Id] -> Type
+partialApply (FuncType t1 t2) (id:ids)
+    | isPlaceholder id = FuncType t1 $ partialApply t2 ids
+    | otherwise = partialApply t2 ids
+partialApply (RuleType t1 t2) (id:ids)
+    | isPlaceholder id = RuleType t1 $ partialApply t2 ids
+    | otherwise = partialApply t2 ids
+partialApply (DataType t1 t2) (id:ids)
+    | isPlaceholder id = DataType t1 $ partialApply t2 ids
+    | otherwise = partialApply t2 ids
+partialApply t _ = t
 
 instance Inferable Expr TypedExpr where
     infer (Expr id) = TypedExpr <$> infer id
@@ -496,7 +545,7 @@ instance Inferable Def TypedDef where
         defineNew $ TypedRule id ruleType tConstr
 
     infer (Data id constrs) = do
-        let resType = TypeName $ makeTypeName id
+        let resType = makeTypeName id
         TypedData id <$> mapM (defineNew <=< makeConstructor resType) constrs
 
     infer (Exec constr) = TypedExec <$> infer constr

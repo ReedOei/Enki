@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 75894ec87bff339b47c2a492b2fe90a4b2a118139d5c209f82c48b1cced93c6c
+-- hash: be02a1edb2734ef5139c27f70b7d07cedc958c5fb9d248ce7de26ad89d348bbd
 
 name:           Enki
 version:        0.1.0.0
@@ -33,6 +33,7 @@ library
       Enki.Compiler.Types
       Enki.Compiler.Util
       Enki.Parser.AST
+      Enki.Parser.AST.Transformer
       Enki.Parser.Parser
       Enki.Parser.Util
       Enki.Types
@@ -45,6 +46,7 @@ library
       MissingH
     , QuickCheck
     , base >=4.7 && <5
+    , cmark-gfm
     , containers
     , directory
     , filepath
@@ -53,6 +55,7 @@ library
     , mtl
     , parsec
     , process
+    , text
     , transformers
   default-language: Haskell2010
 
@@ -68,6 +71,7 @@ executable enki
     , MissingH
     , QuickCheck
     , base >=4.7 && <5
+    , cmark-gfm
     , containers
     , directory
     , filepath
@@ -76,6 +80,7 @@ executable enki
     , mtl
     , parsec
     , process
+    , text
     , transformers
   default-language: Haskell2010
 
@@ -92,6 +97,7 @@ test-suite Enki-test
     , MissingH
     , QuickCheck
     , base >=4.7 && <5
+    , cmark-gfm
     , containers
     , directory
     , filepath
@@ -100,5 +106,6 @@ test-suite Enki-test
     , mtl
     , parsec
     , process
+    , text
     , transformers
   default-language: Haskell2010

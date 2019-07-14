@@ -30,9 +30,11 @@ call_built_in(F, X, Res) :- call(F, X, Res).
 :- initialization(main, main).
 
 main(Argv) :-
-    answer_less_than(999,Temp126),
-    as_text(Temp126,Temp125),
-    display(Temp125).
+    range_to(1,10,Temp121),
+    filter_with(Temp121,{}/[FAKEARGNAME]>>(even(FAKEARGNAME)),Temp119),
+    sum_of(Temp119,Temp118),
+    as_text(Temp118,Temp117),
+    display(Temp117).
 % EnkiString
 display(X) :-
     writeln(X).
@@ -859,20 +861,3 @@ from_digit_list(List,Temp112) :-
 int_from(Str,Temp114) :-
     digits_from(Str,Temp115),
     from_digit_list(Temp115,Temp114).
-
-% FuncType EnkiInt EnkiInt
-answer_less_than(N,Temp123) :-
-    range_to(1,N,Temp116),
-    multiples_of_in(3,Temp116,ThreeMult),
-    ThreeMult = ThreeMult,
-    range_to(1,N,Temp117),
-    multiples_of_in(5,Temp117,FiveMult),
-    FiveMult = FiveMult,
-    range_to(1,N,Temp118),
-    multiples_of_in(15,Temp118,FifteenMult),
-    FifteenMult = FifteenMult,
-    sum_of(ThreeMult,Temp119),
-    sum_of(FiveMult,Temp120),
-    Temp121 #= (Temp119 + Temp120),
-    sum_of(FifteenMult,Temp122),
-    Temp123 #= (Temp121 - Temp122).

@@ -11,7 +11,7 @@ data TypedId = StringVal String
              | BoolVal Bool
              | VarVal String
              | FuncCall TypedDef (Map String TypedId)
-             | FuncRef String Type
+             | FuncRef TypedDef Type (Map String TypedId) [String]
              | BinOp String Type TypedId TypedId
     deriving (Eq, Show)
 
@@ -44,4 +44,15 @@ defId (TypedFunc funcId _ _ _)      = funcId
 defId (TypedRule ruleId _ _)        = ruleId
 defId (TypedConstructor constrId _) = constrId
 defId _                             = Comp []
+
+paramsOf :: TypedDef -> [String]
+paramsOf (TypedFunc funcId _ _ _) = vars funcId
+paramsOf (TypedRule ruleId _ _) = vars ruleId
+paramsOf (TypedData dataId _) = vars dataId
+paramsOf _ = []
+
+isFuncLike :: TypedDef -> Bool
+isFuncLike (TypedFunc _ _ _ _) = True
+isFuncLike (TypedConstructor _ _) = True
+isFuncLike _ = False
 

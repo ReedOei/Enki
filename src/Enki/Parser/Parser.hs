@@ -1,7 +1,10 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Enki.Parser.Parser where
+
+import CMarkGFM
 
 import Control.Monad.IO.Class
 import Control.Monad.Trans.State.Lazy
@@ -9,6 +12,7 @@ import Control.Monad.Trans.State.Lazy
 import Data.List
 import Data.Maybe
 import Data.String.Utils
+import qualified Data.Text as T
 
 import System.Directory
 import System.Environment
@@ -20,20 +24,38 @@ import Text.Parsec.Expr
 import Enki.Types
 import Enki.Parser.AST
 import Enki.Parser.Util
+import Enki.Parser.AST.Transformer
 
 type Parser a = forall s st m. Stream s m Char => ParsecT s st m a
+
+extractCode :: Node -> [String]
+extractCode (Node _ (CODE_BLOCK info code) nodes)
+    | info == "enki" = T.unpack code : concatMap extractCode nodes
+    | otherwise = concatMap extractCode nodes
+extractCode (Node _ _ nodes) = concatMap extractCode nodes
+
+loadMarkdownFile :: String -> IO String
+loadMarkdownFile filename = do
+    contents <- T.pack <$> readFile filename
+    let markdown = commonmarkToNode [] [] contents
+    pure $ intercalate "\n" $ extractCode markdown
+
+loadFile :: String -> IO String
+loadFile filename
+    | ".enki" `isSuffixOf` filename = readFile filename
+    | otherwise = loadMarkdownFile filename
 
 parseFileAst :: String -> IO [Def]
 parseFileAst fname = do
     enkiPath <- getEnv "ENKI_PATH"
 
     -- Load the standard library
-    stdLib <- withCurrentDirectory enkiPath (parseDef =<< readFile "base.enki")
+    stdLib <- withCurrentDirectory enkiPath (parseDef =<< loadFile "base.enki")
 
     let dir = takeDirectory fname
     let base = takeFileName fname
 
-    res <- withCurrentDirectory dir (parseDef =<< readFile base)
+    res <- withCurrentDirectory dir (parseDef =<< loadFile base)
 
     case (stdLib, res) of
         (Left err, _) -> error $ show err
@@ -51,7 +73,7 @@ fixImports defs = filter (noIgnore (concatMap ignore defs)) defs
         ignore _ = []
 
 parseDef :: MonadIO m => String -> m (Either ParseError [Def])
-parseDef = runParserT enkiDef () ""
+parseDef = fmap (fmap runTransform) <$> runParserT enkiDef () ""
 
 enkiDef :: (MonadIO m, Stream s m Char) => ParsecT s st m [Def]
 enkiDef = many (try enkiImport <|>
@@ -237,7 +259,7 @@ dataTypeName = do
     id <- symbol $ baseEnkiId "" ["->", "~", "*"]
     pure $ case id of
         Comp [V s] -> Any s
-        _ -> TypeName $ makeTypeName id
+        _ -> makeTypeName id
 
 parenType :: Parser Type
 parenType = between (symbol (string "(")) (symbol (string ")")) enkiType
@@ -433,8 +455,8 @@ exclude strs parser = do
 
 var :: Parser Id
 var = V <$> do
-    s <- oneOf ['A'..'Z']
-    ss <- many $ oneOf $ ['A'..'Z'] ++ ['a'..'z'] ++ ['0'..'9']
+    s <- oneOf $ '_' : ['A'..'Z']
+    ss <- many $ oneOf $ '_' : ['A'..'Z'] ++ ['a'..'z'] ++ ['0'..'9']
 
     pure $ s:ss
 
