@@ -5,6 +5,10 @@ as text X is term_to_atom X.
 map F over Xs is map_built_in F Xs.
 filter Xs with F is filter_built_in F Xs.
 
+number of characters in T is atom_length T.
+
+only elements of List satisfying F is filter List with F.
+
 call F on X is call_built_in F X.
 
 the X is X.
@@ -291,4 +295,27 @@ from digit list List is
     from reversed digit list (reverse list List).
 
 int from Str is from digit list (digits from Str).
+
+first letter of Text is
+    Text = Letter .. Rest,
+    number of characters in Letter = 1,
+    Letter.
+
+characters of Text is
+    when Text = "" then empty.
+    otherwise then
+        Text = Letter .. Rest,
+        number of characters in Letter = 1,
+        prepend Letter to characters of Rest.
+
+text from characters in Cs is
+    when Cs = cons C Rest then C .. text from characters in Rest.
+    otherwise then "".
+
+replace X with Y in A is
+    when A != X then A.
+    otherwise then Y.
+
+text replace X with Y in T is
+    text from characters in map (replace X with Y in _) over characters of T.
 

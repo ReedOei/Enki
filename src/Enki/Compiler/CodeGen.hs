@@ -249,9 +249,11 @@ class PrettyPrint a where
 prettyExpr :: PrettyPrint a => a -> String
 prettyExpr = head . prettyPrint
 
+unquote = reverse . dropWhile (== '\"') . reverse . dropWhile (== '\"')
+
 instance PrettyPrint PrologExpr where
     prettyPrint (PrologInt i)               = [show i]
-    prettyPrint (PrologAtom str)            = [str]
+    prettyPrint (PrologAtom str)            = ["'" ++ unquote str ++ "'"]
     prettyPrint (PrologVar str)             = [str]
     prettyPrint (PrologOpExpr op e1 e2)     = ["(" ++ prettyExpr e1 ++ " " ++ op ++ " " ++ prettyExpr e2 ++ ")"]
     prettyPrint (PrologFunctor name params) = [name ++ "(" ++ intercalate "," (map prettyExpr params) ++ ")"]

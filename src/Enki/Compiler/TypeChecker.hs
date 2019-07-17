@@ -65,7 +65,13 @@ filterBuiltIn = TypedFunc (Comp [S "filter_built_in", V "F", V "Xs"])
                 (TypedConstraints [])
                 (TypedExpr (StringVal "BUILTIN"))
 
-builtIns = [writelnBuiltIn, termToAtom, prologNot, call, mapBuiltIn, filterBuiltIn]
+atomLengthBuiltIn :: TypedDef
+atomLengthBuiltIn = TypedFunc (Comp [S "atom_length", V "X"])
+                (FuncType EnkiString EnkiInt)
+                (TypedConstraints [])
+                (TypedExpr (StringVal "BUILTIN"))
+
+builtIns = [writelnBuiltIn, termToAtom, prologNot, call, mapBuiltIn, filterBuiltIn, atomLengthBuiltIn]
 
 logError :: Monad m => Error -> StateT Environment m ()
 logError err = modify $ over errors (err:)
