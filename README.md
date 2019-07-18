@@ -3,12 +3,17 @@
 [![Build Status](https://travis-ci.org/ReedOei/Enki.svg?branch=master)](https://travis-ci.org/ReedOei/Enki)
 
 Enki is intended to be a logic language for teaching programming to people with no programming experience.
-It is still a work in progress, and it not ready to be used for this purpose.
+It is still a work in progress, and is not yet ready to be used for this purpose.
 
-To run an enki file (see examples below or in the [examples](https://github.com/ReedOei/Enki/tree/master/examples) directory, use the following command:
+To run an Enki file (see examples below or in the [examples](https://github.com/ReedOei/Enki/tree/master/examples) directory, use the following command:
 
 ```bash
-enki run FILENAME
+enki run FILENAME [OUTPUT FILE PATH]
+```
+
+To compile the file:
+```bash
+enki compile FILENAME to <OUTPUT FILE PATH>
 ```
 
 To see the code output, run:
@@ -38,7 +43,7 @@ echo "export ENKI_PATH=\"$(pwd)/libraries/base\"" >> ~/.bashrc
 
 Sample code to solve [Problem 1](https://projecteuler.net/problem=1) on [Project Euler](https://projecteuler.net/):
 
-```
+```enki
 A divides B if B = A*N.
 
 multiples of A in List is
@@ -57,13 +62,13 @@ display as text answer less than 999.
 
 Alternatively, we may use partial application and higher order functions to rewrite `multiples of _ in _` as:
 
-```
+```enki
 multiples of A in List is filter List with (A divides _).
 ```
 
 Sample code to solve [Problem 2](https://projecteuler.net/problem=2) on [Project Euler](https://projecteuler.net/):
 
-```
+```enki
 fib nums A B Limit is
     when A > Limit then empty.
     otherwise then prepend A to fib nums B (A + B) Limit.
