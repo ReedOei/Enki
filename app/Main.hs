@@ -7,16 +7,25 @@ import System.Process
 
 import Enki.Compiler
 
+genExec :: FilePath -> FilePath -> IO FilePath
+genExec inFile outFile = generateExecutable inFile outFile
+
 main :: IO ()
 main = do
     args <- getArgs
 
     case args of
         ["run", fname] -> do
-            source <- compile fname
-            let outputName = fname ++ "_out.pl"
-            writeFile outputName source
-            callProcess "swipl" [outputName]
+            execName <- genExec fname (fname ++ ".out")
+            callProcess execName []
+
+        ["run", fname, outname] -> do
+            execName <- genExec fname outname
+            callProcess execName []
+
+        ["compile", fname, "to", outname] -> do
+            genExec fname outname
+            pure ()
 
         [fname] -> putStrLn =<< compile fname
 

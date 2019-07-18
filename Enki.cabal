@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: be02a1edb2734ef5139c27f70b7d07cedc958c5fb9d248ce7de26ad89d348bbd
+-- hash: 48421407b3df1b747928b12d3972bc261365a48fa82b55364ab7a83a8f4813ed
 
 name:           Enki
 version:        0.1.0.0
@@ -56,6 +56,7 @@ library
     , parsec
     , process
     , text
+    , timeit
     , transformers
   default-language: Haskell2010
 
@@ -81,6 +82,7 @@ executable enki
     , parsec
     , process
     , text
+    , timeit
     , transformers
   default-language: Haskell2010
 
@@ -107,5 +109,6 @@ test-suite Enki-test
     , parsec
     , process
     , text
+    , timeit
     , transformers
   default-language: Haskell2010
