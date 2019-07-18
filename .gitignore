@@ -3,4 +3,5 @@
 Parser.cabal
 *~
 *.enki_out.pl
+*.out
 
