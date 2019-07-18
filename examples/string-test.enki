@@ -1,0 +1,3 @@
+display format list characters of "testing thing thing out on a longer string".
+display text replace "t" with "argh" in "testing thing thing out on a longer string".
+
