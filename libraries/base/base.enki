@@ -5,6 +5,8 @@ as text X is term_to_atom X.
 map F over Xs is map_built_in F Xs.
 filter Xs with F is filter_built_in F Xs.
 
+either A or B is disjunction_built_in A B.
+
 number of characters in T is atom_length T.
 
 only elements of List satisfying F is filter List with F.

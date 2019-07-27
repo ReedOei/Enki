@@ -12,10 +12,21 @@ transpose Xs is
     when Xs = cons empty T then transpose T.
     otherwise then prepend (map head over Xs) to transpose (map tail over Xs).
 
-repeat X N times is
-    when N <= 0 then empty.
-    otherwise then prepend X to repeat X (N - 1) times.
-
 rows (board Rows) is Rows.
 columns (board Rows) is transpose Rows.
+
+empty row Row if
+    when Row = cons 0 T then empty row T.
+    otherwise then 1 = 1.
+
+row Row contains X is
+    when X > 0, Row = cons 1 T then row T contains (X - 1).
+    when X > 0, Row = cons 0 T then row T contains X.
+    otherwise then Row.
+
+Row has pattern Pat if
+    when Pat = cons H T then
+        Rest = row Row contains H,
+        Rest has pattern T.
+    otherwise then empty row Row.
 

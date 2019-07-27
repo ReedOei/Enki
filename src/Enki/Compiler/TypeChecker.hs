@@ -71,7 +71,12 @@ atomLengthBuiltIn = TypedFunc (Comp [S "atom_length", V "X"])
                 (TypedConstraints [])
                 (TypedExpr (StringVal "BUILTIN"))
 
-builtIns = [writelnBuiltIn, termToAtom, prologNot, call, mapBuiltIn, filterBuiltIn, atomLengthBuiltIn]
+disjunctionBuiltIn :: TypedDef
+disjunctionBuiltIn = TypedRule (Comp [S "disjunction_built_in", V "A", V "B"])
+                     (RuleType (Any "ANYTHING1") (Any "ANYTHING2"))
+                     (TypedConstraints [])
+
+builtIns = [writelnBuiltIn, termToAtom, prologNot, call, mapBuiltIn, filterBuiltIn, atomLengthBuiltIn, disjunctionBuiltIn]
 
 logError :: Monad m => Error -> StateT Environment m ()
 logError err = modify $ over errors (err:)
