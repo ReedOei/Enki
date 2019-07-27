@@ -31,6 +31,15 @@ data TypedDef = TypedFunc Id Type TypedConstraint TypedExpr
               | TypedModule String [TypedDef]
     deriving (Eq, Show)
 
+typedIdVars :: TypedId -> [String]
+typedIdVars (StringVal _) = []
+typedIdVars (IntVal _) = []
+typedIdVars (BoolVal _) = []
+typedIdVars (VarVal x) = [x]
+typedIdVars (FuncCall _ varMap) = concatMap typedIdVars $ Map.elems varMap
+typedIdVars (FuncRef _ _ freeVarMap placeHolders) = placeHolders ++ concatMap typedIdVars (Map.elems freeVarMap)
+typedIdVars (BinOp _ _ id1 id2) = typedIdVars id1 ++ typedIdVars id2
+
 vars :: Id -> [String]
 vars (S _) = []
 vars (I _) = []

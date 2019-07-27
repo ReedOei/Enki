@@ -47,7 +47,7 @@ main = hspec $ do
     describe "unifyIds" $ do
         it "grabs arguments from function calls" $ do
             let res = unifyIds (Comp [S "add", I 1, S "to", I 2]) (Comp [S "add", V "X", S "to", V "Y"])
-            res `shouldBe` Just (Map.fromList [("X",I 1),("Y",Comp [I 2])])
+            res `shouldBe` Just (Map.fromList [("X",I 1),("Y",I 2)])
         it "does not match if any part fails" $ do
             let res = unifyIds (Comp [S "add", I 1, S "to", I 2]) (Comp [S "add", V "X", S "nope", V "Y"])
             res `shouldBe` Nothing
@@ -72,32 +72,6 @@ main = hspec $ do
             let cons = TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (Any "A") (DataType (Any "B") (TypeName [Named "pair",Any "A",Any "B"])))
             let res = evalState (freshDefType cons) newEnv
             res `shouldBe` TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (Any "T0") (DataType (Any "T1") (TypeName [Named "pair",Any "T0",Any "T1"])))
-
-    describe "infer (TypedDef)" $ do
-        it "infers the type of functions (simple)" $ do
-            (res,_) <- inferDef "add X to Y is Y."
-            res `shouldBe` TypedFunc (Comp [S "add",V "X",S "to",V "Y"]) (FuncType (Any "T0") (FuncType (Any "T1") (Any "T1"))) (TypedConstraints []) (TypedExpr {exprId = VarVal "Y"})
-        it "infers the type of functions (with constraints)" $ do
-            (res,_) <- inferDef "add X to Y is X = Y, Y."
-            res `shouldBe` TypedFunc (Comp [S "add",V "X",S "to",V "Y"]) (FuncType (Any "T3") (FuncType (Any "T3") (Any "T3"))) (TypedConstraints [TypedConstraint (BinOp "=" Void (VarVal "X") (VarVal "Y"))]) (TypedExpr {exprId = VarVal "Y"})
-        it "infers the type of functions (int operators)" $ do
-            (res,_) <- inferDef "add X to Y is X = Y, Y."
-            res `shouldBe` TypedFunc (Comp [S "add",V "X",S "to",V "Y"]) (FuncType (Any "T3") (FuncType (Any "T3") (Any "T3"))) (TypedConstraints [TypedConstraint (BinOp "=" Void (VarVal "X") (VarVal "Y"))]) (TypedExpr {exprId = VarVal "Y"})
-        it "infers the type of functions (string operators)" $ do
-            (res,_) <- inferDef "concat X with Y is X .. Y."
-            res `shouldBe` TypedFunc (Comp [S "concat",V "X",S "with",V "Y"]) (FuncType EnkiString (FuncType EnkiString EnkiString)) (TypedConstraints []) (TypedExpr {exprId = FuncCall (TypedFunc (Comp [S "atom_concat",V "X",V "Y"]) (FuncType EnkiString (FuncType EnkiString EnkiString)) (TypedConstraints []) (TypedExpr {exprId = StringVal "dummy value"})) (Map.fromList [("X",VarVal "X"),("Y",VarVal "Y")])})
-
-        it "infers the type of functions (simple function callS)" $ do
-            (res, _) <- inferDefs "inc X is X + 1.\ninc X twice is inc (inc X)."
-            res `shouldBe` TypedFunc (Comp [S "inc",V "X",S "twice"]) (FuncType EnkiInt EnkiInt) (TypedConstraints []) (TypedExpr {exprId = FuncCall (TypedFunc (Comp [S "inc",V "X"]) (FuncType EnkiInt EnkiInt) (TypedConstraints []) (TypedExpr {exprId = BinOp "+" EnkiInt (VarVal "X") (IntVal 1)})) (Map.fromList [("X",FuncCall (TypedFunc (Comp [S "inc",V "X"]) (FuncType EnkiInt EnkiInt) (TypedConstraints []) (TypedExpr {exprId = BinOp "+" EnkiInt (VarVal "X") (IntVal 1)})) (Map.fromList [("X",VarVal "X")]))])})
-
-        it "infers the type of functions (using data constructors)" $ do
-            res <- runInfer "box may be containing X has X : int. put X in a box is containing X."
-            res `shouldBe` [TypedData (Comp [S "box"]) [TypedConstructor (Comp [S "containing",V "X"]) (DataType EnkiInt (TypeName [Named "box"]))],TypedFunc (Comp [S "put",V "X",S "in",S "a",S "box"]) (FuncType EnkiInt (TypeName [Named "box"])) (TypedConstraints []) (TypedExpr {exprId = FuncCall (TypedConstructor (Comp [S "containing",V "X"]) (DataType EnkiInt (TypeName [Named "box"]))) (Map.fromList [("X",VarVal "X")])})]
-
-        it "infers the type of functions (using nested data constructors and type variables)" $ do
-            res <- runInfer "pair A B may be pair of X and Y has X : A, Y : B. f X Y is pair of (pair of X and Y) and 2."
-            res `shouldBe` [TypedData (Comp [S "pair",V "A",V "B"]) [TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (Any "A") (DataType (Any "B") (TypeName [Named "pair",Any "A",Any "B"])))],TypedFunc (Comp [S "f",V "X",V "Y"]) (FuncType (Any "T12") (FuncType (Any "T13") (TypeName [Named "pair",TypeName [Named "pair",Any "T12",Any "T13"],EnkiInt]))) (TypedConstraints []) (TypedExpr {exprId = FuncCall (TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (TypeName [Named "pair",Any "T12",Any "T13"]) (DataType EnkiInt (TypeName [Named "pair",TypeName [Named "pair",Any "T12",Any "T13"],EnkiInt])))) (Map.fromList [("X",FuncCall (TypedConstructor (Comp [S "pair",S "of",V "X",S "and",V "Y"]) (DataType (Any "T12") (DataType (Any "T13") (TypeName [Named "pair",Any "T12",Any "T13"])))) (Map.fromList [("X",VarVal "X"),("Y",VarVal "Y")])),("Y",IntVal 2)])})]
 
     describe "func" $ do
         it "parses function declarations" $ do
@@ -214,6 +188,15 @@ main = hspec $ do
                             [Constructor (Comp [S "empty"]) [],
                              Constructor (Comp [S "cons",V "Head",V "Tail"])
                                 [Field (Comp [V "Head"]) EnkiInt,Field (Comp [V "Tail"]) (TypeName [Named "list"])]]
+
+    describe "aliases" $ do
+        it "performs arbitrary syntax transformations" $ do
+            v <- parseDef "define alias square X as X * X. test X is square X."
+            v `shouldBe` Right [Func (Comp [S "test",V "X"]) (Constraints []) (Expr {getId = Comp [V "X",S "*",V "X"]})]
+
+        it "performs type substitutions" $ do
+            v <- parseDef "define alias self pair X as pair X X. temp X may be con A B has A : self pair X, B : self pair X."
+            v `shouldBe` Right [Data (Comp [S "temp",V "X"]) [Constructor (Comp [S "con",V "A",V "B"]) [Field (Comp [V "A"]) (TypeName [Named "pair",Any "X",Any "X"]),Field (Comp [V "B"]) (TypeName [Named "pair",Any "X",Any "X"])]]]
 
     describe "execute" $ do
         runFile "examples/pe1.enki" "233168\n"

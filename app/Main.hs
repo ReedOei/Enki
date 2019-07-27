@@ -30,6 +30,7 @@ main = do
         [fname] -> putStrLn =<< compile fname
 
         _ -> putStrLn $ "Usage:\n" ++
-            "enki FILE\n" ++
-            "enki run FILE"
+            "   enki FILE\n" ++
+            "   enki run FILE [OUTPUT FILE NAME]\n" ++
+            "   enki compile FILE to OUTPUT_FILE_NAME"
 

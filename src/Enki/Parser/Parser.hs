@@ -76,12 +76,24 @@ parseDef :: MonadIO m => String -> m (Either ParseError [Def])
 parseDef = fmap (fmap runTransform) <$> runParserT enkiDef () ""
 
 enkiDef :: (MonadIO m, Stream s m Char) => ParsecT s st m [Def]
-enkiDef = many (try enkiImport <|>
+enkiDef = many (try defineAlias <|>
+                try enkiImport <|>
                 try noImport <|>
                 try func <|>
                 try rule <|>
                 try dataDef <|>
                 try exec)
+
+defineAlias :: (MonadIO m, Stream s m Char) => ParsecT s st m Def
+defineAlias = do
+    symbol $ string "define"
+    symbol $ string "alias"
+    idKey <- enkiId  "" ["by", "as"]
+    symbol $ choice [string "by", string "as"]
+    idVal <- enkiId "" []
+    symbol $ string "."
+
+    pure $ Alias idKey idVal
 
 noImport :: (MonadIO m, Stream s m Char) => ParsecT s st m Def
 noImport = do

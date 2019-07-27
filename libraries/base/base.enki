@@ -5,7 +5,7 @@ as text X is term_to_atom X.
 map F over Xs is map_built_in F Xs.
 filter Xs with F is filter_built_in F Xs.
 
-either A or B is disjunction_built_in A B.
+either P or Q holds for X if disjunction_built_in P Q X.
 
 number of characters in T is atom_length T.
 
@@ -242,7 +242,7 @@ min value in Map is
     when Map = cons M1 Assocs then just (min value no more than M1 in Map).
     otherwise then nothing.
 
-singleton X is cons X empty.
+singleton list X is cons X empty.
 
 init List is
     when List = cons H empty then empty.
@@ -284,7 +284,7 @@ A mod B is
     R.
 
 X to reversed digits is
-    when X < 10 then singleton X.
+    when X < 10 then singleton list X.
     otherwise then prepend (X mod 10) to (X / 10) to reversed digits.
 
 X to digits is reverse list X to reversed digits.

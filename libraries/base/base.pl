@@ -12,5 +12,7 @@ filter_built_in(F, cons(H, T), Out) :-
 
 call_built_in(F, X, Res) :- call(F, X, Res).
 
-disjunction_built_in(A, B) :- A; B.
+disjunction_built_in(A, B, X) :-
+    call(A, X);
+    call(B, X).
 

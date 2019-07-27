@@ -23,5 +23,6 @@ data Def = Func Id Constraint Expr
          | Exec Constraint
          | Module String [Def]
          | NoImport String
+         | Alias Id Id
     deriving (Eq, Show)
 

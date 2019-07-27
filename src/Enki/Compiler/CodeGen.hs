@@ -139,15 +139,17 @@ instance CodeGen TypedId Computation where
         resName <- newVar
         gen <- genFuncCallWith (FuncCall func varMap) resName
 
+        let freeVarNames = concatMap typedIdVars $ Map.elems freeVars
+
         case gen of
             [Computation constrs res] -> do
                 let newRes =
                         case last constrs of
                             PredCall name params ->
                                 if isFuncLike func then
-                                    PrologLambda (Map.keys freeVars) (boundParams ++ [resName]) $ PredCall name params
+                                    PrologLambda freeVarNames (boundParams ++ [resName]) $ PredCall name params
                                 else
-                                    PrologLambda (Map.keys freeVars) boundParams $ PredCall name params
+                                    PrologLambda freeVarNames boundParams $ PredCall name params
 
                 pure $ [Computation (init constrs) newRes]
 

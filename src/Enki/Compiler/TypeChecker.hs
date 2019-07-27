@@ -72,8 +72,8 @@ atomLengthBuiltIn = TypedFunc (Comp [S "atom_length", V "X"])
                 (TypedExpr (StringVal "BUILTIN"))
 
 disjunctionBuiltIn :: TypedDef
-disjunctionBuiltIn = TypedRule (Comp [S "disjunction_built_in", V "A", V "B"])
-                     (RuleType (Any "ANYTHING1") (Any "ANYTHING2"))
+disjunctionBuiltIn = TypedRule (Comp [S "disjunction_built_in", V "P", V "Q", V "X"])
+                     (RuleType (Any "INPUTARG") (RuleType (Any "INPUTARG") (Any "INPUTARG")))
                      (TypedConstraints [])
 
 builtIns = [writelnBuiltIn, termToAtom, prologNot, call, mapBuiltIn, filterBuiltIn, atomLengthBuiltIn, disjunctionBuiltIn]
@@ -169,19 +169,6 @@ makeRuleType vars = do
     types <- mapM lookupType vars
 
     pure $ foldr1 RuleType types
-
--- The first parameter is the id we wish to match (e.g., the function call expression),
--- the second is the function we are checking if it matches
-unifyIds :: Id -> Id -> Maybe (Map String Id)
-unifyIds (S s1) (S s2)       = if s1 == s2 then Just Map.empty else Nothing
-unifyIds (I i1) (I i2)       = if i1 == i2 then Just Map.empty else Nothing
-unifyIds (B b1) (B b2)       = if b1 == b2 then Just Map.empty else Nothing
-unifyIds id (V varName)      = Just $ Map.fromList [(varName, id)]
-unifyIds (Comp []) (Comp []) = Just Map.empty
-unifyIds id1 (Comp [id2])    = unifyIds id1 id2
-unifyIds (Comp [id1]) id2    = unifyIds id1 id2
-unifyIds (Comp (id1:ids1)) (Comp (id2:ids2)) = Map.union <$> unifyIds id1 id2 <*> unifyIds (Comp ids1) (Comp ids2)
-unifyIds _ _ = Nothing
 
 types :: Type -> [Type]
 types (FuncType t1 t2) = t1 : types t2
@@ -486,10 +473,6 @@ instance Inferable Id TypedId where
         case res of
             Nothing -> error $ "Could not find function referenced by " ++ show ref
             Just (typeMap, func) -> do
-                -- unsafePerformIO $ do
-                --     print typeMap
-                --     pure $ pure ()
-
                 let newTypeMap = Map.filter (isPlaceholder . snd) typeMap
                 let freeVarsMap = Map.filter (not . isPlaceholder . snd) typeMap
 
@@ -501,22 +484,28 @@ instance Inferable Id TypedId where
 
                 let orderedParams = sortBy (comparing ((`elemIndex` paramsOf newDef) . fst)) $ Map.toList typeMap
 
-                let newType = partialApply funcType $ map (snd . snd) orderedParams
-
-                pure $ FuncRef newDef newType params $ map (head . placeHolders . snd) $ Map.elems newTypeMap
+                pure $ case partialApply funcType $ map (snd . snd) orderedParams of
+                    Nothing -> error $ "No params left for func ref: " ++ show funcType ++ ", with params: " ++ show orderedParams
+                    Just newType -> FuncRef newDef newType params $ map (head . placeHolders . snd) $ Map.elems newTypeMap
 
 -- TODO: Ugh this is very repetive...
-partialApply :: Type -> [Id] -> Type
+partialApply :: Type -> [Id] -> Maybe Type
 partialApply (FuncType t1 t2) (id:ids)
-    | isPlaceholder id = FuncType t1 $ partialApply t2 ids
+    | isPlaceholder id = FuncType t1 <$> partialApply t2 ids
     | otherwise = partialApply t2 ids
 partialApply (RuleType t1 t2) (id:ids)
-    | isPlaceholder id = RuleType t1 $ partialApply t2 ids
+    | isPlaceholder id =
+        case partialApply t2 ids of
+            Nothing -> pure t1
+            Just appT2 -> pure $ RuleType t1 appT2
     | otherwise = partialApply t2 ids
 partialApply (DataType t1 t2) (id:ids)
-    | isPlaceholder id = DataType t1 $ partialApply t2 ids
+    | isPlaceholder id = DataType t1 <$> partialApply t2 ids
     | otherwise = partialApply t2 ids
-partialApply t _ = t
+partialApply t [] = pure t
+partialApply t (id:ids)
+    | isPlaceholder id = pure t
+    | otherwise = Nothing
 
 instance Inferable Expr TypedExpr where
     infer (Expr id) = TypedExpr <$> infer id
