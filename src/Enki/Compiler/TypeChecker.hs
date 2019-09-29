@@ -52,6 +52,11 @@ call = TypedFunc (Comp [S "call_built_in", V "F", V "X"])
                  (TypedConstraints [])
                  (TypedExpr (StringVal "BUILTIN"))
 
+callRule :: TypedDef
+callRule = TypedRule (Comp [S "call_rule_built_in", V "F", V "X"])
+                 (RuleType (Any "INPUTARG") (Any "INPUTARG"))
+                 (TypedConstraints [])
+
 mapBuiltIn :: TypedDef
 mapBuiltIn = TypedFunc (Comp [S "map_built_in", V "F", V "Xs"])
                 (FuncType (FuncType (Any "INPUTARG") (Any "OUTPUTARG")) (FuncType (TypeName [Named "list", Any "INPUTARG"]) (TypeName [Named "list", Any "OUTPUTARG"])))
@@ -76,7 +81,12 @@ disjunctionBuiltIn = TypedRule (Comp [S "disjunction_built_in", V "P", V "Q", V 
                      (RuleType (Any "INPUTARG") (RuleType (Any "INPUTARG") (Any "INPUTARG")))
                      (TypedConstraints [])
 
-builtIns = [writelnBuiltIn, termToAtom, prologNot, call, mapBuiltIn, filterBuiltIn, atomLengthBuiltIn, disjunctionBuiltIn]
+oneOfBuiltIn :: TypedDef
+oneOfBuiltIn = TypedRule (Comp [S "one_of_built_in", V "Ps", V "X"])
+               (RuleType (TypeName [Named "list", Any "INPUTARG"]) (Any "INPUTARG"))
+               (TypedConstraints [])
+
+builtIns = [writelnBuiltIn, termToAtom, prologNot, call, callRule, mapBuiltIn, filterBuiltIn, atomLengthBuiltIn, disjunctionBuiltIn, oneOfBuiltIn]
 
 logError :: Monad m => Error -> StateT Environment m ()
 logError err = modify $ over errors (err:)
@@ -264,7 +274,7 @@ inferAndUnify (t, id) = do
     if not res then do
         vars <- (^.typeVars) <$> get
         env <- (^.typeEnv) <$> get
-        error $ "Inferred\n" ++ show inferred ++ "\nfor\n" ++ show id ++ "\nbut failed to unify this with\n" ++ show t ++ "\nin the environment\n" ++ show env ++ "\nwith type vars\n" ++ show vars
+        error $ "Failed to unify " ++ show inferred ++ " with type " ++ show newT ++ "\n" ++ show vars ++ "\n" ++ show env
     else
         pure res
 

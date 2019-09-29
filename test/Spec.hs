@@ -153,7 +153,7 @@ main = hspec $ do
             v `shouldBe` RuleType EnkiString (Any "T2")
         it "parses data types" $ do
             let (Right v) = parse enkiType "" "int * list"
-            v `shouldBe` DataType EnkiInt (TypeName [Named "list"])
+            v `shouldBe` DataType EnkiInt (Named "list")
         it "parses parenthesized types at the front of a data type" $ do
             let (Right v) = parse enkiType "" "(int * int) * bool"
             v `shouldBe` DataType (DataType EnkiInt EnkiInt) EnkiBool
@@ -187,7 +187,7 @@ main = hspec $ do
             v `shouldBe` Data (Comp [S "list"])
                             [Constructor (Comp [S "empty"]) [],
                              Constructor (Comp [S "cons",V "Head",V "Tail"])
-                                [Field (Comp [V "Head"]) EnkiInt,Field (Comp [V "Tail"]) (TypeName [Named "list"])]]
+                                [Field (Comp [V "Head"]) EnkiInt,Field (Comp [V "Tail"]) (Named "list")]]
 
     describe "aliases" $ do
         it "performs arbitrary syntax transformations" $ do

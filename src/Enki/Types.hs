@@ -28,6 +28,7 @@ data Type = EnkiInt
 makeTypeName :: Id -> Type
 makeTypeName (S str) = Named str
 makeTypeName (V name) = Any name
+makeTypeName (Comp [id]) = makeTypeName id
 makeTypeName (Comp ids) = TypeName $ map makeTypeName ids
 
 placeHolders :: Id -> [String]

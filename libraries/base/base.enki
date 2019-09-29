@@ -7,11 +7,15 @@ filter Xs with F is filter_built_in F Xs.
 
 either P or Q holds for X if disjunction_built_in P Q X.
 
+one of Ps holds for X if one_of_built_in Ps X.
+
 number of characters in T is atom_length T.
 
 only elements of List satisfying F is filter List with F.
 
 call F on X is call_built_in F X.
+
+call rule R on X is call_rule_built_in R X.
 
 the X is X.
 
@@ -34,6 +38,10 @@ prepend Head to Tail is cons Head Tail.
 
 pair A B may be
     pair X and Y has X : A, Y : B.
+
+list of length N is
+    when N <= 0 then empty.
+    otherwise then prepend NewElem to list of length (N - 1).
 
 length of List is
     when List = cons H T then 1 + length of T.
@@ -61,10 +69,7 @@ sum of List is
     when List = cons H T then H + sum of T.
     otherwise then 0.
 
-multiples of A in List is
-    when List = cons H T, A divides H then cons H (multiples of A in T).
-    when List = cons H T then multiples of A in T.
-    otherwise then empty.
+multiples of A in List is filter List with (A divides _).
 
 formatHelper List is
     when List = cons H empty then (as text H) .. "]".

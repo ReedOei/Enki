@@ -1,13 +1,16 @@
+A mymod B is
+    A = Q*B + R,
+    0 <= R, R < B,
+    R.
+
 gcd of A and B is
     when B = 0 then A.
-    otherwise then
-        A = B*X + M, M >= 0, M < B,
-        gcd of B and M.
+    otherwise then gcd of B and A mymod B.
 
-lcm A B is A * B / gcd of A and B.
+lcm of A and B is A * B / gcd of A and B.
 
 list lcm of List is
-    when List = cons H T then lcm H (list lcm of T).
+    when List = cons H T then lcm of H and the list lcm of T.
     otherwise then 1.
 
 display as text the list lcm of the integers from 1 to 20.

@@ -175,11 +175,11 @@ replaceCompArgs i = (i, [])
 
 func :: Parser Def
 func = do
-    tempId <- symbol $ enkiId "" ["is"]
+    tempId <- symbol $ enkiId "" ["are", "is"]
 
     let (id, argConstrs) = replaceCompArgs tempId
 
-    symbol $ string "is"
+    symbol $ choice [string "is", string "are"]
     constr <- symbol constraint
     symbol $ char '.'
 

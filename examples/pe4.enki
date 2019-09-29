@@ -5,10 +5,7 @@ product pairs in List is
         prepend (A * B) to product pairs in T.
     otherwise then empty.
 
-palindromic numbers in List is
-    when List = cons H T, palindromic number H then prepend H to palindromic numbers in T.
-    when List = cons H T then palindromic numbers in T.
-    otherwise then empty.
+palindromic numbers in List is filter (palindrome number _) List.
 
 answer with N digits is
     Nums = N digit numbers,
