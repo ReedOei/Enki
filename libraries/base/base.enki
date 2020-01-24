@@ -18,7 +18,6 @@ call F on X is call_built_in F X.
 call rule R on X is call_rule_built_in R X.
 
 the X is X.
-
 id X is X.
 
 odd X if X = 2*K + 1.
