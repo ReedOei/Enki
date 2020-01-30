@@ -88,9 +88,9 @@ defineAlias :: (MonadIO m, Stream s m Char) => ParsecT s st m Def
 defineAlias = do
     symbol $ string "define"
     symbol $ string "alias"
-    idKey <- enkiId  "" ["by", "as"]
+    idKey <- symbol $ enkiId "" ["by", "as"]
     symbol $ choice [string "by", string "as"]
-    idVal <- enkiId "" []
+    idVal <- symbol $ enkiId "" []
     symbol $ string "."
 
     pure $ Alias idKey idVal
@@ -121,18 +121,19 @@ enkiImport = do
                 Just name -> if ".enki" `isSuffixOf` name then name else name ++ ".enki"
 
     -- TODO: Make this search multiple paths
-    -- TODO: Also make this search the ENKI_PATH
     defs <- liftIO $ parseFileAst filename
     pure $ Module moduleName defs
 
 exec :: Parser Def
 exec = do
+    lineSep
     c <- constraint
     symbol $ char '.'
     pure $ Exec c
 
 rule :: Parser Def
 rule = do
+    lineSep
     tempId <- symbol $ enkiId "" ["if", "where"]
 
     let (id, argConstrs) = replaceCompArgs tempId
@@ -162,6 +163,7 @@ replaceCompArgs i = (i, [])
 
 func :: Parser Def
 func = do
+    lineSep
     tempId <- symbol $ enkiId "" ["are", "is"]
 
     let (id, argConstrs) = replaceCompArgs tempId
@@ -213,7 +215,7 @@ constructor = try constructorWithFields <|> try unitConstructor
 
 unitConstructor :: Parser Constructor
 unitConstructor = do
-    id <- enkiId "" ["is","if","where","|"] -- Don't accidentally parse functions or rules
+    id <- enkiId "" ["is","are","if","where", "|", "has"] -- Don't accidentally parse functions or rules
     pure $ Constructor id []
 
 constructorWithFields :: Parser Constructor
@@ -251,7 +253,7 @@ singleEnkiType = parenType <|> dataTypeName
 
 dataTypeName :: Parser Type
 dataTypeName = do
-    id <- symbol $ baseEnkiId "" ["->", "~", "*"]
+    id <- symbol $ baseEnkiId "" ["->", "~", "*", "|"]
     pure $ case id of
         V s -> Any s
         S s | s == "int" -> EnkiInt
@@ -261,18 +263,17 @@ dataTypeName = do
 parenType :: Parser Type
 parenType = between (symbol (string "(")) (symbol (string ")")) enkiType
 
-connected :: String -> (Type -> Type -> Type) -> Parser Type
-connected connector constr = foldl1 constr <$> sepBy1 enkiType (symbol (string connector))
-
 expr :: Parser Expr
 expr = Expr <$> enkiId "" []
 
 constraint :: Parser Constraint
 constraint = do
     constraints <- map Constraint <$> sepEndBy idParsers sep
-    whenBranches <- many $ try $ when <|> otherwiseBranch
+    whenBranches <- many $ try when
 
-    pure $ Constraints $ constraints ++ whenBranches
+    owise <- if not $ null whenBranches then (:[]) <$> (otherwiseBranch <|> fail "expected otherwise after when") else pure []
+
+    pure $ Constraints $ constraints ++ whenBranches ++ owise
     where
         ignoreWords = ["when", "then", "otherwise"]
         idParsers = do
@@ -470,8 +471,13 @@ wsSkip = skipMany $ oneOf " \r\t"
 
 skip p = p >> pure ()
 
+whitespace :: Parser ()
+whitespace = do
+    oneOf " \r\t\n"
+    pure ()
+
 lineSep :: Parser ()
-lineSep = skipMany (skip (oneOf " \r\t\n") <|> try comment)
+lineSep = skipMany (whitespace <|> try comment)
 
 comment :: Parser ()
 comment = do

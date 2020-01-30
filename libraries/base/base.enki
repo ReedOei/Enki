@@ -55,6 +55,11 @@ construct Head Full is
     Full = cons Head Tail,
     Tail.
 
+N th element of List is
+    when List = cons H T, N <= 0 then H.
+    when List = cons H T, N > 0 then (N-1) th element of List.
+    otherwise then false, FAILURE.
+
 concat A with B is
     when A = cons H T then prepend H to concat T with B.
     otherwise then B.
