@@ -5,8 +5,7 @@ map_built_in(F,cons(H,T),cons(NewH,NewT)) :-
 
 filter_built_in(_F, empty(), empty()).
 filter_built_in(F, cons(H, T), Out) :-
-    call(F, H) ->
-        filter_built_in(F, T, Temp),
+    call(F, H), filter_built_in(F, T, Temp),
         Out = cons(H, Temp);
     filter_built_in(F, T, Out).
 

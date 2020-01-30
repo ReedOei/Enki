@@ -290,7 +290,7 @@ instance PrettyPrint PrologConstraint where
     prettyPrint (PredCall name exprs) = [name ++ "(" ++ intercalate "," (map prettyExpr exprs) ++ ")"]
     prettyPrint (PrologOp op e1 e2)   = [prettyExpr e1 ++ " " ++ op ++ " " ++ prettyExpr e2]
     prettyPrint (Condition cond body) =
-        mapConj cond ++ ["    ->"] ++ mapConj body
+        mapConj cond ++ ["    ,"] ++ mapConj body
     prettyPrint (Disjunction a [])    = mapConj a
     prettyPrint (Disjunction a b)     =
         ["("] ++ mapConj a ++ ["    ;"] ++ mapConj b ++ [")"]

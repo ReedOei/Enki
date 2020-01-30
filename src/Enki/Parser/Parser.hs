@@ -269,11 +269,9 @@ expr = Expr <$> enkiId "" []
 constraint :: Parser Constraint
 constraint = do
     constraints <- map Constraint <$> sepEndBy idParsers sep
-    whenBranches <- many $ try when
+    whenBranches <- many $ try $ when <|> otherwiseBranch
 
-    owise <- if not $ null whenBranches then (:[]) <$> (otherwiseBranch <|> fail "expected otherwise after when") else pure []
-
-    pure $ Constraints $ constraints ++ whenBranches ++ owise
+    pure $ Constraints $ constraints ++ whenBranches
     where
         ignoreWords = ["when", "then", "otherwise"]
         idParsers = do
@@ -291,7 +289,7 @@ when = do
     symbol $ string "then"
     body <- constraint
 
-    symbol $ char '.'
+    optional $ symbol $ char '.'
 
     pure $ When condition body
 
@@ -392,8 +390,8 @@ parens ignoreSymbols excluded =
 paren :: String -> [String] -> String -> String -> (Id -> Id) -> Parser Id
 paren ignoreSymbols excluded start end f = f <$> try (between startGroup endGroup (enkiId (start ++ end ++ ignoreSymbols) excluded))
     where
-        startGroup = string start >> wsSkip
-        endGroup = wsSkip >> string end
+        startGroup = symbol $ string start
+        endGroup = symbol $ string end
 
 opTable :: Stream s m Char => OperatorTable s st m Id
 opTable =

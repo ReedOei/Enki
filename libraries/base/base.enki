@@ -31,12 +31,16 @@ even X if X = 2*K.
 square root X is (Root^2) = X, Root.
 
 A divides B if B = A*N.
+A | B if A divides B.
 
 list A may be
     empty |
     cons Head Tail has
         Head : A,
         Tail : list A.
+
+-- Just a nice alias for cons
+X :: Xs is cons X Xs.
 
 prepend Head to Tail is cons Head Tail.
 
@@ -51,18 +55,21 @@ length of List is
     when List = cons H T then 1 + length of T.
     otherwise then 0.
 
-construct Head Full is
-    Full = cons Head Tail,
-    Tail.
-
 N th element of List is
-    when List = cons H T, N <= 0 then H.
+    when List = cons H T, N = 0 then H.
     when List = cons H T, N > 0 then (N-1) th element of List.
     otherwise then false, FAILURE.
 
+set index Idx of List to NewVal is
+    when List = cons H T, N <= 0 then prepend NewVal to T.
+    when List = cons H T, N > 0 then prepend H to set index (Idx - 1) of T to NewVal.
+    otherwise then prepend NewVal to empty.
+
 concat A with B is
     when A = cons H T then prepend H to concat T with B.
-    otherwise then B.
+    otherwise then A = empty, B.
+
+A ++ B is concat A with B.
 
 flatten List is
     when List = cons H T then concat H with flatten T.
@@ -103,6 +110,19 @@ zip A and B is
     when A = cons HA TA, B = cons HB TB then
         cons (pair HA and HB) (zip TA and TB).
     otherwise then empty.
+
+zip with F A and B is
+    when A = cons HA TA, B = cons HB TB then
+        cons (call (call F on HA) on HB) (zip with F TA and TB).
+    otherwise then empty.
+
+-- The other zip functions are quite permissive, and don't care if the two lists have different lengths.
+-- This one does.
+zip same length F A and B is
+    when A = cons HA TA, B = cons HB TB then
+        cons (call (call F on HA) on HB) (zip same length F TA and TB).
+    when A = empty, B = empty then empty.
+    otherwise then false, empty.
 
 max of A and B is
     when A > B then A.
@@ -331,4 +351,20 @@ replace X with Y in A is
 
 text replace X with Y in T is
     text from characters in map (replace X with Y in _) over characters of T.
+
+set of A may be
+    empty set |
+    {X} has X : A |
+    X u Y has X : set of A, Y : set of A.
+
+X element of S if
+    when S = {Y} then X = Y.
+    when S = A u B then either (_ element of A) or (_ element of B) holds for X.
+    otherwise then false.
+
+canonize set S is
+    when S = (empty set) u X then canonize set X.
+    when S = X u empty set then canonize set X.
+    when S = X u Y then (canonize set X) u (canonize set Y).
+    otherwise then S.
 
