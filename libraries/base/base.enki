@@ -33,7 +33,7 @@ square root X is (Root^2) = X, Root.
 A divides B if B = A*N.
 
 list A may be
-    empty.
+    empty |
     cons Head Tail has
         Head : A,
         Tail : list A.
@@ -186,13 +186,10 @@ mapping K V may be X |-> Y has X : K, Y : V.
 X maps to Y is X |-> Y.
 
 maybe A may be
-    nothing.
+    nothing |
     just X has X : A.
 
-ordering may be
-    equal.
-    greater.
-    less.
+ordering may be equal | greater | less.
 
 compare A to B is
     when A > B then greater.

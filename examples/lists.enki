@@ -4,7 +4,7 @@ pair may be
     pair X and Y has X : int, Y : int.
 
 list may be
-    empty.
+    empty |
     cons Head Tail has
         Head : int,
         Tail : list.

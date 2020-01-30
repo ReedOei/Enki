@@ -203,7 +203,8 @@ dataDef = do
     id <- symbol $ enkiId "" ["may", "be"]
     symbol $ string "may"
     symbol $ string "be"
-    constructors <- many constructor
+    constructors <- sepBy constructor $ symbol $ string "|"
+    symbol $ string "."
 
     pure $ Data id constructors
 
@@ -212,17 +213,14 @@ constructor = try constructorWithFields <|> try unitConstructor
 
 unitConstructor :: Parser Constructor
 unitConstructor = do
-    id <- enkiId "" ["is","if","where"] -- Don't accidentally parse functions or rules
-    symbol $ char '.'
-
+    id <- enkiId "" ["is","if","where","|"] -- Don't accidentally parse functions or rules
     pure $ Constructor id []
 
 constructorWithFields :: Parser Constructor
 constructorWithFields = do
-    id <- symbol $ enkiId "" ["has"]
+    id <- symbol $ enkiId "" ["has", "|"]
     symbol $ string "has"
     fields <- sepBy1 field $ symbol $ string ","
-    symbol $ char '.'
     pure $ Constructor id fields
 
 field :: Parser Field

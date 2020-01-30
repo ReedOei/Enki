@@ -167,7 +167,7 @@ main = hspec $ do
                             [Constructor (Comp [S "pair",S "of",V "X",S "and",V "Y"])
                                 [Field (V "X") EnkiInt,Field (V "Y") EnkiInt]]
         it "parses types with multiple constructors" $ do
-            let (Right v) = parse dataDef "" "list may be empty. cons Head Tail has Head : int, Tail : list."
+            let (Right v) = parse dataDef "" "list may be empty | cons Head Tail has Head : int, Tail : list."
             v `shouldBe` Data (S "list")
                             [Constructor (S "empty") [],
                              Constructor (Comp [S "cons",V "Head",V "Tail"])

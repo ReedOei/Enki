@@ -1,7 +1,7 @@
 do not use base.
 
 list may be
-    empty.
+    empty |
     cons Head Tail has
         Head : int,
         Tail : list.
