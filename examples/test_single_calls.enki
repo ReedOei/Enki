@@ -1,0 +1,14 @@
+true if 1 = 1.
+false if 1 = 2.
+
+test X is
+    when true then 1.
+    otherwise then 2.
+
+test2 Y is
+    when false then 1.
+    otherwise then 2.
+
+display as text test 10.
+display as text test2 10.
+

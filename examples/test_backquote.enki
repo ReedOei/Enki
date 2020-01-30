@@ -1,0 +1,6 @@
+A `is less than B is
+    when A < B then 0.
+    otherwise then 1.
+
+display as text 1 `is less than 2.
+

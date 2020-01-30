@@ -178,7 +178,9 @@ makeRuleType :: Monad m => [String] -> StateT Environment m Type
 makeRuleType vars = do
     types <- mapM lookupType vars
 
-    pure $ foldr1 RuleType types
+    pure $ case types of
+        [] -> Unit
+        _ -> foldr1 RuleType types
 
 types :: Type -> [Type]
 types (FuncType t1 t2) = t1 : types t2
@@ -457,7 +459,6 @@ instance Inferable Id TypedId where
                 newDef <- resolveDefType func
                 pure $ FuncCall newDef params
     infer (I i) = pure $ IntVal i
-    infer (B b) = pure $ BoolVal b
     infer (V str) = do
         -- Do this to generate a new type if necessary
         lookupType str

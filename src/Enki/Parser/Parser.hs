@@ -336,6 +336,11 @@ withWs parser = do
 operators = ["!=", "=", "+", "-", "<=", ">=", "*", "/", "^", "..", "<", ">"]
 
 sanitizeStr :: String -> String
+
+-- We can't directly use the strings "true" and "false", because those are reserved in Prolog
+sanitizeStr "true" = "enki_true"
+sanitizeStr "false" = "enki_false"
+
 sanitizeStr str
     | str `elem` operators = str
     | otherwise = fst $ foldl go ("", False) str
@@ -371,7 +376,6 @@ sanitizeStr str
 
 sanitize :: Id -> Id
 sanitize i@(I _)    = i
-sanitize b@(B _)    = b
 sanitize v@(V _)    = v
 sanitize (S str)    = S $ sanitizeStr str
 sanitize (Comp ids) = Comp $ map sanitize ids
@@ -381,7 +385,7 @@ enkiId symbols = fmap sanitize . buildExpressionParser opTable . baseEnkiId symb
 
 baseEnkiId :: String -> [String] -> Parser Id
 baseEnkiId symbols excluded =
-    Comp <$> untilFail (choice (map (try . withWs) [var, bool, int, parens symbols excluded, str symbols excluded, quoteId]))
+    Comp <$> untilFail (choice (map (try . withWs) [var, int, parens symbols excluded, str symbols excluded, quoteId]))
 
 untilFail :: Parser a -> Parser [a]
 untilFail parser = do
@@ -487,9 +491,6 @@ int = I . read <$> string "0" <|> do
     digits <- (:) <$> nonzeroDigit <*> many digit
 
     pure $ I $ read $ fromMaybe "" neg ++ digits
-
-bool :: Parser Id
-bool = B . read . titleCase <$> choice [string "true", string "false"]
 
 wsSkip :: Parser ()
 wsSkip = skipMany $ oneOf " \r\t"

@@ -7,7 +7,6 @@ import Data.Maybe
 
 data Id = S String
         | I Integer
-        | B Bool
         | V String
         | Comp [Id]
         | DefRef Integer Id -- e.g., (pair of _ and _) = DefRef 2 (Comp [S "pair", S "of", V "_1", S "and", V "_2"])
@@ -18,6 +17,7 @@ data Type = EnkiInt
           | EnkiString
           | Any String
           | Void
+          | Unit
           | FuncType Type Type
           | RuleType Type Type
           | DataType Type Type
@@ -78,7 +78,6 @@ idToType (DefRef _ id) = idToType id
 unifyIds :: Id -> Id -> Maybe (Map String Id)
 unifyIds (S s1) (S s2)       = if s1 == s2 then Just Map.empty else Nothing
 unifyIds (I i1) (I i2)       = if i1 == i2 then Just Map.empty else Nothing
-unifyIds (B b1) (B b2)       = if b1 == b2 then Just Map.empty else Nothing
 unifyIds id (V varName)      = Just $ Map.fromList [(varName, id)]
 unifyIds (Comp []) (Comp []) = Just Map.empty
 unifyIds id1 (Comp [id2])    = unifyIds id1 id2

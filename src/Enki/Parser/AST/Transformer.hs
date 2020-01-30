@@ -77,7 +77,6 @@ replacePlaceholders id = pure id
 applyMapping :: Map String Id -> Id -> Id
 applyMapping mapping s@(S _) = s
 applyMapping mapping i@(I _) = i
-applyMapping mapping b@(B _) = b
 applyMapping mapping v@(V x) = fromMaybe v $ Map.lookup x mapping
 applyMapping mapping (Comp ids) = Comp $ map (applyMapping mapping) ids
 applyMapping mapping (DefRef n id) = DefRef n $ applyMapping mapping id

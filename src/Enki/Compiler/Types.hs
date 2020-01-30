@@ -43,7 +43,6 @@ typedIdVars (BinOp _ _ id1 id2) = typedIdVars id1 ++ typedIdVars id2
 vars :: Id -> [String]
 vars (S _) = []
 vars (I _) = []
-vars (B _) = []
 vars (V str) = [str]
 vars (Comp []) = []
 vars (Comp (id:ids)) = vars id ++ vars (Comp ids)

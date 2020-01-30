@@ -59,9 +59,6 @@ main = hspec $ do
         it "infers the type of basic ids (string)" $ do
             let res = evalState (infer (S "testing")) newEnv
             res `shouldBe` StringVal "testing"
-        it "infers the type of basic ids (bool)" $ do
-            let res = evalState (infer (B False)) newEnv
-            res `shouldBe` BoolVal False
         it "infers the type of basic ids (var)" $ do
             let (res, env) = runState (infer (V "X")) newEnv
             res `shouldBe` VarVal "X"
@@ -89,14 +86,6 @@ main = hspec $ do
             let (Right v) = parse expr "" "(3 * 4) + (9 / 3)"
             v `shouldBe` Expr (Comp [Comp[I 3, S "*", I 4], S "+", Comp[I 9, S "/", I 3]])
 
-    describe "bool" $ do
-        it "parses booleans (true)" $ do
-            let (Right v) = parse bool "" "true"
-            v `shouldBe` B True
-        it "parses booleans (false)" $ do
-            let (Right v) = parse bool "" "false"
-            v `shouldBe` B False
-
     describe "str" $ do
         it "parses a single string" $ do
             let (Right v) = parse (str "" []) "" "hello"
@@ -118,7 +107,8 @@ main = hspec $ do
             v `shouldBe` Comp [S "test"]
         it "parses multiple expressions" $ do
             let (Right v) = parse (enkiId "" []) "" "t y false B"
-            v `shouldBe` Comp [S "t", S "y", B False, V "B"]
+            -- Note that "false" gets automatically sanitized to "enki_false" for Prolog compatibility
+            v `shouldBe` Comp [S "t", S "y", S "enki_false", V "B"]
         it "parses nested expressions" $ do
             let (Right v) = parse (enkiId "" []) "" "(1 + 2) + 4"
             v `shouldBe` Comp [Comp [I 1, S "+",I 2], S "+", I 4]
@@ -211,4 +201,5 @@ main = hspec $ do
         runFile "examples/defref.enki" "24\n2\n[5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]\n"
         runFile "examples/string-test.enki" "[t,e,s,t,i,n,g,' ',t,h,i,n,g,' ',t,h,i,n,g,' ',o,u,t,' ',o,n,' ',a,' ',l,o,n,g,e,r,' ',s,t,r,i,n,g]\narghesarghing arghhing arghhing ouargh on a longer sarghring\n"
         runFile "examples/test_backquote.enki" "0\n"
+        runFile "examples/test_single_calls.enki" "1\n2\n"
 
