@@ -129,7 +129,6 @@ genFuncCallWith (FuncCall def varMap) resName = do
 instance CodeGen TypedId Computation where
     codeGen (StringVal v)         = pure [Computation [] $ PrologAtom v]
     codeGen (IntVal i)            = pure [Computation [] $ PrologInt i]
-    codeGen (BoolVal b)           = pure [Computation [] $ PrologAtom $ map toLower $ show b]
     codeGen (VarVal v)            = pure [Computation [] $ PrologVar v]
     codeGen (FuncRef func _ freeVars boundParams) = do
         let boundVarNames = vars (defId func) \\ Map.keys freeVars

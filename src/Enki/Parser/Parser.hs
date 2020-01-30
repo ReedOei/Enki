@@ -82,7 +82,7 @@ enkiDef = many (try defineAlias <|>
                 try func <|>
                 try rule <|>
                 try dataDef <|>
-                try exec)
+                exec)
 
 defineAlias :: (MonadIO m, Stream s m Char) => ParsecT s st m Def
 defineAlias = do
@@ -102,7 +102,6 @@ noImport = do
     symbol $ string "use"
     moduleName <- symbol $ many $ noneOf " .\n\r\t"
     symbol $ string "."
-    optional newlines
 
     pure $ NoImport moduleName
 
@@ -115,7 +114,6 @@ enkiImport = do
         symbol $ string "from"
         symbol $ many $ noneOf " .\n\r\t"
     symbol $ string "."
-    optional newlines
 
     let filename =
             case file of
@@ -129,32 +127,21 @@ enkiImport = do
 
 exec :: Parser Def
 exec = do
-    lineSep
     c <- constraint
     symbol $ char '.'
-    lineSep
-
     pure $ Exec c
-
-lineSep :: Parser ()
-lineSep = do
-    wsSkip
-    optional newlines
-    wsSkip
 
 rule :: Parser Def
 rule = do
-    lineSep
-    tempId <- enkiId "" ["if", "where"]
+    tempId <- symbol $ enkiId "" ["if", "where"]
 
     let (id, argConstrs) = replaceCompArgs tempId
 
-    lineSep
-    choice $ map string ["if", "where"]
-    lineSep
+    symbol $ choice $ map string ["if", "where"]
+
     c <- constraint
-    lineSep
-    char '.'
+
+    symbol $ char '.'
 
     pure $ case c of
         c@(Constraint cid) -> Rule id $ Constraints $ argConstrs ++ [c]
@@ -216,8 +203,7 @@ dataDef = do
     id <- symbol $ enkiId "" ["may", "be"]
     symbol $ string "may"
     symbol $ string "be"
-    constructors <- many (symbol constructor)
-    lineSep
+    constructors <- many constructor
 
     pure $ Data id constructors
 
@@ -251,7 +237,7 @@ enkiType :: Parser Type
 enkiType = do
     first <- singleEnkiType
     rest <- optionMaybe $ do
-        sep <- try $ choice $ map (symbol . string) ["->", "~", "*"]
+        sep <- choice $ map (symbol . string) ["->", "~", "*"]
         second <- enkiType
         pure $ case sep of
             "->" -> (FuncType, second)
@@ -263,23 +249,19 @@ enkiType = do
         Just (constr, second) -> constr first second
 
 singleEnkiType :: Parser Type
-singleEnkiType = choice $ map try [namedType "int" EnkiInt, namedType "bool" EnkiBool, namedType "string" EnkiString,
-                                   parenType, dataTypeName]
+singleEnkiType = parenType <|> dataTypeName
 
 dataTypeName :: Parser Type
 dataTypeName = do
     id <- symbol $ baseEnkiId "" ["->", "~", "*"]
     pure $ case id of
-        Comp [V s] -> Any s
+        V s -> Any s
+        S s | s == "int" -> EnkiInt
+        S s | s == "string" -> EnkiString
         _ -> makeTypeName id
 
 parenType :: Parser Type
 parenType = between (symbol (string "(")) (symbol (string ")")) enkiType
-
-namedType :: String -> Type -> Parser Type
-namedType enkiTName enkiTConst = do
-    symbol $ string enkiTName
-    pure enkiTConst
 
 connected :: String -> (Type -> Type -> Type) -> Parser Type
 connected connector constr = foldl1 constr <$> sepBy1 enkiType (symbol (string connector))
@@ -290,7 +272,7 @@ expr = Expr <$> enkiId "" []
 constraint :: Parser Constraint
 constraint = do
     constraints <- map Constraint <$> sepEndBy idParsers sep
-    whenBranches <- sepBy1 (try when <|> try otherwiseBranch) lineSep <|> pure []
+    whenBranches <- many $ try $ when <|> otherwiseBranch
 
     pure $ Constraints $ constraints ++ whenBranches
     where
@@ -307,23 +289,18 @@ when = do
     symbol $ string "when"
     condition <- constraint
 
-    body <- optionMaybe $ do
-        symbol $ string "then"
-        body <- symbol constraint
-        pure body
+    symbol $ string "then"
+    body <- constraint
+
     symbol $ char '.'
 
-    pure $ When condition $ fromMaybe (Constraints []) body
+    pure $ When condition body
 
 otherwiseBranch :: Parser Constraint
 otherwiseBranch = do
-    lineSep
-    string "otherwise"
-    lineSep
-    string "then"
-    lineSep
+    symbol $ string "otherwise"
+    symbol $ string "then"
     body <- constraint
-    lineSep
 
     pure $ When body $ Constraints []
 
@@ -384,8 +361,11 @@ enkiId :: Stream s m Char => String -> [String] -> ParsecT s st m Id
 enkiId symbols = fmap sanitize . buildExpressionParser opTable . baseEnkiId symbols . (operators ++ )
 
 baseEnkiId :: String -> [String] -> Parser Id
-baseEnkiId symbols excluded =
-    Comp <$> untilFail (choice (map (try . withWs) [var, int, parens symbols excluded, str symbols excluded, quoteId]))
+baseEnkiId symbols excluded = do
+    ids <- untilFail $ choice $ map withWs [var, int, parens symbols excluded, try (str symbols excluded), quoteId]
+    pure $ case ids of
+        [i] -> i
+        xs -> Comp xs
 
 untilFail :: Parser a -> Parser [a]
 untilFail parser = do
@@ -419,6 +399,7 @@ paren ignoreSymbols excluded start end f = f <$> try (between startGroup endGrou
 opTable :: Stream s m Char => OperatorTable s st m Id
 opTable =
     [
+        [prefix "-"],
         [binary "^" AssocLeft],
         [binary "*" AssocLeft, binary "/" AssocLeft, binary "mod" AssocLeft],
         [binary "+" AssocLeft, binary "-" AssocLeft],
@@ -431,12 +412,15 @@ opTable =
 flatten (Comp [id]) = id
 flatten id = id
 
+prefix :: Stream s m Char => String -> Operator s st m Id
+prefix name = Prefix $ do
+    op <- try $ opStr name
+    pure $ \a -> Comp [op, flatten a]
+
 binary :: Stream s m Char => String -> Assoc -> Operator s st m Id
-binary name = Infix parse
-    where
-        parse = do
-            op <- try $ opStr name
-            pure $ \a b -> Comp [flatten a, op, flatten b]
+binary name = Infix $ do
+    op <- try $ opStr name
+    pure $ \a b -> Comp [flatten a, op, flatten b]
 
 str :: String -> [String] -> Parser Id
 str ignoreSymbols list = do
@@ -466,9 +450,7 @@ nonEmpty start ending = do
     pure $ s:ss
 
 opStr :: String -> Parser Id
-opStr str = S <$> do
-    s <- symbol (string str)
-    pure s
+opStr str = S <$> symbol (string str)
 
 exclude :: Stream s m Char => [String] -> ParsecT s st m String -> ParsecT s st m String
 exclude strs parser = do
@@ -482,29 +464,16 @@ var = V <$> do
 
     pure $ s:ss
 
-nonzeroDigit :: Parser Char
-nonzeroDigit = oneOf "123456789"
-
 int :: Parser Id
-int = I . read <$> string "0" <|> do
-    neg <- optionMaybe $ try $ string "-"
-    digits <- (:) <$> nonzeroDigit <*> many digit
-
-    pure $ I $ read $ fromMaybe "" neg ++ digits
+int = I . read <$> many1 digit
 
 wsSkip :: Parser ()
 wsSkip = skipMany $ oneOf " \r\t"
 
-whitespace :: Parser ()
-whitespace = skipMany1 $ oneOf " \t\n\r"
-
-newlines :: Parser ()
-newlines = skipMany1 (wsSkip >> newline >> wsSkip)
-
 skip p = p >> pure ()
 
-newline :: Parser ()
-newline = skip (char '\n') <|> try comment
+lineSep :: Parser ()
+lineSep = skipMany (skip (oneOf " \r\t\n") <|> try comment)
 
 comment :: Parser ()
 comment = do

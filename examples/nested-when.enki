@@ -1,5 +1,7 @@
 do not use base.
 
+- X is 0 - X.
+
 display X where writeln X.
 
 f X is
@@ -10,7 +12,7 @@ f X is
     when X < 0 then "negative".
     otherwise then "blah".
 
-display f -1.
+display f (-1).
 display f 3.
 display f 6.
 display f 10.

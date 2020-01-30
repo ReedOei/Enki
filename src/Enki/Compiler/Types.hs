@@ -8,7 +8,6 @@ import Enki.Parser.AST
 
 data TypedId = StringVal String
              | IntVal Integer
-             | BoolVal Bool
              | VarVal String
              | FuncCall TypedDef (Map String TypedId)
              | FuncRef TypedDef Type (Map String TypedId) [String]
@@ -34,7 +33,6 @@ data TypedDef = TypedFunc Id Type TypedConstraint TypedExpr
 typedIdVars :: TypedId -> [String]
 typedIdVars (StringVal _) = []
 typedIdVars (IntVal _) = []
-typedIdVars (BoolVal _) = []
 typedIdVars (VarVal x) = [x]
 typedIdVars (FuncCall _ varMap) = concatMap typedIdVars $ Map.elems varMap
 typedIdVars (FuncRef _ _ freeVarMap placeHolders) = placeHolders ++ concatMap typedIdVars (Map.elems freeVarMap)

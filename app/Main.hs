@@ -60,6 +60,8 @@ main = do
             execName <- genExec fname outname
             callProcess execName []
 
+        ["parse", fname] -> print =<< parseFileAst fname
+
         ["compile", fname, "to", outname] -> do
             genExec fname outname
             pure ()

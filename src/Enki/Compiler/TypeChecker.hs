@@ -258,7 +258,6 @@ joinTypes t1 t2 =
 unify :: Monad m => Type -> TypedId -> StateT Environment m Bool
 unify t (StringVal _) = joinTypes t EnkiString
 unify t (IntVal _)    = joinTypes t EnkiInt
-unify t (BoolVal _)   = joinTypes t EnkiBool
 unify t (VarVal str)  = do
     curT <- lookupType str
     joinTypes t curT
@@ -299,7 +298,7 @@ freshTypeVars t = do
     newT <- go t
 
     -- Restore the state
-    modify $ over typeVars $ const origVars
+    modify $ set typeVars origVars
 
     pure newT
 
@@ -341,10 +340,7 @@ findCall :: Monad m => Id -> StateT Environment m (Maybe (Map String (Type, Id),
 findCall id = do
     funcs <- (^.funcEnv) <$> get
     maybeDef <- (^.curDef) <$> get
-    curTyped <- case maybeDef of
-                    Nothing -> pure []
-                    Just def -> (:[]) <$> makeTempTyped def
-
+    curTyped <- mapM makeTempTyped $ maybeToList maybeDef
     possible <- catMaybes <$> mapM (unifyFunc id) (curTyped ++ funcs)
 
     case possible of
@@ -369,7 +365,6 @@ instance Typeable TypedDef where
 instance Typeable TypedId where
     getType (StringVal _)    = pure EnkiString
     getType (IntVal _)       = pure EnkiInt
-    getType (BoolVal _)      = pure EnkiBool
     getType (VarVal name)    = lookupType name
     getType (FuncCall def _) = returnType <$> getType def
     getType (FuncRef _ t _ _)    = pure t
@@ -443,7 +438,7 @@ inferOp id = error $ "Not an operator expression: " ++ show id
 
 instance Inferable Id TypedId where
     infer id@(S str) = do
-        res <- findCall $ Comp [id]
+        res <- findCall id
         case res of
             Nothing -> do
                 secondRes <- findCall $ Comp [id, V "FAKEARGNAME"]

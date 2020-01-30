@@ -13,7 +13,6 @@ data Id = S String
     deriving (Ord, Eq, Show)
 
 data Type = EnkiInt
-          | EnkiBool
           | EnkiString
           | Any String
           | Void
@@ -49,7 +48,6 @@ unwrapIds ids = Comp ids
 typeToId :: Type -> Id
 typeToId EnkiInt = S "int"
 typeToId EnkiString = S "string"
-typeToId EnkiBool = S "bool"
 typeToId Void = S "void"
 typeToId (Named str) = S str
 typeToId (Any v) = V v
@@ -62,7 +60,6 @@ typeToId (TypeName types) = Comp $ map typeToId types
 idToType :: Id -> Type
 idToType (S "int") = EnkiInt
 idToType (S "string") = EnkiString
-idToType (S "bool") = EnkiBool
 idToType (S "void") = Void
 idToType (S str) = Named str
 idToType (V v) = Any v
