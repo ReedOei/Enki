@@ -52,7 +52,6 @@ main :: IO ()
 main = do
     hSetBuffering stdout NoBuffering
 
-    -- TODO: Use a proper argument parsing library
     args <- getArgs
 
     case args of

@@ -440,13 +440,19 @@ str ignoreSymbols list = do
     if s `elem` list then
         parserFail "Found item from excluded list"
     else
-        pure $ S s
+        pure $ S $ processEscape s
 
     where
-        letters = nonEmpty ['a'..'z'] cs
+        letters = nonEmpty ('`' : ['a'..'z']) cs
         cs = ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ ['_']
 
-        symbols = many1 $ oneOf $ "!@#$%^&*[]{}|\\:;>-<=+*/" \\ ignoreSymbols
+        symbols = many1 $ oneOf $ "`!@#$%^&*[]{}|\\:;>-<=+*/" \\ ignoreSymbols
+
+        -- We use backquotes to allow defining names that use otherwise reserved identitiers like "is"
+        processEscape [] = []
+        processEscape ('`':'`':xs) = '`' : processEscape xs
+        processEscape ('`':xs) = processEscape xs
+        processEscape (x:xs) = x : processEscape xs
 
 nonEmpty :: String -> String -> Parser String
 nonEmpty start ending = do

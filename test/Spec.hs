@@ -210,4 +210,5 @@ main = hspec $ do
         runFile "examples/filter-test.enki" "30\n"
         runFile "examples/defref.enki" "24\n2\n[5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]\n"
         runFile "examples/string-test.enki" "[t,e,s,t,i,n,g,' ',t,h,i,n,g,' ',t,h,i,n,g,' ',o,u,t,' ',o,n,' ',a,' ',l,o,n,g,e,r,' ',s,t,r,i,n,g]\narghesarghing arghhing arghhing ouargh on a longer sarghring\n"
+        runFile "examples/test_backquote.enki" "0\n"
 
