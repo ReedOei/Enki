@@ -18,7 +18,7 @@ import System.Directory
 import System.Environment
 import System.FilePath.Posix
 
-import Text.Parsec
+import Text.Parsec hiding (newline)
 import Text.Parsec.Expr
 
 import Enki.Types
@@ -492,7 +492,19 @@ whitespace :: Parser ()
 whitespace = skipMany1 $ oneOf " \t\n\r"
 
 newlines :: Parser ()
-newlines = skipMany1 (wsSkip >> char '\n' >> wsSkip)
+newlines = skipMany1 (wsSkip >> newline >> wsSkip)
+
+skip p = p >> pure ()
+
+newline :: Parser ()
+newline = skip (char '\n') <|> try comment
+
+comment :: Parser ()
+comment = do
+    -- Consume as many characters as possible after seeing "--"
+    string "--"
+    many $ noneOf "\n"
+    pure ()
 
 symbol :: Stream s m Char => ParsecT s st m a -> ParsecT s st m a
 symbol parser = do
