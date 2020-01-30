@@ -1,11 +1,11 @@
 do not use base.
 
 step collatz X is
-    when X = 2*K + 1 then 3*X + 1.
-    otherwise then X = 2*N, N.
+    when X = 2*K + 1 then 3*X + 1;
+    default X = 2*N, N.
 
 collatz sequence on X takes N steps if
-    when X = 1 then N = 0.
-    otherwise then
+    when X = 1 then N = 0;
+    default
         collatz sequence on (step collatz X) takes (N - 1) steps.
 

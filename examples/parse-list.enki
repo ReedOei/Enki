@@ -1,20 +1,20 @@
 digit from Str is
-    when Str = "0" .. Rest then pair 0 and Rest.
-    when Str = "1" .. Rest then pair 1 and Rest.
-    when Str = "2" .. Rest then pair 2 and Rest.
-    when Str = "3" .. Rest then pair 3 and Rest.
-    when Str = "4" .. Rest then pair 4 and Rest.
-    when Str = "5" .. Rest then pair 5 and Rest.
-    when Str = "6" .. Rest then pair 6 and Rest.
-    when Str = "7" .. Rest then pair 7 and Rest.
-    when Str = "8" .. Rest then pair 8 and Rest.
-    when Str = "9" .. Rest then pair 9 and Rest.
-    otherwise then pair (-1) and Rest.
+    when Str = "0" .. Rest then pair 0 and Rest;
+    when Str = "1" .. Rest then pair 1 and Rest;
+    when Str = "2" .. Rest then pair 2 and Rest;
+    when Str = "3" .. Rest then pair 3 and Rest;
+    when Str = "4" .. Rest then pair 4 and Rest;
+    when Str = "5" .. Rest then pair 5 and Rest;
+    when Str = "6" .. Rest then pair 6 and Rest;
+    when Str = "7" .. Rest then pair 7 and Rest;
+    when Str = "8" .. Rest then pair 8 and Rest;
+    when Str = "9" .. Rest then pair 9 and Rest;
+    default pair (-1) and Rest.
 
 digits from Str is
     pair D and Rest = digit from Str,
-    when D = -1 then empty.
-    otherwise then
+    when D = -1 then empty;
+    default
         prepend D to digits from Rest.
 
 A mod B is
@@ -23,14 +23,14 @@ A mod B is
     R.
 
 X to reversed digits is
-    when X < 10 then singleton X.
-    otherwise then prepend (X mod 10) to (X / 10) to reversed digits.
+    when X < 10 then singleton X;
+    default prepend (X mod 10) to (X / 10) to reversed digits.
 
 X to digits is reverse list X to reversed digits.
 
 from reversed digit list List is
-    when List = cons H T then 10 * from reversed digit list T + H.
-    otherwise then 0.
+    when List = cons H T then 10 * from reversed digit list T + H;
+    default 0.
 
 from digit list List is
     from reversed digit list (reverse list List).

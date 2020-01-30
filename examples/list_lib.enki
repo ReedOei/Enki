@@ -7,35 +7,35 @@ list may be
         Tail : list.
 
 length of List is
-    when List = cons H T then 1 + length of T.
-    otherwise then 0.
+    when List = cons H T then 1 + length of T;
+    default 0.
 
 construct Head Full is
     Full = (cons Head Tail),
     Tail.
 
 concat A B is
-    when A = cons H T then cons H (concat T B).
-    otherwise then B.
+    when A = cons H T then cons H (concat T B);
+    default B.
 
 reverseAcc A Acc is
-    when A = cons H T then reverseAcc T (cons H Acc).
-    otherwise then Acc.
+    when A = cons H T then reverseAcc T (cons H Acc);
+    default Acc.
 
 reverse list A is reverseAcc A empty.
 
 range Low to High is
-    when Low > High then empty.
-    otherwise then cons Low (range (Low + 1) to High).
+    when Low > High then empty;
+    default cons Low (range (Low + 1) to High).
 
 sum List is N where
-    when List = cons H T then sum T is (N - H).
-    otherwise then N = 0.
+    when List = cons H T then sum T is (N - H);
+    default N = 0.
 
 formatHelper List is
-    when List = cons H empty then H .. "]".
-    when List = cons H T then H .. "," .. formatHelper T.
-    otherwise then "]".
+    when List = cons H empty then H .. "]";
+    when List = cons H T then H .. "," .. formatHelper T;
+    default "]".
 
 format list List is "[" .. formatHelper List.
 

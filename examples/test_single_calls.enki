@@ -1,10 +1,10 @@
 test X is
-    when true then 1.
-    otherwise then 2.
+    when true then 1;
+    default 2.
 
 test2 Y is
-    when false then 1.
-    otherwise then 2.
+    when false then 1;
+    default 2.
 
 display as text test 10.
 display as text test2 10.

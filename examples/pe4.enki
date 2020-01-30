@@ -6,8 +6,8 @@ N digit numbers is range (10^(N - 1)) to (10^N - 1).
 
 product pairs in List is
     when List = cons (pair A and B) T then
-        prepend (A * B) to product pairs in T.
-    otherwise then empty.
+        prepend (A * B) to product pairs in T;
+    default empty.
 
 palindromic numbers in List is filter (palindrome number _) List.
 

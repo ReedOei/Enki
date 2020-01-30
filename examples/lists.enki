@@ -14,16 +14,16 @@ construct Head Full is
     Tail.
 
 sum List is N where
-    when List = (cons H T) then sum T is (N - H).
-    otherwise then N = 0.
+    when List = (cons H T) then sum T is (N - H);
+    default N = 0.
 
 inc List is NewList where
     when List = (cons H T) then
-        inc T is (construct (H + 1) NewList).
-    otherwise then NewList = empty.
+        inc T is (construct (H + 1) NewList);
+    default NewList = empty.
 
 zip A and B is Zipped where
     when A = (cons HA TA), B = (cons HB TB) then
-        zip TA and TB is (construct (pair HA and HB) Zipped).
-    otherwise then Zipped = empty.
+        zip TA and TB is (construct (pair HA and HB) Zipped);
+    default Zipped = empty.
 

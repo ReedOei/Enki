@@ -1,6 +1,6 @@
 squares of List is
-    when List = cons H T then prepend (H^2) to squares of T.
-    otherwise then empty.
+    when List = cons H T then prepend (H^2) to squares of T;
+    default empty.
 
 answer up to N is
     SumSquare = the sum of squares of integers from 1 to N,

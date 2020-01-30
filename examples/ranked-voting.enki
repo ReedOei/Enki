@@ -1,13 +1,13 @@
 first vote for Candidates in Votes is
-    when Votes = cons Vote Rest, Candidates contains Vote then Vote.
-    when Votes = cons Vote Rest then first vote for Candidates in Rest.
-    otherwise then 1.
+    when Votes = cons Vote Rest, Candidates contains Vote then Vote;
+    when Votes = cons Vote Rest then first vote for Candidates in Rest;
+    default 1.
 
 tally votes for Candidates in Ballots is
     when Ballots = cons Ballot Rest then
         Candidate = first vote for Candidates in Ballot,
-        increment key Candidate in (tally votes for Candidates in Rest).
-    otherwise then empty.
+        increment key Candidate in (tally votes for Candidates in Rest);
+    default empty.
 
 Candidate has Votes is Candidate maps to Votes.
 
@@ -16,8 +16,8 @@ run voting for Candidates using Ballots is
     when
         Best = max value in Tally,
         just (Winner has Votes) = Best,
-        Votes > (length of Ballots) / 2 then Best.
-    otherwise then
+        Votes > (length of Ballots) / 2 then Best;
+    default
         just (Candidate has Votes) = min value in Tally,
         run voting for (remove Candidate from Candidates) using Ballots.
 

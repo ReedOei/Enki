@@ -5,8 +5,8 @@
 -- By considering the terms in the Fibonacci sequence whose values do not exceed four million, find the sum of the even-valued terms.
 
 fib nums A B Limit is
-    when A > Limit then empty.
-    otherwise then prepend A to fib nums B (A + B) Limit.
+    when A > Limit then empty;
+    default prepend A to fib nums B (A + B) Limit.
 
 fib seq up to N is fib nums 0 1 N.
 

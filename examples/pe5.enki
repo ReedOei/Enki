@@ -4,14 +4,14 @@ A mymod B is
     R.
 
 gcd of A and B is
-    when B = 0 then A.
-    otherwise then gcd of B and A mymod B.
+    when B = 0 then A;
+    default gcd of B and A mymod B.
 
 lcm of A and B is A * B / gcd of A and B.
 
 list lcm of List is
-    when List = cons H T then lcm of H and the list lcm of T.
-    otherwise then 1.
+    when List = cons H T then lcm of H and the list lcm of T;
+    default 1.
 
 display as text the list lcm of the integers from 1 to 20.
 

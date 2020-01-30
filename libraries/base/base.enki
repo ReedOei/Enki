@@ -48,113 +48,106 @@ pair A B may be
     pair X and Y has X : A, Y : B.
 
 list of length N is
-    when N <= 0 then empty.
-    otherwise then prepend NewElem to list of length (N - 1).
+    when N <= 0 then empty;
+    default prepend NewElem to list of length (N - 1).
 
 length of List is
-    when List = cons H T then 1 + length of T.
-    otherwise then 0.
+    when List = cons H T then 1 + length of T;
+    default 0.
 
 N th element of List is
-    when List = cons H T, N = 0 then H.
-    when List = cons H T, N > 0 then (N-1) th element of List.
-    otherwise then false, FAILURE.
+    when List = cons H T, N = 0 then H;
+    when List = cons H T, N > 0 then (N-1) th element of List;
+    default false, FAILURE.
 
 set index Idx of List to NewVal is
-    when List = cons H T, N <= 0 then prepend NewVal to T.
-    when List = cons H T, N > 0 then prepend H to set index (Idx - 1) of T to NewVal.
-    otherwise then prepend NewVal to empty.
+    when List = cons H T, N <= 0 then prepend NewVal to T;
+    when List = cons H T, N > 0 then prepend H to set index (Idx - 1) of T to NewVal;
+    default prepend NewVal to empty.
 
 concat A with B is
-    when A = cons H T then prepend H to concat T with B.
-    otherwise then A = empty, B.
+    when A = cons H T then prepend H to concat T with B;
+    default A = empty, B.
 
 A ++ B is concat A with B.
 
 flatten List is
-    when List = cons H T then concat H with flatten T.
-    otherwise then empty.
+    when List = cons H T then concat H with flatten T;
+    default empty.
 
 reverseAcc A Acc is
-    when A = cons H T then reverseAcc T (cons H Acc).
-    otherwise then Acc.
+    when A = cons H T then reverseAcc T (cons H Acc);
+    default Acc.
 
 reverse list A is reverseAcc A empty.
 
 sum of List is
-    when List = cons H T then H + sum of T.
-    otherwise then 0.
+    when List = cons H T then H + sum of T;
+    default 0.
 
 multiples of A in List is filter List with (A divides _).
 
 formatHelper List is
-    when List = cons H empty then (as text H) .. "]".
-    when List = cons H T then (as text H) .. "," .. formatHelper T.
-    otherwise then "]".
+    when List = cons H empty then (as text H) .. "]";
+    when List = cons H T then (as text H) .. "," .. formatHelper T;
+    default "]".
 
 format list List is "[" .. formatHelper List.
 
 range Low to High is
-    when Low > High then empty.
-    otherwise then cons Low (range (Low + 1) to High).
+    when Low > High then empty;
+    default cons Low (range (Low + 1) to High).
 
 range from Low to High is range Low to High.
 integers from Low to High is range Low to High.
 
-inc List is
-    when List = (cons H T) then
-        cons (H + 1) (inc T).
-    otherwise then empty.
-
 zip A and B is
     when A = cons HA TA, B = cons HB TB then
-        cons (pair HA and HB) (zip TA and TB).
-    otherwise then empty.
+        cons (pair HA and HB) (zip TA and TB);
+    default empty.
 
 zip with F A and B is
     when A = cons HA TA, B = cons HB TB then
-        cons (call (call F on HA) on HB) (zip with F TA and TB).
-    otherwise then empty.
+        cons (call (call F on HA) on HB) (zip with F TA and TB);
+    default empty.
 
 -- The other zip functions are quite permissive, and don't care if the two lists have different lengths.
 -- This one does.
 zip same length F A and B is
     when A = cons HA TA, B = cons HB TB then
-        cons (call (call F on HA) on HB) (zip same length F TA and TB).
-    when A = empty, B = empty then empty.
-    otherwise then false, empty.
+        cons (call (call F on HA) on HB) (zip same length F TA and TB);
+    when A = empty, B = empty then empty;
+    default false, empty.
 
 max of A and B is
-    when A > B then A.
-    otherwise then B.
+    when A > B then A;
+    default B.
 
 min of A and B is
-    when A > B then A.
-    otherwise then B.
+    when A > B then A;
+    default B.
 
 maximum of List is
-    when List = cons H empty then H.
+    when List = cons H empty then H;
     when List = cons H T then max of H and maximum of T.
-    otherwise then 0.
 
 minimum of List is
-    when List = cons H empty then H.
+    when List = cons H empty then H;
     when List = cons H T then min of H and minimum of T.
-    otherwise then 0.
 
 find factor of N starting with X is
-    when X divides N then X.
-    otherwise then find factor of N starting with (X + 1).
+    when X divides N then X;
+    default find factor of N starting with (X + 1).
 
 factors of N is
-    when N = 1 then empty.
-    otherwise then
+    when N = 1 then empty;
+    default
         Factor = find factor of N starting with 2,
         cons Factor factors of (N / Factor).
 
 digits of N is
-    when N < 10 then cons N empty.
-    otherwise then
+    when N < 10 then cons N empty;
+    default
         N = 10*Rest + Digit,
         Digit >= 0, Digit < 10,
         cons Digit digits of Rest.
@@ -163,48 +156,48 @@ palindrome List if reverse list List = List.
 palindromic number N if palindrome digits of N.
 
 pair X with each List is
-    when List = cons H T then cons (pair X and H) (pair X with each T).
-    otherwise then empty.
+    when List = cons H T then cons (pair X and H) (pair X with each T);
+    default empty.
 
 cartesian product of A and B is
     when A = cons H T then
-        concat (pair H with each B) with cartesian product of T and B.
-    otherwise then empty.
+        concat (pair H with each B) with cartesian product of T and B;
+    when A = empty then empty.
 
 pairs of A and B is cartesian product of A and B.
 
 take N from List is
-    when N > 0, List = cons H T then cons H (take (N - 1) from T).
-    otherwise then empty.
+    when N > 0, List = cons H T then cons H (take (N - 1) from T);
+    default empty.
 
 drop N from List is
-    when N > 0, List = cons H T then drop (N - 1) from T.
-    otherwise then List.
+    when N > 0, List = cons H T then drop (N - 1) from T;
+    default List.
 
 product of List is
-    when List = cons H T then H * (product of T).
-    otherwise then 1.
+    when List = cons H T then H * (product of T);
+    default 1.
 
 element N of List starting with H is
-    when N <= 0 then H.
-    when List = cons X Rest then element (N - 1) of Rest starting with X.
-    otherwise then H.
+    when N <= 0 then H;
+    when List = cons X Rest then element (N - 1) of Rest starting with X;
+    default H.
 
 chunks of size L in List is
-    when List = empty then empty.
-    otherwise then cons (take L from List) (chunks of size L in drop L from List).
+    when List = empty then empty;
+    default cons (take L from List) (chunks of size L in drop L from List).
 
 chunks of length L in List is chunks of size L in List.
 
 List contains Element if
-    when List = cons H T, H = Element then 1 = 1.
-    when List = cons H T then T contains Element.
-    otherwise then 1 = 2.
+    when List = cons H T, H = Element then 1 = 1;
+    when List = cons H T then T contains Element;
+    default 1 = 2.
 
 remove Element from List is
-    when List = cons H T, H = Element then T.
-    when List = cons H T then cons H (remove Element from T).
-    otherwise then 1 = 2, empty.
+    when List = cons H T, H = Element then T;
+    when List = cons H T then cons H (remove Element from T);
+    default 1 = 2, empty.
 
 mapping K V may be X |-> Y has X : K, Y : V.
 
@@ -217,9 +210,9 @@ maybe A may be
 ordering may be equal | greater | less.
 
 compare A to B is
-    when A > B then greater.
-    when A < B then less.
-    otherwise then equal.
+    when A > B then greater;
+    when A < B then less;
+    default equal.
 
 key in (K maps to V) is K.
 value in (K maps to V) is V.
@@ -238,75 +231,75 @@ remove key Key from Map is remove (Key |-> V) from Map.
 increment key Key in Map is insert Key (V + 1) into (remove (Key |-> V) from Map).
 
 max key at least M1 in Map is
-    when Map = cons M2 Assocs, compare keys M2 to M1 = less then max key at least M2 in Assocs.
-    when Map = cons P Assocs then max key at least M1 in Assocs.
-    otherwise then M1.
+    when Map = cons M2 Assocs, compare keys M2 to M1 = less then max key at least M2 in Assocs;
+    when Map = cons P Assocs then max key at least M1 in Assocs;
+    default M1.
 
 max key in Map is
-    when Map = cons M1 Assocs then just (max key at least M1 in Map).
-    otherwise then nothing.
+    when Map = cons M1 Assocs then just (max key at least M1 in Map);
+    default nothing.
 
 min key no more than M1 in Map is
-    when Map = cons M2 Assocs, compare keys M2 to M1 = less then min key no more than M2 in Assocs.
-    when Map = cons P Assocs then min key no more than M1 in Assocs.
-    otherwise then M1.
+    when Map = cons M2 Assocs, compare keys M2 to M1 = less then min key no more than M2 in Assocs;
+    when Map = cons P Assocs then min key no more than M1 in Assocs;
+    default M1.
 
 min key in Map is
-    when Map = cons M1 Assocs then just (min key no more than M1 in Map).
-    otherwise then nothing.
+    when Map = cons M1 Assocs then just (min key no more than M1 in Map);
+    default nothing.
 
 max value at least M1 in Map is
-    when Map = cons M2 Assocs, compare values M2 to M1 = less then max value at least M2 in Assocs.
-    when Map = cons P Assocs then max value at least M1 in Assocs.
-    otherwise then M1.
+    when Map = cons M2 Assocs, compare values M2 to M1 = less then max value at least M2 in Assocs;
+    when Map = cons P Assocs then max value at least M1 in Assocs;
+    default M1.
 
 max value in Map is
-    when Map = cons M1 Assocs then just (max value at least M1 in Map).
-    otherwise then nothing.
+    when Map = cons M1 Assocs then just (max value at least M1 in Map);
+    default nothing.
 
 min value no more than M1 in Map is
-    when Map = cons M2 Assocs, compare values M2 to M1 = less then min value no more than M2 in Assocs.
-    when Map = cons P Assocs then min value no more than M1 in Assocs.
-    otherwise then M1.
+    when Map = cons M2 Assocs, compare values M2 to M1 = less then min value no more than M2 in Assocs;
+    when Map = cons P Assocs then min value no more than M1 in Assocs;
+    default M1.
 
 min value in Map is
-    when Map = cons M1 Assocs then just (min value no more than M1 in Map).
-    otherwise then nothing.
+    when Map = cons M1 Assocs then just (min value no more than M1 in Map);
+    default nothing.
 
 singleton list X is cons X empty.
 
 init List is
-    when List = cons H empty then empty.
-    when List = cons H T then cons H (init T).
-    otherwise then empty.
+    when List = cons H empty then empty;
+    when List = cons H T then cons H (init T);
+    default empty.
 
 last List is
-    when List = cons H empty then just H.
-    when List = cons H T then last T.
-    otherwise then nothing.
+    when List = cons H empty then just H;
+    when List = cons H T then last T;
+    default nothing.
 
 List does not contain Element if
-    when List = cons Element T then 1 = 2.
-    when List = cons H T, H != Element then T does not contain Element.
-    otherwise then 1 = 1.
+    when List = cons Element T then 1 = 2;
+    when List = cons H T, H != Element then T does not contain Element;
+    default 1 = 1.
 
 digit from Str is
-    when Str = "0" .. Rest then pair 0 and Rest.
-    when Str = "1" .. Rest then pair 1 and Rest.
-    when Str = "2" .. Rest then pair 2 and Rest.
-    when Str = "3" .. Rest then pair 3 and Rest.
-    when Str = "4" .. Rest then pair 4 and Rest.
-    when Str = "5" .. Rest then pair 5 and Rest.
-    when Str = "6" .. Rest then pair 6 and Rest.
-    when Str = "7" .. Rest then pair 7 and Rest.
-    when Str = "8" .. Rest then pair 8 and Rest.
-    when Str = "9" .. Rest then pair 9 and Rest.
-    otherwise then pair (-1) and Rest.
+    when Str = "0" .. Rest then pair 0 and Rest;
+    when Str = "1" .. Rest then pair 1 and Rest;
+    when Str = "2" .. Rest then pair 2 and Rest;
+    when Str = "3" .. Rest then pair 3 and Rest;
+    when Str = "4" .. Rest then pair 4 and Rest;
+    when Str = "5" .. Rest then pair 5 and Rest;
+    when Str = "6" .. Rest then pair 6 and Rest;
+    when Str = "7" .. Rest then pair 7 and Rest;
+    when Str = "8" .. Rest then pair 8 and Rest;
+    when Str = "9" .. Rest then pair 9 and Rest;
+    default pair (-1) and Rest.
 
 digits from Str is
     pair D and Rest = digit from Str,
-    when D = -1 then empty.
-    otherwise then
+    when D = -1 then empty;
+    default
         prepend D to digits from Rest.
 
 A mod B is
@@ -315,14 +308,14 @@ A mod B is
     R.
 
 X to reversed digits is
-    when X < 10 then singleton list X.
-    otherwise then prepend (X mod 10) to (X / 10) to reversed digits.
+    when X < 10 then singleton list X;
+    default prepend (X mod 10) to (X / 10) to reversed digits.
 
 X to digits is reverse list X to reversed digits.
 
 from reversed digit list List is
-    when List = cons H T then 10 * from reversed digit list T + H.
-    otherwise then 0.
+    when List = cons H T then 10 * from reversed digit list T + H;
+    default 0.
 
 from digit list List is
     from reversed digit list (reverse list List).
@@ -335,19 +328,19 @@ first letter of Text is
     Letter.
 
 characters of Text is
-    when Text = "" then empty.
-    otherwise then
+    when Text = "" then empty;
+    default
         Text = Letter .. Rest,
         number of characters in Letter = 1,
         prepend Letter to characters of Rest.
 
 text from characters in Cs is
-    when Cs = cons C Rest then C .. text from characters in Rest.
-    otherwise then "".
+    when Cs = cons C Rest then C .. text from characters in Rest;
+    default "".
 
 replace X with Y in A is
+    when A = X then Y;
     when A != X then A.
-    otherwise then Y.
 
 text replace X with Y in T is
     text from characters in map (replace X with Y in _) over characters of T.
@@ -358,13 +351,11 @@ set of A may be
     X u Y has X : set of A, Y : set of A.
 
 X element of S if
-    when S = {Y} then X = Y.
+    when S = {Y} then X = Y;
     when S = A u B then either (_ element of A) or (_ element of B) holds for X.
-    otherwise then false.
 
 canonize set S is
-    when S = (empty set) u X then canonize set X.
-    when S = X u empty set then canonize set X.
+    when S = (empty set) u X then canonize set X;
+    when S = X u empty set then canonize set X;
     when S = X u Y then (canonize set X) u (canonize set Y).
-    otherwise then S.
 
