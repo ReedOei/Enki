@@ -47,6 +47,9 @@ prepend Head to Tail is cons Head Tail.
 pair A B may be
     pair X and Y has X : A, Y : B.
 
+fst (pair A and B) is A.
+snd (pair A and B) is B.
+
 list of length N is
     when N <= 0 then empty;
     default prepend NewElem to list of length (N - 1).
@@ -76,13 +79,13 @@ flatten List is
 
 reverseAcc A Acc is
     when A = cons H T then reverseAcc T (cons H Acc);
-    default Acc.
+    when A = empty then Acc.
 
 reverse list A is reverseAcc A empty.
 
 sum of List is
-    when List = cons H T then H + sum of T;
-    default 0.
+    when List = empty then 0;
+    when List = cons H T then H + sum of T.
 
 multiples of A in List is filter List with (A divides _).
 
@@ -263,43 +266,47 @@ min value no more than M1 in Map is
 
 min value in Map is
     when Map = cons M1 Assocs then just (min value no more than M1 in Map);
-    default nothing.
+    when Map = empty then nothing.
 
 singleton list X is cons X empty.
 
 init List is
     when List = cons H empty then empty;
     when List = cons H T then cons H (init T);
-    default empty.
+    when List = empty then empty.
 
 last List is
     when List = cons H empty then just H;
     when List = cons H T then last T;
-    default nothing.
+    when List = empty then nothing.
 
-List does not contain Element if
-    when List = cons Element T then 1 = 2;
-    when List = cons H T, H != Element then T does not contain Element;
-    default 1 = 1.
+digit list is cons "0" (cons "1" (cons "2" (cons "3" (cons "4" (cons "5" (cons "6" (cons "7" (cons "8" (cons "9" empty))))))))).
 
-digit from Str is
-    when Str = "0" .. Rest then pair 0 and Rest;
-    when Str = "1" .. Rest then pair 1 and Rest;
-    when Str = "2" .. Rest then pair 2 and Rest;
-    when Str = "3" .. Rest then pair 3 and Rest;
-    when Str = "4" .. Rest then pair 4 and Rest;
-    when Str = "5" .. Rest then pair 5 and Rest;
-    when Str = "6" .. Rest then pair 6 and Rest;
-    when Str = "7" .. Rest then pair 7 and Rest;
-    when Str = "8" .. Rest then pair 8 and Rest;
-    when Str = "9" .. Rest then pair 9 and Rest;
-    default pair (-1) and Rest.
+first character of Text is
+    Text = Letter .. Rest,
+    number of characters in Letter = 1,
+    Letter.
+
+first letter of Text is first character of Text.
+
+first digit Digit of Str and Rest where
+    when Str = "0" .. Rest then Digit = 0;
+    when Str = "1" .. Rest then Digit = 1;
+    when Str = "2" .. Rest then Digit = 2;
+    when Str = "3" .. Rest then Digit = 3;
+    when Str = "4" .. Rest then Digit = 4;
+    when Str = "5" .. Rest then Digit = 5;
+    when Str = "6" .. Rest then Digit = 6;
+    when Str = "7" .. Rest then Digit = 7;
+    when Str = "8" .. Rest then Digit = 8;
+    when Str = "9" .. Rest then Digit = 9.
 
 digits from Str is
-    pair D and Rest = digit from Str,
-    when D = -1 then empty;
-    default
-        prepend D to digits from Rest.
+    when first digit Digit of Str and Rest then
+        pair Digs and Remaining = digits from Rest,
+        pair (prepend Digit to Digs) and Remaining;
+    when not(first digit Digit of Str and Rest) then
+        pair empty and Str.
 
 A mod B is
     A = Q*B + R,
@@ -308,27 +315,32 @@ A mod B is
 
 X to reversed digits is
     when X < 10 then singleton list X;
-    default prepend (X mod 10) to (X / 10) to reversed digits.
+    when X >= 10 then prepend (X mod 10) to (X / 10) to reversed digits.
 
 X to digits is reverse list X to reversed digits.
 
 from reversed digit list List is
     when List = cons H T then 10 * from reversed digit list T + H;
-    default 0.
+    when List = empty then 0.
 
-from digit list List is
-    from reversed digit list (reverse list List).
+from digit list List is from reversed digit list (reverse list List).
 
-int from Str is from digit list (digits from Str).
+parse int I from Str and Rest where
+    pair Digits and Rest = digits from Str,
+    I = from digit list Digits.
 
-first letter of Text is
-    Text = Letter .. Rest,
-    number of characters in Letter = 1,
-    Letter.
+parse all F Str is
+    call F on Str = pair Res and Rest,
+    when Rest = "" then Res;
+    when Rest != "" then Res ++ (parse all F Rest).
+
+int from Str is
+    parse int I from Str and Rest,
+    I.
 
 characters of Text is
     when Text = "" then empty;
-    default
+    when Text != "" then
         Text = Letter .. Rest,
         number of characters in Letter = 1,
         prepend Letter to characters of Rest.

@@ -370,7 +370,7 @@ untilFail parser = do
 
 quoteId :: Parser Id
 quoteId = do
-    s <- between (symbol (string "\"")) (symbol (string "\"")) $ many $ noneOf "\""
+    s <- between (skipMany whitespace >> (string "\"")) (string "\"" >> skipMany whitespace) $ many $ noneOf "\""
     pure $ S $ "\"" ++ s ++ "\""
 
 parens :: String -> [String] -> Parser Id
