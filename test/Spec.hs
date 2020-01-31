@@ -196,4 +196,5 @@ main = hspec $ do
         runFile "examples/string-test.enki" "[t,e,s,t,i,n,g,' ',t,h,i,n,g,' ',t,h,i,n,g,' ',o,u,t,' ',o,n,' ',a,' ',l,o,n,g,e,r,' ',s,t,r,i,n,g]\narghesarghing arghhing arghhing ouargh on a longer sarghring\n"
         runFile "examples/test_backquote.enki" "0\n"
         runFile "examples/test_single_calls.enki" "1\n2\n"
+        runFile "examples/test_not.enki" "2\n1\n1\n2\n"
 

@@ -57,8 +57,7 @@ length of List is
 
 N th element of List is
     when List = cons H T, N = 0 then H;
-    when List = cons H T, N > 0 then (N-1) th element of List;
-    default false, FAILURE.
+    when List = cons H T, N > 0 then (N-1) th element of List.
 
 set index Idx of List to NewVal is
     when List = cons H T, N <= 0 then prepend NewVal to T;

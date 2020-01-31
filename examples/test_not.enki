@@ -1,0 +1,28 @@
+do not use base.
+
+true if 1 = 1.
+false if 1 = 2.
+
+even X if X = 2*K.
+
+display X where writeln X.
+as text X is term_to_atom X.
+
+test X is
+    when not(even X) then 1;
+    when not(false) then 2.
+
+display as text test 40.
+display as text test 41.
+
+A substring of B if
+    B = Start .. Rest,
+    Start = Before .. A.
+
+blah X is
+    when not("," substring of X) then 1;
+    when "," substring of X then 2.
+
+display as text blah "testing".
+display as text blah "tes,ting".
+

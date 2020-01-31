@@ -71,7 +71,7 @@ newVar = do
     pure $ "Temp" ++ show i
 
 resetCounter :: Monad m => StateT CodeGenEnv m ()
-resetCounter = modify $ over freshCounter (const 0)
+resetCounter = modify $ set freshCounter 0
 
 destructComp :: Computation -> ([PrologConstraint], [PrologExpr])
 destructComp (Computation cs res) = (cs, [res])
@@ -80,12 +80,18 @@ destructComp (ConstraintComp cs) = (cs, [])
 concatComps :: [Computation] -> ([PrologConstraint], [PrologExpr])
 concatComps = over _2 concat . over _1 concat . unzip . map destructComp
 
+safeInit [] = []
+safeInit xs@(_:_) = init xs
+
+initComps :: [Computation] -> ([PrologConstraint], [PrologExpr])
+initComps = over _2 concat . over _1 (concatMap safeInit) . unzip . map destructComp
+
 genFuncCall :: Monad m => TypedDef -> Map String Computation -> String -> StateT CodeGenEnv m ([PrologConstraint], PrologExpr)
 genFuncCall def paramVals resName = do
     let comps = map doLookup $ vars $ defId def
     let name  = idToName $ defId def
 
-    let (constraints, params) = concatComps comps
+    let (constraints, params) = if defId def == Comp [S "not", V "G"] then initComps comps else concatComps comps
 
     pure $ case def of
         TypedConstructor _ _ -> (constraints, PrologFunctor name params)
@@ -93,7 +99,7 @@ genFuncCall def paramVals resName = do
         TypedFunc _ _ _ _ -> (constraints ++ [PredCall name $ params ++ [PrologVar resName]], PrologVar resName)
 
         -- The result of this is not really used, but we return it anyway for consistency's sake
-        TypedRule _ _ _ -> (constraints ++ [PredCall name params], last params)
+        TypedRule _ _ _ -> (constraints ++ [PredCall name params], PrologFunctor name params)
 
     where
         doLookup paramName =
