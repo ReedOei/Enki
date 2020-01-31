@@ -60,11 +60,11 @@ length of List is
 
 N th element of List is
     when List = cons H T, N = 0 then H;
-    when List = cons H T, N > 0 then (N-1) th element of List.
+    when List = cons H T, N > 0 then (N-1) th element of T.
 
 set index Idx of List to NewVal is
-    when List = cons H T, N <= 0 then prepend NewVal to T;
-    when List = cons H T, N > 0 then prepend H to set index (Idx - 1) of T to NewVal;
+    when List = cons H T, Idx <= 0 then prepend NewVal to T;
+    when List = cons H T, Idx > 0 then prepend H to set index (Idx - 1) of T to NewVal;
     default prepend NewVal to empty.
 
 concat A with B is
