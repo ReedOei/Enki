@@ -47,9 +47,9 @@ Sample code to solve [Problem 1](https://projecteuler.net/problem=1) on [Project
 A divides B if B = A*N.
 
 multiples of A in List is
-    when List = cons H T, A divides H then cons H (multiples of A in T).
-    when List = cons H T then multiples of A in T.
-    otherwise then empty.
+    when List = H :: T, A divides H then prepend H to multiples of A in T;
+    when List = H :: T then multiples of A in T;
+    when List = empty then empty.
 
 answer less than N is
     ThreeMult = multiples of 3 in range 1 to N,
@@ -70,8 +70,8 @@ Sample code to solve [Problem 2](https://projecteuler.net/problem=2) on [Project
 
 ```enki
 fib nums A B Limit is
-    when A > Limit then empty.
-    otherwise then prepend A to fib nums B (A + B) Limit.
+    when A > Limit then empty;
+    when A <= Limit then prepend A to fib nums B (A + B) Limit.
 
 fib seq up to N is fib nums 0 1 N.
 
