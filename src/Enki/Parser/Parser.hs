@@ -354,7 +354,7 @@ enkiId symbols = fmap sanitize . buildExpressionParser opTable . baseEnkiId symb
 
 baseEnkiId :: String -> [String] -> Parser Id
 baseEnkiId symbols excluded = do
-    ids <- untilFail $ choice $ map symbol [var, int, parens symbols excluded, try (str symbols excluded), quoteId]
+    ids <- untilFail $ choice $ map symbol [try (listLiteral symbols excluded), var, int, parens symbols excluded, try (str symbols excluded), quoteId]
     pure $ case ids of
         [i] -> i
         xs -> Comp xs
@@ -367,6 +367,25 @@ untilFail parser = do
         Just v -> do
             rs <- untilFail parser
             pure $ v:rs
+
+listLiteral :: String -> [String] -> Parser Id
+listLiteral ignoreSymbols excluded = do
+    symbol $ string "["
+
+    elems <- sepEndBy (try listElem) (symbol (string ","))
+
+    symbol $ string "]"
+
+    pure $ foldr makeCons emptyId elems
+
+    where
+        listElem = enkiId (ignoreSymbols ++ "[]") excluded
+
+        emptyId = S "empty"
+
+        -- TODO: Not sure why we sometimes get an empty list for x, but if we do, we should drop it
+        makeCons (Comp []) xs = xs
+        makeCons x xs = Comp [S "cons", x, xs]
 
 quoteId :: Parser Id
 quoteId = do

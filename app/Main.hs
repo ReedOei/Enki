@@ -19,8 +19,10 @@ runRepl = do
     runReplWith ".enki-repl.enki"
 
 runFile fname = do
-    execName <- genExec fname $ fname ++ ".out"
-    callProcess execName []
+    source <- compileTime $ compile fname
+    let outputName = fname ++ "_out.pl"
+    writeFile outputName source
+    callProcess "swipl" [outputName]
 
 runReplWith :: String -> IO ()
 runReplWith fname = do

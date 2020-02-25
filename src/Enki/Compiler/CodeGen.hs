@@ -18,6 +18,8 @@ import qualified Data.Map as Map
 import Enki.Types
 import Enki.Compiler.Types
 
+import System.IO.Unsafe
+
 data CodeGenEnv = CodeGenEnv
     { _freshCounter :: Integer }
     deriving (Eq, Show)
@@ -263,7 +265,9 @@ instance PrettyPrint PrologExpr where
     prettyPrint (PrologAtom str)            = ["'" ++ unquote str ++ "'"]
     prettyPrint (PrologVar str)             = [str]
     prettyPrint (PrologOpExpr op e1 e2)     = ["(" ++ prettyExpr e1 ++ " " ++ op ++ " " ++ prettyExpr e2 ++ ")"]
-    prettyPrint (PrologFunctor name params) = [name ++ "(" ++ intercalate "," (map prettyExpr params) ++ ")"]
+    prettyPrint (PrologFunctor name params)
+        | null params = [name]
+        | otherwise = [name ++ "(" ++ intercalate "," (map prettyExpr params) ++ ")"]
     prettyPrint (PrologLambda free bound body) =
         [curryBodies free bound body]
 
@@ -302,7 +306,11 @@ instance PrettyPrint PrologConstraint where
         ["("] ++ mapConj a ++ ["    ;"] ++ mapConj b ++ [")"]
 
 instance PrettyPrint PrologDef where
-    prettyPrint (Predicate typeStr name params []) = ["% " ++ typeStr ++ "\n" ++ name ++ "(" ++ intercalate "," params ++ ")."]
+    prettyPrint (Predicate typeStr name [] []) = ["% " ++ typeStr, name ++ "."]
+    prettyPrint (Predicate typeStr name params []) = ["% " ++ typeStr, name ++ "(" ++ intercalate "," params ++ ")."]
+    prettyPrint (Predicate typeStr name [] constrs) =
+        ["% " ++ typeStr, name ++ " :-"] ++
+        placeLast "." (mapConj constrs)
     prettyPrint (Predicate typeStr name params constrs) =
         ["% " ++ typeStr, name ++ "(" ++ intercalate "," params ++ ") :-"] ++
         placeLast "." (mapConj constrs)

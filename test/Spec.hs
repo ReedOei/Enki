@@ -98,6 +98,19 @@ main = hspec $ do
             let (Right v) = parse int "" "301"
             v `shouldBe` I 301
 
+    describe "listLiteral" $ do
+        it "parses empty lists" $ do
+            let v = parse (listLiteral [] []) "" "[]"
+            v `shouldBe` Right (S "empty")
+
+        it "parses lists" $ do
+            let v = parse (listLiteral [] []) "" "[1,2,3]"
+            v `shouldBe` Right (Comp [S "cons", I 1, Comp [S "cons", I 2,Comp [S "cons",I 3,S "empty"]]])
+
+        it "parses nested lists" $ do
+            let v = parse (listLiteral [] []) "" "[[f 1 and 3,2,3],2,3]"
+            v `shouldBe` Right (Comp [S "cons",Comp [S "cons",Comp [S "f",I 1,S "and",I 3],Comp [S "cons",I 2,Comp [S "cons",I 3,S "empty"]]],Comp [S "cons",I 2,Comp [S "cons",I 3,S "empty"]]])
+
     describe "enkiId" $ do
         it "parses a single expression" $ do
             let (Right v) = parse (enkiId "" []) "" "test"

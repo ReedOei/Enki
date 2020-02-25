@@ -98,7 +98,7 @@ format list List is "[" .. formatHelper List.
 
 range Low to High is
     when Low > High then empty;
-    default cons Low (range (Low + 1) to High).
+    when Low <= High then cons Low (range (Low + 1) to High).
 
 range from Low to High is range Low to High.
 integers from Low to High is range Low to High.
@@ -106,12 +106,14 @@ integers from Low to High is range Low to High.
 zip A and B is
     when A = cons HA TA, B = cons HB TB then
         cons (pair HA and HB) (zip TA and TB);
-    default empty.
+    when A = empty then empty;
+    when B = empty then empty.
 
 zip with F A and B is
     when A = cons HA TA, B = cons HB TB then
         cons (call (call F on HA) on HB) (zip with F TA and TB);
-    default empty.
+    when A = empty then empty;
+    when B = empty then empty.
 
 -- The other zip functions are quite permissive, and don't care if the two lists have different lengths.
 -- This one does.
