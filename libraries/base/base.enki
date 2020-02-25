@@ -151,7 +151,7 @@ factors of N is
 
 digits of N is
     when N < 10 then cons N empty;
-    default
+    when N >= 10 then
         N = 10*Rest + Digit,
         Digit >= 0, Digit < 10,
         cons Digit digits of Rest.
