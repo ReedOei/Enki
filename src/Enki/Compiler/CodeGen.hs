@@ -7,6 +7,7 @@
 module Enki.Compiler.CodeGen where
 
 import Control.Lens
+import Control.Arrow ((***))
 import Control.Monad.Trans.State.Lazy
 
 import Data.Char
@@ -68,25 +69,24 @@ idToName = intercalate "_" . nonVarStrs
 
 newVar :: Monad m => StateT CodeGenEnv m String
 newVar = do
-    i <- (^.freshCounter) <$> get
-    modify $ over freshCounter (+1)
+    i <- freshCounter <<+= 1
     pure $ "Temp" ++ show i
 
 resetCounter :: Monad m => StateT CodeGenEnv m ()
-resetCounter = modify $ set freshCounter 0
+resetCounter = freshCounter .= 0
 
 destructComp :: Computation -> ([PrologConstraint], [PrologExpr])
 destructComp (Computation cs res) = (cs, [res])
 destructComp (ConstraintComp cs) = (cs, [])
 
 concatComps :: [Computation] -> ([PrologConstraint], [PrologExpr])
-concatComps = over _2 concat . over _1 concat . unzip . map destructComp
+concatComps = (concat *** concat) . unzip . map destructComp
 
 safeInit [] = []
 safeInit xs@(_:_) = init xs
 
 initComps :: [Computation] -> ([PrologConstraint], [PrologExpr])
-initComps = over _2 concat . over _1 (concatMap safeInit) . unzip . map destructComp
+initComps = (concatMap safeInit *** concat) . unzip . map destructComp
 
 genFuncCall :: Monad m => TypedDef -> Map String Computation -> String -> StateT CodeGenEnv m ([PrologConstraint], PrologExpr)
 genFuncCall def paramVals resName = do
