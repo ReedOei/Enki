@@ -18,9 +18,9 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 
 import Enki.Types
+import Enki.Compiler.Optimizer
+import Enki.Compiler.Prolog
 import Enki.Compiler.Types
-
-import System.IO.Unsafe
 
 data CodeGenEnv = CodeGenEnv
     { _freshCounter :: Integer }
@@ -29,28 +29,6 @@ makeLenses ''CodeGenEnv
 
 newCodeGenEnv :: CodeGenEnv
 newCodeGenEnv = CodeGenEnv 0
-
-data PrologFile = PrologFile String [PrologDef]
-    deriving (Eq, Show)
-
-data PrologDef = Predicate String String [String] [PrologConstraint]
-               | Main [PrologConstraint]
-    deriving (Eq, Show)
-
-data PrologExpr = PrologInt Integer
-                | PrologAtom String
-                | PrologVar String
-                | PrologOpExpr String PrologExpr PrologExpr
-                | PrologFunctor String [PrologExpr]
-                | PrologLambda [String] [String] PrologConstraint
-    deriving (Eq, Show)
-
-data PrologConstraint = PredCall String [PrologExpr]
-                      | PrologOp String PrologExpr PrologExpr
-                      | Condition [PrologConstraint] [PrologConstraint]
-                      | Disjunction [PrologConstraint] [PrologConstraint]
-                      | Conjunction [PrologConstraint] [PrologConstraint]
-    deriving (Eq, Show)
 
 data Computation = Computation [PrologConstraint] PrologExpr
                  | ConstraintComp [PrologConstraint]
@@ -370,7 +348,7 @@ instance PrettyPrint PrologFile where
         main ++
         concat (placeSep "\n" (map prettyPrint rest))
         where
-            (main, rest) = makeMain defs
+            (main, rest) = makeMain $ concatMap optimize defs
 
 header = "#!/usr/bin/env swipl\n\n" ++
          ":- use_module(library(clpfd)).\n\n" ++

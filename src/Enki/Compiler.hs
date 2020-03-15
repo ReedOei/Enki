@@ -7,9 +7,10 @@ import Control.Monad.Trans.State.Lazy
 import Data.List
 
 import Enki.Parser.Parser
+import Enki.Compiler.CodeGen
+import Enki.Compiler.Prolog
 import Enki.Compiler.Types
 import Enki.Compiler.TypeChecker
-import Enki.Compiler.CodeGen
 
 import System.Directory
 import System.Environment

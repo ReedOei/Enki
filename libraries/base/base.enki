@@ -368,6 +368,7 @@ X element of S if
     when S = A u B then either (_ element of A) or (_ element of B) holds for X.
 
 canonize set S is
+    when S = empty set then empty set;
     when S = (empty set) u X then canonize set X;
     when S = X u empty set then canonize set X;
     when S = X u Y then (canonize set X) u (canonize set Y).

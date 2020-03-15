@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.1.
+-- This file has been generated from package.yaml by hpack version 0.31.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 48421407b3df1b747928b12d3972bc261365a48fa82b55364ab7a83a8f4813ed
+-- hash: 8ee8a72b6bb63f69b838dce2ae430f0669ba0a8abcc65e6c9a641a17020d2349
 
 name:           Enki
 version:        0.1.0.0
@@ -29,6 +29,8 @@ library
   exposed-modules:
       Enki.Compiler
       Enki.Compiler.CodeGen
+      Enki.Compiler.Optimizer
+      Enki.Compiler.Prolog
       Enki.Compiler.TypeChecker
       Enki.Compiler.Types
       Enki.Compiler.Util
