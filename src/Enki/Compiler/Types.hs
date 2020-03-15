@@ -58,7 +58,7 @@ paramsOf (TypedData dataId _) = vars dataId
 paramsOf _ = []
 
 isFuncLike :: TypedDef -> Bool
-isFuncLike (TypedFunc _ _ _ _) = True
-isFuncLike (TypedConstructor _ _) = True
+isFuncLike TypedFunc{} = True
+isFuncLike TypedConstructor{} = True
 isFuncLike _ = False
 

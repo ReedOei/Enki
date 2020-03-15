@@ -24,6 +24,13 @@ data Type = EnkiInt
           | TypeName [Type]
     deriving (Eq, Show)
 
+isPrimitive :: Type -> Bool
+isPrimitive EnkiInt    = True
+isPrimitive EnkiString = True
+isPrimitive Void       = True
+isPrimitive Unit       = True
+isPrimitive _          = False
+
 makeTypeName :: Id -> Type
 makeTypeName (S str) = Named str
 makeTypeName (V name) = Any name
@@ -45,10 +52,17 @@ unwrapIds :: [Id] -> Id
 unwrapIds [x] = x
 unwrapIds ids = Comp ids
 
+typeToList :: Type -> [Type]
+typeToList (FuncType t1 t2) = typeToList t1 ++ typeToList t2
+typeToList (RuleType t1 t2) = typeToList t1 ++ typeToList t2
+typeToList (DataType t1 t2) = typeToList t1 ++ typeToList t2
+typeToList t = [t]
+
 typeToId :: Type -> Id
 typeToId EnkiInt = S "int"
 typeToId EnkiString = S "string"
 typeToId Void = S "void"
+typeToId Unit = S "unit"
 typeToId (Named str) = S str
 typeToId (Any v) = V v
 typeToId (FuncType t1 t2) = Comp [typeToId t1, S "->", typeToId t2]
@@ -61,6 +75,7 @@ idToType :: Id -> Type
 idToType (S "int") = EnkiInt
 idToType (S "string") = EnkiString
 idToType (S "void") = Void
+idToType (S "unit") = Unit
 idToType (S str) = Named str
 idToType (V v) = Any v
 idToType (Comp [t1, S "->", t2]) = FuncType (idToType t1) (idToType t2)
@@ -69,6 +84,16 @@ idToType (Comp [t1, S "*", t2]) = DataType (idToType t1) (idToType t2)
 idToType (Comp [id]) = idToType id
 idToType (Comp ids) = TypeName $ map idToType ids
 idToType (DefRef _ id) = idToType id
+
+typeToName :: Type -> Id
+typeToName EnkiInt = S "int"
+typeToName EnkiString = S "string"
+typeToName Void = S "void"
+typeToName Unit = S "unit"
+typeToName (Named str) = S str
+typeToName (Any v) = V v
+typeToName (TypeName [t]) = typeToName t
+typeToName (TypeName types) = Comp $ map typeToName $ filter (not . isPrimitive) $ types
 
 -- The first parameter is the id we wish to match (e.g., the function call expression),
 -- the second is the function we are checking if it matches

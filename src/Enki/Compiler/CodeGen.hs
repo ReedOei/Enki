@@ -6,9 +6,10 @@
 
 module Enki.Compiler.CodeGen where
 
-import Control.Lens
 import Control.Arrow ((***))
+import Control.Lens
 import Control.Monad.Trans.State.Lazy
+import Control.Monad
 
 import Data.Char
 import Data.Either
@@ -98,10 +99,10 @@ genFuncCall def paramVals resName = do
     pure $ case def of
         TypedConstructor _ _ -> (constraints, PrologFunctor name params)
 
-        TypedFunc _ _ _ _ -> (constraints ++ [PredCall name $ params ++ [PrologVar resName]], PrologVar resName)
+        TypedFunc{} -> (constraints ++ [PredCall name $ params ++ [PrologVar resName]], PrologVar resName)
 
         -- The result of this is not really used, but we return it anyway for consistency's sake
-        TypedRule _ _ _ -> (constraints ++ [PredCall name params], PrologFunctor name params)
+        TypedRule{} -> (constraints ++ [PredCall name params], PrologFunctor name params)
 
     where
         doLookup paramName =
@@ -158,7 +159,7 @@ instance CodeGen TypedId Computation where
                                 else
                                     PrologLambda freeVarNames boundParams $ PredCall name params
 
-                pure $ [Computation (init constrs) newRes]
+                pure [Computation (init constrs) newRes]
 
     codeGen f@(FuncCall def varMap) = do
         resName <- newVar
@@ -225,22 +226,55 @@ instance CodeGen TypedConstraint Computation where
         case (condComp,bodyComp) of
             ([ConstraintComp condCs], [ConstraintComp bodyCs]) -> pure [ConstraintComp [Condition condCs bodyCs]]
 
+typeCheckerName :: Type -> String
+typeCheckerName (Any _) = "always"
+typeCheckerName t = idToName (typeToName t) ++ "_check"
+
+genTypeCheck :: Monad m => Type -> PrologExpr -> StateT CodeGenEnv m [PrologConstraint]
+-- Nothing to check here
+genTypeCheck (FuncType t1 t2) expr = pure []
+genTypeCheck (RuleType t1 t2) expr = pure []
+genTypeCheck (DataType t1 t2) expr = pure []
+-- Check using whatever the typeCheckerName is
+genTypeCheck typ expr = pure [PredCall (typeCheckerName typ) [expr]]
+
+checkArgs :: Monad m => Id -> Type -> StateT CodeGenEnv m ([PrologExpr], [PrologConstraint])
+checkArgs callId callType = do
+    params <- map PrologVar <$> replicateM (length (vars callId)) newVar
+    checkConstraints <- concat <$> zipWithM genTypeCheck (typeToList callType) params
+
+    pure (params, checkConstraints)
+
+-- | Generates the type checking predicates.
+genConstructor :: Monad m => TypedDef -> TypedDef -> StateT CodeGenEnv m [PrologDef]
+genConstructor (TypedData dataId constructors) (TypedConstructor constructorId typ) = do
+    let name = idToName dataId ++ "_check"
+    let constructorName = idToName constructorId
+
+    (params, checkConstraints) <- checkArgs constructorId typ
+
+    pure [Predicate "" name [prettyExpr (PrologFunctor constructorName params)] checkConstraints]
+
 instance CodeGen TypedDef PrologDef where
     codeGen (TypedFunc funcId funcType constr expr) = do
         constrComp <- codeGen constr
         eComp <- codeGen expr
 
+        (_, checkConstraints) <- checkArgs funcId funcType
+
         case (constrComp, eComp) of
             ([ConstraintComp cs], [Computation es res]) ->
-                pure [Predicate (show funcType) (idToName funcId) (vars funcId ++ [prettyExpr res]) $ cs ++ es]
+                pure [Predicate (show funcType) (idToName funcId) (vars funcId ++ [prettyExpr res]) $ checkConstraints ++ cs ++ es]
 
     codeGen (TypedRule ruleId ruleType constr) = do
         constrComp <- codeGen constr
 
-        case constrComp of
-            [ConstraintComp cs] -> pure [Predicate (show ruleType) (idToName ruleId) (vars ruleId) cs]
+        (_, checkConstraints) <- checkArgs ruleId ruleType
 
-    codeGen (TypedData _ _) = pure []
+        case constrComp of
+            [ConstraintComp cs] -> pure [Predicate (show ruleType) (idToName ruleId) (vars ruleId) $ checkConstraints ++ cs]
+
+    codeGen d@(TypedData dataId constructors) = concat <$> mapM (genConstructor d) constructors
 
     codeGen (TypedModule _ defs) = concat <$> mapM codeGen defs
 

@@ -21,3 +21,14 @@ one_of_built_in(cons(P, Rest), X) :-
     call(P, X);
     one_of_built_in(Rest, X).
 
+% Use freeze so it gets checked whether we have bound D (maybe we can do clpfd something here?)
+int_check(D) :- freeze(D, integer(D)).
+string_check(S) :- freeze(S, atom(S)).
+
+always(X).
+
+% You can never have a value of type void.
+void_check(Void) :- false.
+
+unit_check(unit).
+
