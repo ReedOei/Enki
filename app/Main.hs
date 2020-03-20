@@ -10,19 +10,10 @@ import Enki.Compiler
 import Enki.Parser.AST
 import Enki.Parser.Parser
 
-genExec :: FilePath -> FilePath -> IO FilePath
-genExec inFile outFile = generateExecutable inFile outFile
-
 runRepl :: IO ()
 runRepl = do
     writeFile ".enki-repl.enki" ""
     runReplWith ".enki-repl.enki"
-
-runFile fname = do
-    source <- compileTime $ compile fname
-    let outputName = fname ++ "_out.pl"
-    writeFile outputName source
-    callProcess "swipl" [outputName]
 
 runReplWith :: String -> IO ()
 runReplWith fname = do
@@ -59,21 +50,25 @@ main = do
     case args of
         ["run", fname] -> runFile fname
         ["run", fname, outname] -> do
-            execName <- genExec fname outname
+            execName <- generateExecutable fname outname
             callProcess execName []
 
         ["parse", fname] -> print =<< parseFileAst fname
 
-        ["compile", fname, "to", outname] -> do
-            genExec fname outname
+        ["compile", fname, outname] -> do
+            generateExecutable fname outname
             pure ()
 
         ["help"] -> putStrLn $ "Usage:\n" ++
             "   enki FILE\n" ++
             "   enki run FILE [OUTPUT FILE NAME]\n" ++
-            "   enki compile FILE to OUTPUT_FILE_NAME"
+            "   enki compile FILE OUTPUT_FILE_NAME"
 
-        [fname] -> putStrLn =<< compile fname
+        [fname] -> do
+            res <- compile fname
+            case res of
+                Left errs -> mapM_ print errs
+                Right sourceCode -> putStrLn sourceCode
 
         [] -> runRepl
 

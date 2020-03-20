@@ -24,7 +24,7 @@ import Enki.Compiler
 import Enki.Compiler.Types
 import Enki.Compiler.TypeChecker
 
-runFile fname expected = it fname $ do
+checkFile fname expected = it fname $ do
     executableName <- generateExecutable fname (fname ++ ".out")
     actual <- readProcess executableName [] ""
     actual `shouldBe` expected
@@ -189,25 +189,25 @@ main = hspec $ do
     describe "aliases" $ do
         it "performs arbitrary syntax transformations" $ do
             v <- parseDef "define alias square X as X * X. test X is square X."
-            v `shouldBe` Right [Func (Comp [S "test",V "X"]) (Constraints []) (Expr {getId = Comp [V "X",S "*",V "X"]})]
+            v `shouldBe` Right [Func (Comp [S "test",V "X"]) (Constraints []) (Expr (Comp [V "X",S "*",V "X"]))]
 
         it "performs type substitutions" $ do
             v <- parseDef "define alias self pair X as pair X X. temp X may be con A B has A : self pair X, B : self pair X."
             v `shouldBe` Right [Data (Comp [S "temp",V "X"]) [Constructor (Comp [S "con",V "A",V "B"]) [Field (V "A") (TypeName [Named "pair",Any "X",Any "X"]),Field (V "B") (TypeName [Named "pair",Any "X",Any "X"])]]]
 
     describe "execute" $ do
-        runFile "examples/pe1.enki" "233168\n"
-        runFile "examples/pe2.enki" "4613732\n"
-        runFile "examples/pe3.enki" "6857\n"
-        runFile "examples/pe5.enki" "232792560\n"
-        runFile "examples/pe6.enki" "25164150\n"
-        runFile "examples/nested-when.enki" "negative\nblah\nat least 5\nmore than 7\nmore than 10\n"
-        runFile "examples/map-test.enki" "65\n"
-        runFile "examples/call-test.enki" "11\n"
-        runFile "examples/filter-test.enki" "30\n"
-        runFile "examples/defref.enki" "24\n2\n[5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]\n"
-        runFile "examples/string-test.enki" "[t,e,s,t,i,n,g,' ',t,h,i,n,g,' ',t,h,i,n,g,' ',o,u,t,' ',o,n,' ',a,' ',l,o,n,g,e,r,' ',s,t,r,i,n,g]\narghesarghing arghhing arghhing ouargh on a longer sarghring\n"
-        runFile "examples/test_backquote.enki" "0\n"
-        runFile "examples/test_single_calls.enki" "1\n2\n"
-        runFile "examples/test_not.enki" "2\n1\n1\n2\n"
+        checkFile "examples/pe1.enki" "233168\n"
+        checkFile "examples/pe2.enki" "4613732\n"
+        checkFile "examples/pe3.enki" "6857\n"
+        checkFile "examples/pe5.enki" "232792560\n"
+        checkFile "examples/pe6.enki" "25164150\n"
+        checkFile "examples/nested-when.enki" "negative\nblah\nat least 5\nmore than 7\nmore than 10\n"
+        checkFile "examples/map-test.enki" "65\n"
+        checkFile "examples/call-test.enki" "11\n"
+        checkFile "examples/filter-test.enki" "30\n"
+        checkFile "examples/defref.enki" "24\n2\n[5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]\n"
+        checkFile "examples/string-test.enki" "[t,e,s,t,i,n,g,' ',t,h,i,n,g,' ',t,h,i,n,g,' ',o,u,t,' ',o,n,' ',a,' ',l,o,n,g,e,r,' ',s,t,r,i,n,g]\narghesarghing arghhing arghhing ouargh on a longer sarghring\n"
+        checkFile "examples/test_backquote.enki" "0\n"
+        checkFile "examples/test_single_calls.enki" "1\n2\n"
+        checkFile "examples/test_not.enki" "2\n1\n1\n2\n"
 

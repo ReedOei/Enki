@@ -13,7 +13,7 @@ enki run FILENAME [OUTPUT FILE PATH]
 
 To compile the file:
 ```bash
-enki compile FILENAME to <OUTPUT FILE PATH>
+enki compile FILENAME <OUTPUT FILE PATH>
 ```
 
 To see the code output, run:

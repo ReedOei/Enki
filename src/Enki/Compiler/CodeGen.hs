@@ -23,12 +23,13 @@ import Enki.Compiler.Prolog
 import Enki.Compiler.Types
 
 data CodeGenEnv = CodeGenEnv
-    { _freshCounter :: Integer }
+    { _freshCounter :: Integer
+    , _errors :: [Error] }
     deriving (Eq, Show)
 makeLenses ''CodeGenEnv
 
 newCodeGenEnv :: CodeGenEnv
-newCodeGenEnv = CodeGenEnv 0
+newCodeGenEnv = CodeGenEnv 0 []
 
 data Computation = Computation [PrologConstraint] PrologExpr
                  | ConstraintComp [PrologConstraint]
@@ -36,6 +37,13 @@ data Computation = Computation [PrologConstraint] PrologExpr
 
 class CodeGen a b | a -> b where
     codeGen :: Monad m => a -> StateT CodeGenEnv m [b]
+
+instance ErrorReporter CodeGenEnv where
+    reportError val err = do
+        modify $ over errors (err:)
+        pure val
+
+    errorList = (^.errors)
 
 nonVarStrs :: Id -> [String]
 nonVarStrs (S str) = [str]
@@ -69,7 +77,7 @@ initComps = (concatMap safeInit *** concat) . unzip . map destructComp
 
 genFuncCall :: Monad m => TypedDef -> Map String Computation -> String -> StateT CodeGenEnv m ([PrologConstraint], PrologExpr)
 genFuncCall def paramVals resName = do
-    let comps = map doLookup $ vars $ defId def
+    comps <- mapM doLookup $ vars $ defId def
     let name  = idToName $ defId def
 
     let (constraints, params) = if defId def == Comp [S "not", V "G"] then initComps comps else concatComps comps
@@ -85,8 +93,10 @@ genFuncCall def paramVals resName = do
     where
         doLookup paramName =
             case Map.lookup paramName paramVals of
-                Nothing -> error $ "Could not find value for parameter '" ++ paramName ++ "'. Have: " ++ show (Map.keys paramVals)
-                Just val -> val
+                Nothing -> do
+                    v <- newVar
+                    reportError (Computation [] (PrologVar v)) $ ErrorMsg $ "Could not find value for parameter '" ++ paramName ++ "'. Have: " ++ show (Map.keys paramVals)
+                Just val -> pure val
 
 eqSign :: Type -> String
 eqSign EnkiInt = "#="

@@ -1,5 +1,7 @@
 module Enki.Compiler.Types where
 
+import Control.Monad.Trans.State.Lazy
+
 import Data.Map (Map)
 import qualified Data.Map as Map
 
@@ -29,6 +31,23 @@ data TypedDef = TypedFunc Id Type TypedConstraint TypedExpr
               | TypedExec TypedConstraint
               | TypedModule String [TypedDef]
     deriving (Eq, Show)
+
+data Error = ErrorMsg String
+    deriving (Eq, Show)
+
+class ErrorReporter env where
+    reportError :: Monad m => a -> Error -> StateT env m a
+
+    errorList :: env -> [Error]
+
+    runError :: Monad m => StateT env m a -> env -> m (Either [Error] a)
+    runError comp env = do
+        (res, newEnv) <- runStateT comp env
+
+        if not $ null $ errorList newEnv then
+            pure $ Left $ errorList newEnv
+        else
+            pure $ Right res
 
 typedIdVars :: TypedId -> [String]
 typedIdVars (StringVal _) = []

@@ -23,9 +23,6 @@ import Enki.Util
 
 import System.IO.Unsafe
 
-data Error = ErrorMsg String
-    deriving (Eq, Show)
-
 data Environment = Environment
     { _typeEnv :: Map String Type
     , _typeVars :: Map String Type
@@ -35,6 +32,13 @@ data Environment = Environment
     , _errors :: [Error] }
     deriving (Eq, Show)
 makeLenses ''Environment
+
+instance ErrorReporter Environment where
+    reportError val err = do
+        modify $ over errors (err:)
+        pure val
+
+    errorList = (^.errors)
 
 -- TODO: Move these builtins somewhere else where thye can just be "read" in (e.g., a file listing thing or something, in the standard library directory)
 writelnBuiltIn :: TypedDef
@@ -203,7 +207,7 @@ freshDefType :: Monad m => TypedDef -> StateT Environment m TypedDef
 freshDefType (TypedFunc id t constr expr) = TypedFunc <$> pure id <*> freshTypeVars t <*> pure constr <*> pure expr
 freshDefType (TypedRule id t constr) = TypedRule <$> pure id <*> freshTypeVars t <*> pure constr
 freshDefType (TypedConstructor id t) = TypedConstructor <$> pure id <*> freshTypeVars t
-freshDefType def = error $ "Cannot use def as a function call (freshDefType): " ++ show def
+freshDefType def = reportError def $ ErrorMsg $ "Cannot use def as a function call (freshDefType): " ++ show def
 
 funcParamTypes :: TypedDef -> Map String Type
 funcParamTypes (TypedFunc funcId funcType _ _)      = Map.fromList $ zip (vars funcId) $ types funcType
@@ -275,7 +279,7 @@ inferAndUnify (t, id) = do
     if not res then do
         vars <- (^.typeVars) <$> get
         env <- (^.typeEnv) <$> get
-        error $ "Failed to unify " ++ show inferred ++ " with type " ++ show newT ++ "\n" ++ show vars ++ "\n" ++ show env
+        reportError False (ErrorMsg $ "Failed to unify " ++ show inferred ++ " with type " ++ show newT ++ "\n" ++ show vars ++ "\n" ++ show env)
     else
         pure res
 
@@ -283,7 +287,7 @@ unifyAll :: Monad m => [(Type, Id)] -> StateT Environment m ()
 unifyAll pairs = do
     res <- mapM inferAndUnify pairs
     if not $ and res then
-        error $ "Failed to unify parameters: " ++ show pairs ++ " " ++ show res
+        reportError () $ ErrorMsg $ "Failed to unify parameters: " ++ show pairs ++ " " ++ show res
     else
         pure ()
 
