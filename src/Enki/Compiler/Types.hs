@@ -14,15 +14,15 @@ data TypedId = StringVal String
              | FuncCall TypedDef (Map String TypedId)
              | FuncRef TypedDef Type (Map String TypedId) [String]
              | BinOp String Type TypedId TypedId
-    deriving (Eq, Show)
+    deriving (Eq, Show, Read)
 
 newtype TypedExpr = TypedExpr { exprId :: TypedId }
-    deriving (Eq, Show)
+    deriving (Eq, Show, Read)
 
 data TypedConstraint = TypedConstraint TypedId
                      | TypedConstraints [TypedConstraint]
                      | TypedWhen TypedConstraint TypedConstraint
-    deriving (Eq, Show)
+    deriving (Eq, Show, Read)
 
 data TypedDef = TypedFunc Id Type TypedConstraint TypedExpr
               | TypedRule Id Type TypedConstraint
@@ -30,10 +30,10 @@ data TypedDef = TypedFunc Id Type TypedConstraint TypedExpr
               | TypedData Id [TypedDef]
               | TypedExec TypedConstraint
               | TypedModule String [TypedDef]
-    deriving (Eq, Show)
+    deriving (Eq, Show, Read)
 
 data Error = ErrorMsg String
-    deriving (Eq, Show)
+    deriving (Eq, Show, Read)
 
 class ErrorReporter env where
     reportError :: Monad m => a -> Error -> StateT env m a

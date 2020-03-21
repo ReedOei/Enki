@@ -10,7 +10,7 @@ data Id = S String
         | V String
         | Comp [Id]
         | DefRef Integer Id -- e.g., (pair of _ and _) = DefRef 2 (Comp [S "pair", S "of", V "_1", S "and", V "_2"])
-    deriving (Ord, Eq, Show)
+    deriving (Ord, Eq, Show, Read)
 
 data Type = EnkiInt
           | EnkiString
@@ -22,7 +22,7 @@ data Type = EnkiInt
           | DataType Type Type
           | Named String
           | TypeName [Type]
-    deriving (Eq, Show)
+    deriving (Eq, Show, Read)
 
 isPrimitive :: Type -> Bool
 isPrimitive EnkiInt    = True
