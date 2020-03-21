@@ -21,7 +21,7 @@ import Enki.Parser.AST
 import Enki.Compiler.Types
 import Enki.Util
 
-import System.IO.Unsafe
+import Text.Read (readMaybe)
 
 data Environment = Environment
     { _typeEnv :: Map String Type
@@ -40,63 +40,11 @@ instance ErrorReporter Environment where
 
     errorList = (^.errors)
 
--- TODO: Move these builtins somewhere else where thye can just be "read" in (e.g., a file listing thing or something, in the standard library directory)
-writelnBuiltIn :: TypedDef
-writelnBuiltIn = TypedRule (Comp [S "writeln", V "Str"]) EnkiString (TypedConstraints [])
-
-termToAtom :: TypedDef
-termToAtom = TypedFunc (Comp [S "term_to_atom", V "I"]) (FuncType (Any "ANYTHING") EnkiString) (TypedConstraints []) (TypedExpr (StringVal "BUILTIN"))
-
-prologNot :: TypedDef
-prologNot = TypedRule (Comp [S "not", V "G"]) (Any "ANYTHING") (TypedConstraints [])
-
-call :: TypedDef
-call = TypedFunc (Comp [S "call_built_in", V "F", V "X"])
-                 (FuncType (FuncType (Any "INPUTARG") (Any "OUTPUTARG")) (FuncType (Any "INPUTARG") (Any "OUTPUTARG")))
-                 (TypedConstraints [])
-                 (TypedExpr (StringVal "BUILTIN"))
-
-callRule :: TypedDef
-callRule = TypedRule (Comp [S "call_rule_built_in", V "F", V "X"])
-                 (RuleType (Any "INPUTARG") (Any "INPUTARG"))
-                 (TypedConstraints [])
-
-mapBuiltIn :: TypedDef
-mapBuiltIn = TypedFunc (Comp [S "map_built_in", V "F", V "Xs"])
-                (FuncType (FuncType (Any "INPUTARG") (Any "OUTPUTARG")) (FuncType (TypeName [Named "list", Any "INPUTARG"]) (TypeName [Named "list", Any "OUTPUTARG"])))
-                (TypedConstraints [])
-                (TypedExpr (StringVal "BUILTIN"))
-
--- TODO: Allow ruletype with only one argument...
-filterBuiltIn :: TypedDef
-filterBuiltIn = TypedFunc (Comp [S "filter_built_in", V "F", V "Xs"])
-                (FuncType (Any "INPUTARG") (FuncType (TypeName [Named "list", Any "INPUTARG"]) (TypeName [Named "list", Any "INPUTARG"])))
-                (TypedConstraints [])
-                (TypedExpr (StringVal "BUILTIN"))
-
-atomLengthBuiltIn :: TypedDef
-atomLengthBuiltIn = TypedFunc (Comp [S "atom_length", V "X"])
-                (FuncType EnkiString EnkiInt)
-                (TypedConstraints [])
-                (TypedExpr (StringVal "BUILTIN"))
-
-disjunctionBuiltIn :: TypedDef
-disjunctionBuiltIn = TypedRule (Comp [S "disjunction_built_in", V "P", V "Q", V "X"])
-                     (RuleType (Any "INPUTARG") (RuleType (Any "INPUTARG") (Any "INPUTARG")))
-                     (TypedConstraints [])
-
-oneOfBuiltIn :: TypedDef
-oneOfBuiltIn = TypedRule (Comp [S "one_of_built_in", V "Ps", V "X"])
-               (RuleType (TypeName [Named "list", Any "INPUTARG"]) (Any "INPUTARG"))
-               (TypedConstraints [])
-
-builtIns = [writelnBuiltIn, termToAtom, prologNot, call, callRule, mapBuiltIn, filterBuiltIn, atomLengthBuiltIn, disjunctionBuiltIn, oneOfBuiltIn]
-
 logError :: Monad m => Error -> StateT Environment m ()
 logError err = modify $ over errors (err:)
 
 newEnv :: Environment
-newEnv = Environment Map.empty Map.empty Nothing builtIns 0 []
+newEnv = Environment Map.empty Map.empty Nothing [] 0 []
 
 defineNew :: Monad m => TypedDef -> StateT Environment m TypedDef
 defineNew def = do
@@ -438,7 +386,9 @@ inferOp id@(Comp [id1, S op, id2]) = do
                 error $ "Could not unify (3): " ++ show (tid1, newT1, tid2, newT2)
             else
                 pure $ constr tid1 tid2
-inferOp id = error $ "Not an operator expression: " ++ show id
+inferOp id = do
+    funcs <- (^.funcEnv) <$> get
+    error $ "Not an operator expression: " ++ show id ++ " " ++ show funcs
 
 instance Inferable Id TypedId where
     infer id@(S str) = do
@@ -561,6 +511,14 @@ instance Inferable Def TypedDef where
     infer (Exec constr) = TypedExec <$> infer constr
 
     infer (Module name defs) = TypedModule name <$> mapM infer defs
+
+    infer (Builtin str) =
+        case readMaybe str of
+            Nothing -> error str -- reportError (TypedModule ("FAILED_BUILTIN: " ++ str) []) $ ErrorMsg $ "Could not parse '" ++ str ++ "' as a TypedDef"
+            Just newDef -> do
+                defineNew newDef
+                -- Do this so we don't generate any code
+                pure $ TypedModule ("BUILTIN " ++ str) []
 
     infer e = error $ show e
 

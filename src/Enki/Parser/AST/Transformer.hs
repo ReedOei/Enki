@@ -64,6 +64,8 @@ instance Transformable Def where
         modify $ over aliases $ Map.insert key val
         pure alias
 
+    transform b@Builtin{} = pure b
+
 replacePlaceholders :: Monad m => Id -> Transform m Id
 replacePlaceholders (Comp ids) = Comp <$> go ids
     where

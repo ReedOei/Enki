@@ -1,9 +1,47 @@
+built in 'TypedRule (Comp [S "writeln", V "Str"]) EnkiString (TypedConstraints [])'
+
+built in 'TypedFunc (Comp [S "term_to_atom", V "I"]) (FuncType (Any "ANYTHING") EnkiString) (TypedConstraints []) (TypedExpr { exprId = StringVal "BUILTIN" })'
+
+built in 'TypedRule (Comp [S "not", V "G"]) (Any "ANYTHING") (TypedConstraints [])'
+
+built in 'TypedFunc (Comp [S "call_built_in", V "F", V "X"])
+                 (FuncType (FuncType (Any "INPUTARG") (Any "OUTPUTARG")) (FuncType (Any "INPUTARG") (Any "OUTPUTARG")))
+                 (TypedConstraints [])
+                 (TypedExpr { exprId = StringVal "BUILTIN" } )'
+
+built in 'TypedRule (Comp [S "call_rule_built_in", V "F", V "X"])
+                 (RuleType (Any "INPUTARG") (Any "INPUTARG"))
+                 (TypedConstraints [])'
+
+built in 'TypedFunc (Comp [S "map_built_in", V "F", V "Xs"])
+                (FuncType (FuncType (Any "INPUTARG") (Any "OUTPUTARG")) (FuncType (TypeName [Named "list", Any "INPUTARG"]) (TypeName [Named "list", Any "OUTPUTARG"])))
+                (TypedConstraints [])
+                (TypedExpr { exprId = StringVal "BUILTIN" })'
+
+built in 'TypedFunc (Comp [S "filter_built_in", V "F", V "Xs"])
+                (FuncType (Any "INPUTARG") (FuncType (TypeName [Named "list", Any "INPUTARG"]) (TypeName [Named "list", Any "INPUTARG"])))
+                (TypedConstraints [])
+                (TypedExpr { exprId = StringVal "BUILTIN" })'
+
+built in 'TypedFunc (Comp [S "atom_length", V "X"])
+                (FuncType EnkiString EnkiInt)
+                (TypedConstraints [])
+                (TypedExpr { exprId = StringVal "BUILTIN" })'
+
+built in 'TypedRule (Comp [S "disjunction_built_in", V "P", V "Q", V "X"])
+                     (RuleType (Any "INPUTARG") (RuleType (Any "INPUTARG") (Any "INPUTARG")))
+                     (TypedConstraints [])'
+
+built in 'TypedRule (Comp [S "one_of_built_in", V "Ps", V "X"])
+               (RuleType (TypeName [Named "list", Any "INPUTARG"]) (Any "INPUTARG"))
+               (TypedConstraints [])'
+
 true if 1 = 1.
 false if 1 = 2.
 
 - X is 0 - X.
 
-display X where writeln X.
+display X does writeln X.
 
 as text X is term_to_atom X.
 

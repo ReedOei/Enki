@@ -1,6 +1,6 @@
 Long:
 - Allow calling Prolog code from Enki
-    - This will also let us extract out the code for defining builts in that's currently in the TypeChecker.
+    - This is mostly done, but we still need to allow importing prolog files other than just base.pl
 - Add code analysis stuff
 - Add a GUI library
     - Probably will have to wait until after we can call arbitrary Prolog code from Enki
@@ -9,6 +9,7 @@ Medium:
 - Use a proper argument parsing library
 - Give access to command line arguments to Enki programs
 - Improve error messages
+- Improve builtin stuff so we don't have to write using the literal Haskell syntax
 
 Short:
 -

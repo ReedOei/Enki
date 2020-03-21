@@ -1,8 +1,10 @@
 do not use base.
 
+built in 'TypedRule (Comp [S "writeln", V "Str"]) EnkiString (TypedConstraints [])'
+
 - X is 0 - X.
 
-display X where writeln X.
+display X does writeln X.
 
 f X is
     when X > 5 then

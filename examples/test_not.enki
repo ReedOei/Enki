@@ -5,7 +5,12 @@ false if 1 = 2.
 
 even X if X = 2*K.
 
-display X where writeln X.
+built in 'TypedFunc (Comp [S "term_to_atom", V "I"]) (FuncType (Any "ANYTHING") EnkiString) (TypedConstraints []) (TypedExpr { exprId = StringVal "BUILTIN" })'
+built in 'TypedRule (Comp [S "writeln", V "Str"]) EnkiString (TypedConstraints [])'
+built in 'TypedRule (Comp [S "not", V "G"]) (Any "ANYTHING") (TypedConstraints [])'
+
+display X does writeln X.
+
 as text X is term_to_atom X.
 
 test X is

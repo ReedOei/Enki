@@ -24,5 +24,6 @@ data Def = Func Id Constraint Expr
          | Module String [Def]
          | NoImport String
          | Alias Id Id
+         | Builtin String
     deriving (Eq, Show, Read)
 

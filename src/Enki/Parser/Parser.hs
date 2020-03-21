@@ -51,12 +51,12 @@ parseFileAst fname = do
     enkiPath <- getEnv "ENKI_PATH"
 
     -- Load the standard library
-    stdLib <- withCurrentDirectory enkiPath (parseDef =<< loadFile "base.enki")
+    stdLib <- withCurrentDirectory enkiPath $ parseDef =<< loadFile "base.enki"
 
     let dir = takeDirectory fname
     let base = takeFileName fname
 
-    res <- withCurrentDirectory dir (parseDef =<< loadFile base)
+    res <- withCurrentDirectory dir $ parseDef =<< loadFile base
 
     case (stdLib, res) of
         (Left err, _) -> error $ show err
@@ -83,7 +83,15 @@ enkiDef = many (try defineAlias <|>
                 try func <|>
                 try rule <|>
                 try dataDef <|>
+                try builtin <|>
                 exec)
+
+builtin :: (Monad m, Stream s m Char) => ParsecT s st m Def
+builtin = do
+    symbol $ string "built"
+    symbol $ string "in"
+    s <- between (skipMany whitespace >> (string "'")) (string "'" >> skipMany whitespace) $ many $ noneOf "'"
+    pure $ Builtin s
 
 defineAlias :: (MonadIO m, Stream s m Char) => ParsecT s st m Def
 defineAlias = do
@@ -135,11 +143,11 @@ exec = do
 rule :: Parser Def
 rule = do
     lineSep
-    tempId <- symbol $ enkiId "" ["if", "where"]
+    tempId <- symbol $ enkiId "" ["if", "where", "does"]
 
     let (id, argConstrs) = replaceCompArgs tempId
 
-    symbol $ choice $ map string ["if", "where"]
+    symbol $ choice $ map string ["if", "where", "does"]
 
     c <- constraint
 
@@ -354,7 +362,7 @@ enkiId symbols = fmap sanitize . buildExpressionParser opTable . baseEnkiId symb
 
 baseEnkiId :: String -> [String] -> Parser Id
 baseEnkiId symbols excluded = do
-    ids <- untilFail $ choice $ map symbol [try (listLiteral symbols excluded), var, int, parens symbols excluded, try (str symbols excluded), quoteId]
+    ids <- untilFail $ choice $ map symbol [try (listLiteral symbols excluded), var, int, parens symbols excluded, try (str symbols excluded), S <$> quoteId]
     pure $ case ids of
         [i] -> i
         xs -> Comp xs
@@ -387,10 +395,10 @@ listLiteral ignoreSymbols excluded = do
         makeCons (Comp []) xs = xs
         makeCons x xs = Comp [S "cons", x, xs]
 
-quoteId :: Parser Id
+quoteId :: Parser String
 quoteId = do
     s <- between (skipMany whitespace >> (string "\"")) (string "\"" >> skipMany whitespace) $ many $ noneOf "\""
-    pure $ S $ "\"" ++ s ++ "\""
+    pure $ "\"" ++ s ++ "\""
 
 parens :: String -> [String] -> Parser Id
 parens ignoreSymbols excluded =
